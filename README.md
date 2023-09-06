@@ -10,5 +10,5 @@ Features:<br>
 [+] Memory-editing utilities for both internal and external application<br>
 [+] Open-sourced<br>
 
-Release date: N/A
-Percentage of progress/completion: 40%
+Release date: N/A<br>
+Percentage of progress/completion: 40%<br>
