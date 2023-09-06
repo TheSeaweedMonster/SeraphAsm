@@ -12,3 +12,6 @@ Features:<br>
 
 Release date: N/A<br>
 Percentage of progress/completion: 40%<br>
+
+Open to voluntary contributions<br>
+DM for details jayyy#5764<br>
