@@ -1,10 +1,10 @@
 # SeraphAsm
 
-Functional disassembler and assembler for both x86, x64, and ARM.
+Functional disassembler and assembler for both x86, x64, and ARM.<br>
 
-Features:
-[+] Portable and extremely easy to include
-[+] Analysis of function routines
-[+] Text translation as well as text (and AST) decompilation of instructions
-[+] Memory-editing utilities for both internal and external application
-[+] Open-sourced
+Features:<br>
+[+] Portable and extremely easy to include<br>
+[+] Analysis of function routines<br>
+[+] Text translation as well as text (and AST) decompilation of instructions<br>
+[+] Memory-editing utilities for both internal and external application<br>
+[+] Open-sourced<br>
