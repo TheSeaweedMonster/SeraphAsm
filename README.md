@@ -16,3 +16,63 @@ Percentage of progress/completion: 40%<br>
 
 Open to voluntary contributions<br>
 DM for details jayyy#5764<br>
+
+
+
+# Documentation
+
+Here we'll go over some examples of this API's usage.<br>
+First, let's cover the assembler.<br>
+
+Take the following code:<br>
+
+[code]
+#include "SeraphAsm/Seraph.hpp"
+
+int main()
+{
+	Seraph::Assembler<Seraph::TargetArchitecture::x86> assembler;
+	Seraph::ByteStream stream = assembler.compile(R"(
+push ebp
+mov ebp,esp
+mov eax,[ebp+08h]
+add eax,[ebp+0Ch]
+mov esp,ebp
+pop ebp
+retn
+)");
+
+	printf("\nOutput: \n\n");
+	while (stream.good())
+		printf("%02X ", stream.next());
+	printf("\n");
+	system("pause");
+ 
+	return 0;
+}
+[/code]
+
+This will produce the following output:<br>
+[code]
+55 8B 84 68 00 BB F0 0F 89 9C 68 00 BB F0 0F 8B 81 00 00 00 0C 8B 45 08 03 45 0C 5D C3
+[/code]
+
+These bytes represent the assembly instructions, as <br>
+they can be manually written to any memory location<br>
+and executed. In this particular example we assembled<br>
+a function that adds two ints. Equivalent to:<br>
+[code]
+int __cdecl add(int a, int b){ return a + b; }
+[/code]
+
+It's important to note that there is a syntax to follow<br>
+when using seraph assembler, otherwise bytecode will fail to generate.<br>
+For example, hex numbers must be specified as hex by adding <br>
+an 'h' at the end. Ex: 0Ch, 0FF03380h, ...<br>
+
+Notice we use a "ByteStream" class, which is really<br>
+just a basic byte-vector container, that offers a lot of<br>
+extra control.<br>
+
+
+
