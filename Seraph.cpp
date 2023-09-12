@@ -59,10 +59,14 @@ namespace Seraph
                 Label,
                 AsmNode
             } type;
+
             std::string opPrefix = "";
             std::string opName = "";
+
             std::vector<std::string> operands = {};
+
             BaseSet_x86::Opcode opData;
+
             bool hasMod = false;
             int32_t modIndex = 0xFF;
         };
@@ -609,9 +613,8 @@ namespace Seraph
                     for (auto& opvariant : lookup.second)
                     {
                         bool reject = false;
-
-                        // If the opcode format is "+rd", then the final opcode byte
-                        // is used to denote the (8-32 bit) register
+                        
+                        // Test the operands tied to this opcode, if there are any
                         if (!node.opData.operands.empty())
                         {
                             if (node.opData.operands.size() == opvariant.symbols.size())
@@ -631,6 +634,8 @@ namespace Seraph
                         if (prelookup.find(node.opPrefix) != prelookup.end())
                             stream.add(prelookup[node.opPrefix]);
 
+                        // If the opcode format is "+rd", then the final opcode byte
+                        // is used to denote the (8-32 bit) register
                         auto firstEntry = (!opvariant.entries.empty()) ? opvariant.entries.front() : OpEncoding::none;
                         if (firstEntry == OpEncoding::rb || firstEntry == OpEncoding::rw || firstEntry == OpEncoding::rd)
                         {
@@ -676,7 +681,7 @@ namespace Seraph
                             // --> Finished:
                             // Prefix           (Up to 4, 1 byte each)  optional
                             // Opcode           (1-2 bytes)             required
-                            // --> Next up:
+                            // --> We are here:
                             // ModR/M           (1 byte)                optional
                             // SIB              (1 byte)                optional
                             // Displacement     (1, 2 or 4 bytes)       optional                     
