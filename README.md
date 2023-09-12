@@ -26,7 +26,7 @@ First, let's cover the assembler.<br>
 
 Take the following code:<br>
 
-[code]
+[code]<br>
 #include "SeraphAsm/Seraph.hpp"
 
 int main()
@@ -40,30 +40,30 @@ add eax,[ebp+0Ch]
 mov esp,ebp
 pop ebp
 retn
-)");
-
+	)");
+	
 	printf("\nOutput: \n\n");
 	while (stream.good())
 		printf("%02X ", stream.next());
 	printf("\n");
 	system("pause");
- 
+ 	
 	return 0;
 }
-[/code]
+<br>[/code]
 
 This will produce the following output:<br>
-[code]
+[code]<br>
 55 8B 84 68 00 BB F0 0F 89 9C 68 00 BB F0 0F 8B 81 00 00 00 0C 8B 45 08 03 45 0C 5D C3
-[/code]
+<br>[/code]
 
 These bytes represent the assembly instructions, as <br>
 they can be manually written to any memory location<br>
 and executed. In this particular example we assembled<br>
 a function that adds two ints. Equivalent to:<br>
-[code]
+[code]<br>
 int __cdecl add(int a, int b){ return a + b; }
-[/code]
+<br>[/code]
 
 It's important to note that there is a syntax to follow<br>
 when using seraph assembler, otherwise bytecode will fail to generate.<br>
