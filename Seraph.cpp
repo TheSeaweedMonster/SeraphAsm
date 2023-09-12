@@ -33,7 +33,7 @@ namespace Seraph
     // Referenced by the Assembler (x86 arch, shared by x64 arch)
     namespace Mnemonics
     {
-        static const std::vector<std::string> R8 = { "ah", "al", "ch", "cl", "dh", "dl", "bh", "bl" };
+        static const std::vector<std::string> R8 = { "al", "cl", "dl", "bl", "ah", "ch", "dh", "bh" };//{ "ah", "al", "ch", "cl", "dh", "dl", "bh", "bl" };
         static const std::vector<std::string> R16 = { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di" };
         static const std::vector<std::string> R32 = { "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi" };
     };
@@ -67,6 +67,7 @@ namespace Seraph
 
             BaseSet_x86::Opcode opData;
 
+            int32_t bitSize = 0;
             bool hasMod = false;
             int32_t modIndex = 0xFF;
         };
@@ -306,8 +307,13 @@ namespace Seraph
         oplookup["push"] = { { { 0x50 }, { OpEncoding::rd }, { Symbols::r32 } } };
         oplookup["pop"] = { { { 0x58 }, { OpEncoding::rd }, { Symbols::r32 } } };
         oplookup["add"] = {
+            { { 0x04 }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
+            { { 0x05 }, { OpEncoding::iw }, { Symbols::al, Symbols::imm16 } },
+            { { 0x05 }, { OpEncoding::id }, { Symbols::al, Symbols::imm32 } },
+            { { 0x00 }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
             { { 0x01 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
-            { { 0x03 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } }
+            { { 0x02 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
+            { { 0x03 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
         oplookup["mov"] = {
             { { 0x89 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
@@ -394,7 +400,6 @@ namespace Seraph
                             parts.push_back(token);
                             break;
                         case '*':
-                            operand.opmode = Symbols::rm32;
                             parts.push_back(token);
                             token = next(at);
                             parts.push_back("mul");
@@ -404,6 +409,7 @@ namespace Seraph
                             node.hasMod = true;
                             node.modIndex = opIndex;
                             operand.flags |= BaseSet_x86::OP_RM;
+                            operand.opmode = Symbols::rm32;
                             rm = true;
                             break;
                         default:
@@ -416,6 +422,7 @@ namespace Seraph
                                 {
                                     operand.opmode = (rm) ? Symbols::rm8 : Symbols::r8;
                                     //printf("8-bit reg match: %s\n", token.c_str());
+                                    node.bitSize = (node.bitSize == 0) ? 8 : node.bitSize;
                                     parts.push_back("r8");
                                     operand.regs.push_back(i);
                                     isReserved = true;
@@ -424,6 +431,7 @@ namespace Seraph
                                 {
                                     operand.opmode = (rm) ? Symbols::rm16 : Symbols::r16;
                                     //printf("16-bit reg match: %s\n", token.c_str());
+                                    node.bitSize = (node.bitSize == 0) ? 16 : node.bitSize;
                                     parts.push_back("r16");
                                     operand.regs.push_back(i);
                                     isReserved = true;
@@ -432,6 +440,7 @@ namespace Seraph
                                 {
                                     operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
                                     //printf("32-bit reg match: %s\n", token.c_str());
+                                    node.bitSize = (node.bitSize == 0) ? 32 : node.bitSize;
                                     parts.push_back("r32");
                                     operand.regs.push_back(i);
                                     isReserved = true;
@@ -487,19 +496,19 @@ namespace Seraph
                                     switch (sizeNumber)
                                     {
                                     case 2:
-                                        operand.opmode = (rm) ? Symbols::rm32 : Symbols::moffs8;
+                                        operand.opmode = (rm) ? operand.opmode : Symbols::moffs8;
                                         operand.imm8 = std::strtoul(token.c_str(), nullptr, 16);
                                         operand.flags |= BaseSet_x86::OP_IMM8;
                                         parts.push_back("imm8");
                                         break;
                                     case 4:
-                                        operand.opmode = (rm) ? Symbols::rm32 : Symbols::moffs16;
+                                        operand.opmode = (rm) ? operand.opmode : Symbols::moffs16;
                                         operand.imm16 = std::strtoul(token.c_str(), nullptr, 16);
                                         operand.flags |= BaseSet_x86::OP_IMM16;
                                         parts.push_back("imm16");
                                         break;
                                     case 8:
-                                        operand.opmode = (rm) ? Symbols::rm32 : Symbols::moffs32;
+                                        operand.opmode = (rm) ? operand.opmode : Symbols::moffs32;
                                         operand.imm32 = std::strtoul(token.c_str(), nullptr, 16);
                                         operand.flags |= BaseSet_x86::OP_IMM32;
                                         parts.push_back("imm32");
@@ -511,19 +520,19 @@ namespace Seraph
                                     switch (sizeNumber)
                                     {
                                     case 2:
-                                        operand.opmode = (rm) ? Symbols::rm32 : Symbols::moffs8;
+                                        operand.opmode = (rm) ? operand.opmode : Symbols::moffs8;
                                         operand.imm8 = std::atoi(token.c_str());
                                         operand.flags |= BaseSet_x86::OP_IMM8;
                                         parts.push_back("imm8");
                                         break;
                                     case 4:
-                                        operand.opmode = (rm) ? Symbols::rm32 : Symbols::moffs16;
+                                        operand.opmode = (rm) ? operand.opmode : Symbols::moffs16;
                                         operand.imm16 = std::atoi(token.c_str());
                                         operand.flags |= BaseSet_x86::OP_IMM16;
                                         parts.push_back("imm16");
                                         break;
                                     case 8:
-                                        operand.opmode = (rm) ? Symbols::rm32 : Symbols::moffs32;
+                                        operand.opmode = (rm) ? operand.opmode : Symbols::moffs32;
                                         operand.imm32 = std::atoi(token.c_str());
                                         operand.flags |= BaseSet_x86::OP_IMM32;
                                         parts.push_back("imm32");
@@ -595,6 +604,34 @@ namespace Seraph
                             break;
                         case Symbols::r32:
                             operand2->opmode = Symbols::rm32;
+                            break;
+                        }
+                    }
+                }
+
+                // Correct the bitsize of operand/opmodes so that they match.
+                // Example:
+                // If one operand is r8 and the other is rm32, the only thing we 
+                // can do to make it line up with our (intel-correct) lookup table
+                // is to correct the rm32 so that it is rm8.
+                // It's tedious but this works
+                //
+                if (node.bitSize)
+                {
+                    for (size_t i = 0; i < node.opData.operands.size(); i++)
+                    {
+                        switch (node.opData.operands[i].opmode)
+                        {
+                        case Symbols::rm32:
+                            switch (node.bitSize)
+                            {
+                            case 8:
+                                node.opData.operands[i].opmode = Symbols::rm8;
+                                break;
+                            case 16:
+                                node.opData.operands[i].opmode = Symbols::rm16;
+                                break;
+                            }
                             break;
                         }
                     }
@@ -714,6 +751,7 @@ namespace Seraph
                                     else
                                         modbyte += op.regs.front();
                                     break;
+                                case Symbols::rm8:
                                 case Symbols::rm16:
                                 case Symbols::rm32:
                                     useModByte = true;
