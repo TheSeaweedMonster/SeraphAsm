@@ -53,7 +53,7 @@ retn
 
 This will produce the following output:<br>
 ```
-55 8B 84 68 00 BB F0 0F 89 9C 68 00 BB F0 0F 8B 81 00 00 00 0C 8B 45 08 03 45 0C 5D C3
+55 8B E5 8B 45 08 03 45 0C 5D C3
 ```
 
 These bytes represent the assembly instructions, as <br>
