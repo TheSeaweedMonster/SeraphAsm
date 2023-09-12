@@ -37,7 +37,6 @@ push ebp
 mov ebp,esp
 mov eax,[ebp+08h]
 add eax,[ebp+0Ch]
-mov esp,ebp
 pop ebp
 retn
 	)");
