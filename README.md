@@ -7,7 +7,7 @@ Features:<br>
 ✔️ Portable and easy to include<br>
 ✔️ Text-to-assembly to write instructions and/or function routines<br>
 ⏳ Analysis of function routines<br>
-⏳ Text translation as well as text (and AST) decompilation of instructions<br>
+⏳ Text translation as well as text (and AST) decompilation of instructions (disassembler is incomplete)<br>
 ⏳ Memory-editing utilities for both internal and external application<br>
 ✔️ Open-sourced<br>
 
