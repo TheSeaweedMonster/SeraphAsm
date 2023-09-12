@@ -56,8 +56,8 @@ This will produce the following output:<br>
 55 8B E5 8B 45 08 03 45 0C 5D C3
 ```
 
-These bytes represent the assembly instructions, as <br>
-they can be manually written to any memory location<br>
+These bytes represent the assembly instructions. <br>
+They can be written to any memory location<br>
 and executed. In this particular example we assembled<br>
 a function that adds two ints. Equivalent to:<br>
 ```
@@ -65,9 +65,10 @@ int __cdecl add(int a, int b){ return a + b; }
 ```
 
 It's important to note that there is a syntax to follow<br>
-when using seraph assembler, otherwise bytecode will fail to generate.<br>
+when using Seraph assembler, otherwise bytecode will fail to generate.<br>
 For example, hex numbers must be specified as hex by adding <br>
 an 'h' at the end. Ex: 0Ch, 0FF03380h, ...<br>
+More about format to be explained later<br>
 
 Notice we use a "ByteStream" class, which is really<br>
 just a basic byte-vector container, that offers a lot of<br>
