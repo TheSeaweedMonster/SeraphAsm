@@ -11,11 +11,12 @@ namespace Seraph
     class ByteStream
     {
         size_t pos = 0;
-        std::vector<uint8_t> content = {};
     public:
         ByteStream(void) = default;
         ByteStream(const std::vector<uint8_t>& s) { *this = s; }
         ByteStream(const ByteStream& s){ *this = s; }
+
+        std::vector<uint8_t> content = {};
         
         inline ByteStream& operator<<(const uint8_t b)
         {
@@ -49,15 +50,8 @@ namespace Seraph
             return true;
         }
         
-        inline bool operator!=(const ByteStream& o)
-        {
-            return !(*this == o);
-        }
-        
-        inline uint8_t operator++(const int)
-        {
-            return next();
-        }
+        inline bool operator!=(const ByteStream& o){ return !(*this == o); }
+        inline uint8_t operator++(const int){ return next(); }
 
         const void set(const size_t i, const uint8_t b)
         {
@@ -65,80 +59,35 @@ namespace Seraph
                 content[i] = b;
         }
 
-        const void add(const uint8_t b)
-        {
-            *this << b;
-        }
-
+        const void add(const uint8_t b) { *this << b; }
         const void add(const std::vector<uint8_t>& b)
         {
             for (size_t i = 0; i < b.size(); i++)
                 *this << b[i];
         }
-        
-        const uint8_t next()
+
+        void pop(const size_t count = 1)
         {
-            return (content.size() > pos) ? content[pos++] : 0;
+            for (size_t i = 0; i < count; i++)
+                content.pop_back();
         }
         
+        const uint8_t next(){ return (content.size() > pos) ? content[pos++] : 0; }
         const uint8_t prev()
         {
             if (content.empty()) return 0;
             return (content.size() > pos && pos > 0) ? content[pos - 1] : content[0];
         }
         
-        const uint8_t current()
-        {
-            return (content.size() > pos) ? content[pos] : 0;
-        }
-
-        const uint8_t* pcurrent()
-        {
-            return reinterpret_cast<uint8_t*>(content.data() + pos);
-        }
-        
-        const size_t getpos()
-        {
-            return pos;
-        }
-        
-        const bool good()
-        {
-            return (content.size() > pos);
-        }
-
-        const void reset()
-        {
-            setpos(0);
-        }
-
-        void setpos(const size_t i)
-        {
-            pos = i;
-        }
-        
-        const size_t size()
-        {
-            return content.size();
-        }
-        
-        const void skip(const size_t count)
-        {
-            pos += count;
-        }
-        
-        const uint8_t* data()
-        {
-            return content.data();
-        }
-        
-        void pop(const size_t count = 1)
-        {
-            for (size_t i = 0; i < count; i++)
-            {
-                content.pop_back();
-            }
-        }
+        const uint8_t current(){ return (content.size() > pos) ? content[pos] : 0; }
+        const uint8_t* pcurrent(){ return reinterpret_cast<uint8_t*>(content.data() + pos); }
+        const size_t getpos(){ return pos; }
+        const bool good(){ return (content.size() > pos); }
+        void setpos(const size_t i){ pos = i; }
+        const void skip(const size_t count){ pos += count; }
+        const void clear() { setpos(0); content.clear(); }
+        const uint8_t* data() { return content.data(); }
+        const size_t size() { return content.size(); }
     };
 
     struct OpInfo_x86
@@ -164,7 +113,9 @@ namespace Seraph
         uint32_t prefix = 0;
         uint32_t segment = 0;
         uint32_t flags = 0;
-        std::vector<T_OP> operands = { };
+
+        std::vector<uint8_t> bytes = {};
+        std::vector<T_OP> operands = {};
 
         OpInfo_x86* extendedInfo;
 
@@ -230,6 +181,38 @@ namespace Seraph
         enum class Symbols
         {
             not_set,        // Placeholder - not set
+            al,             // 8-bit registers
+            bl,
+            cl,
+            dl,
+            ah,
+            bh,
+            ch,
+            dh,
+            ax,             // 16-bit registers
+            cx,
+            dx,
+            bx,
+            sp,
+            bp,
+            si,
+            di,
+            eax,            // 32-bit registers
+            ecx,
+            edx,
+            ebx,
+            esp,
+            ebp,
+            esi,
+            edi,
+            cs,             // segment registers
+            ds,
+            es,
+            fs,
+            gs,
+            ss,
+            hs,
+            is,
             rel8,           // A relative address in the range from 128 bytes before the end of the instruction to 127 bytes after the end of the instruction
             rel16,          // A 16-bit relative address within the same code segment as the instruction.
             rel32,          // A 32-bit relative address within the same code segment as the instruction.
@@ -353,7 +336,7 @@ namespace Seraph
 
         // Parses and converts assembly code string directly to
         // a stream of bytes
-        ByteStream compile(const std::string& source, const std::vector<std::pair<std::string, void*>>& locations = {});
+        ByteStream compile(const std::string& source, const uintptr_t offset = 0);
 	};
 
 
