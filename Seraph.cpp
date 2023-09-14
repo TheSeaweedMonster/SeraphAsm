@@ -442,6 +442,90 @@ namespace Seraph
             { { 0x58 }, { OpEncoding::rd }, { Symbols::r32 } },
             { { 0x8F }, { OpEncoding::m0 }, { Symbols::m32 } }
         };
+        oplookup["jo"] = {
+            { { 0x70 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x80 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jno"] = {
+            { { 0x71 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x81 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jb"] = {
+            { { 0x72 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x82 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jae"] = {
+            { { 0x73 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x83 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jnb"] = {
+            { { 0x73 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x83 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["je"] = {
+            { { 0x74 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x84 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jz"] = {
+            { { 0x74 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x84 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jne"] = {
+            { { 0x75 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x85 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jnz"] = {
+            { { 0x75 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x85 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jbe"] = {
+            { { 0x76 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x86 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jna"] = {
+            { { 0x76 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x86 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["ja"] = {
+            { { 0x77 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x87 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["js"] = {
+            { { 0x78 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x88 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jns"] = {
+            { { 0x79 }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x89 }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jp"] = {
+            { { 0x7A }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x8A }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jpo"] = {
+            { { 0x7B }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x8B }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jl"] = {
+            { { 0x7C }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x8C }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jnl"] = {
+            { { 0x7D }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x8D }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jle"] = {
+            { { 0x7E }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x8E }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jng"] = {
+            { { 0x7E }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x8E }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
+        oplookup["jg"] = {
+            { { 0x7F }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0x0F, 0x8F }, { OpEncoding::cd }, { Symbols::rel32 } },
+        };
         oplookup["mov"] = {
             { { 0x88 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x89 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
@@ -453,6 +537,9 @@ namespace Seraph
             { { 0xB0 }, { OpEncoding::rb }, { Symbols::r8, Symbols::imm8 } },
             { { 0xB8 }, { OpEncoding::rw }, { Symbols::r16, Symbols::imm16 } },
             { { 0xB8 }, { OpEncoding::rd }, { Symbols::r32, Symbols::imm32 } },
+            { { 0xC6 }, { OpEncoding::m0 }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0xC7 }, { OpEncoding::m0 }, { Symbols::rm16, Symbols::imm16 } },
+            { { 0xC7 }, { OpEncoding::m0 }, { Symbols::rm32, Symbols::imm32 } },
         };
         oplookup["lea"] = {
             { { 0x8D }, { OpEncoding::r }, { Symbols::r16, Symbols::m } },
@@ -467,6 +554,7 @@ namespace Seraph
         oplookup["lahf"] = { { { 0x9F }, { } } };
         oplookup["call"] = { { { 0xE8 }, { OpEncoding::cd }, { Symbols::rel32 } } };
         oplookup["jmp"] = { { { 0xE9 }, { OpEncoding::cd }, { Symbols::rel32 } }};
+        oplookup["ret"] = { { { 0xC2 }, { OpEncoding::iw }, { Symbols::imm16 } } };
         oplookup["retn"] = { { { 0xC3 }, { } } };
 
         // Used to identify the correct prefix bytecode to use
@@ -720,25 +808,55 @@ namespace Seraph
                     {
                         for (auto& opvariant : oplookup[node.opName])
                         {
-                            if (parts.size() == 1 && opvariant.symbols.size() - 1 >= opIndex)
+                            if (parts.size() == 1)
                             {
-                                if (opvariant.symbols[opIndex] == Symbols::rel8 && parts.back() == "imm8")
+                                if (opvariant.symbols.size() - 1 >= opIndex)
                                 {
-                                    operand.rel8 = operand.imm8;
-                                    operand.imm8 = 0;
-                                    operand.opmode = Symbols::rel8;
-                                }
-                                else if (opvariant.symbols[opIndex] == Symbols::rel16 && parts.back() == "imm16")
-                                {
-                                    operand.rel16 = operand.imm16;
-                                    operand.imm16 = 0;
-                                    operand.opmode = Symbols::rel16;
-                                }
-                                else if (opvariant.symbols[opIndex] == Symbols::rel32 && parts.back() == "imm32")
-                                {
-                                    operand.rel32 = operand.imm32;
-                                    operand.imm32 = 0;
-                                    operand.opmode = Symbols::rel32;
+                                    if (opvariant.symbols[opIndex] == Symbols::imm16 && parts.back() == "imm8")
+                                    {
+                                        operand.imm16 = operand.imm8;
+                                        operand.imm8 = 0;
+                                        operand.opmode = Symbols::imm16;
+                                    }
+                                    else if (opvariant.symbols[opIndex] == Symbols::imm32)
+                                    {
+                                        if (parts.back() == "imm8")
+                                        {
+                                            operand.imm32 = operand.imm8;
+                                            operand.imm8 = 0;
+                                            operand.opmode = Symbols::imm32;
+                                        }
+                                        else if (parts.back() == "imm16")
+                                        {
+                                            operand.imm32 = operand.imm16;
+                                            operand.imm16 = 0;
+                                            operand.opmode = Symbols::imm32;
+                                        }
+                                    }
+                                    else if (opvariant.symbols[opIndex] == Symbols::rel8 && parts.back() == "imm8")
+                                    {
+                                        operand.rel8 = operand.imm8;
+                                        operand.imm8 = 0;
+                                        operand.opmode = Symbols::rel8;
+                                    }
+                                    else if (opvariant.symbols[opIndex] == Symbols::rel16 && parts.back() == "imm16")
+                                    {
+                                        operand.rel16 = operand.imm16;
+                                        operand.imm16 = 0;
+                                        operand.opmode = Symbols::rel16;
+                                    }
+                                    else if (opvariant.symbols[opIndex] == Symbols::rel32 && parts.back() == "imm16")
+                                    {
+                                        operand.rel32 = operand.imm16;
+                                        operand.imm16 = 0;
+                                        operand.opmode = Symbols::rel32;
+                                    }
+                                    else if (opvariant.symbols[opIndex] == Symbols::rel32 && parts.back() == "imm32")
+                                    {
+                                        operand.rel32 = operand.imm32;
+                                        operand.imm32 = 0;
+                                        operand.opmode = Symbols::rel32;
+                                    }
                                 }
                             }
                         }
@@ -956,6 +1074,7 @@ namespace Seraph
                         uint8_t modbyte = 0;
                         uint8_t sibbyte = 0;
 
+                        bool wroteCode = false;
                         bool hasSib = false;
                         bool hasImm8 = false, hasImm16 = false, hasImm32 = false;
                         bool hasDisp8 = false, hasDisp16 = false, hasDisp32 = false;
@@ -1014,12 +1133,16 @@ namespace Seraph
                                 if (noperands)
                                     node.opData.operands.erase(node.opData.operands.begin());
 
-                                break;
-                            default:
-                                for (const auto b : opvariant.code)
-                                    stream.add(b);
+                                wroteCode = true;
                                 break;
                             }
+                        }
+
+                        if (!wroteCode)
+                        {
+                            // append code for this instruction
+                            for (const auto b : opvariant.code)
+                                stream.add(b);
                         }
 
                         // Continue -- generate the rest of the code for this instruction
