@@ -1,3 +1,6 @@
+// Written by TheSeaweedMonster, 09/13/2023
+// Leave these credits please
+// And thank you
 #pragma once
 #include <string>
 #include <vector>
