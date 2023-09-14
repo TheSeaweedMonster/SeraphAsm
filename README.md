@@ -14,8 +14,8 @@ Features:<br>
 Release date: N/A<br>
 Percentage of progress/completion: 40%<br>
 
-Open to contributions<br>
-DM for details jayyy#5764<br>
+Open to contributions (please give credit where due<br>
+if this has been forked or modified. thanks!)<br>
 
 
 
@@ -74,5 +74,5 @@ Notice we use a "ByteStream" class, which is really<br>
 just a basic byte-vector container, that offers a lot of<br>
 extra control.<br>
 
-
+DM for more information: jayyy#5764<br>
 
