@@ -43,6 +43,7 @@ namespace Seraph
         static const std::vector<std::string> STI = { "st0", "st1", "st2", "st3", "st4", "st5", "st6", "st7"};
         static const std::vector<std::string> CRI = { "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7"};
         static const std::vector<std::string> DRI = { "dr0", "dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7"};
+        static const std::vector<std::string> XMM = { "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7"};
     };
 
     BaseSet_x86::Opcode Disassembler<TargetArchitecture::x86>::readNext()
@@ -436,13 +437,22 @@ namespace Seraph
             { { 0x62 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x62 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup["cbw"] = { { { 0x98 }, { }, { } } };
-        oplookup["cwd"] = { { { 0x99 }, { }, { } } };
         oplookup["call"] = {
+            { { 0xE8 }, { OpEncoding::cw }, { Symbols::rel16 } },
             { { 0xE8 }, { OpEncoding::cd }, { Symbols::rel32 } },
             { { 0x9A }, { OpEncoding::cd }, { Symbols::ptr16_16 } },
             { { 0x9A }, { OpEncoding::cp }, { Symbols::ptr16_32 } },
+            { { 0xFF }, { OpEncoding::m2 }, { Symbols::rm16 } },
+            { { 0xFF }, { OpEncoding::m2 }, { Symbols::rm32 } },
+            { { 0xFF }, { OpEncoding::m3 }, { Symbols::m16_16 } },
+            { { 0xFF }, { OpEncoding::m3 }, { Symbols::m16_32 } },
         };
+        oplookup["cbw"] = { { { 0x98 }, { }, { } } };
+        oplookup["cwd"] = { { { 0x99 }, { }, { } } };
+        oplookup["clc"] = { { { 0xF8 }, { } } };
+        oplookup["cld"] = { { { 0xFC }, { } } };
+        oplookup["cli"] = { { { 0xFA }, { } } };
+        oplookup["cmc"] = { { { 0xF5 }, { }, { } } };
         oplookup["cmovo"] = {
             { { 0x0F, 0x40 }, { OpEncoding::m0, OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x40 }, { OpEncoding::m0, OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
@@ -524,7 +534,15 @@ namespace Seraph
             { { 0x0F, 0x4F }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
         oplookup["dec"] = {
-            { { 0x48 }, { OpEncoding::rd }, { Symbols::r32 } }
+            { { 0x48 }, { OpEncoding::rd }, { Symbols::r32 } },
+            { { 0xFE }, { OpEncoding::m1 }, { Symbols::rm8 } },
+            { { 0xFF }, { OpEncoding::m1 }, { Symbols::rm16 } },
+            { { 0xFF }, { OpEncoding::m1 }, { Symbols::rm32 } },
+        };
+        oplookup["div"] = {
+            { { 0xF6 }, { OpEncoding::m6 }, { Symbols::rm8 } },
+            { { 0xF7 }, { OpEncoding::m6 }, { Symbols::rm16 } },
+            { { 0xF7 }, { OpEncoding::m6 }, { Symbols::rm32 } },
         };
         oplookup["enter"] = {
             { { 0xC8 }, { OpEncoding::iw }, { Symbols::imm16, Symbols::imm8 } }
@@ -543,14 +561,26 @@ namespace Seraph
         };
         oplookup["fucompp"] = { { { 0xDA, 0xE9 }, { }, { } } };
         oplookup["fild"] = {
-            { { 0xDB }, { OpEncoding::m0 }, { Symbols::m32int } }
+            { { 0xDF }, { OpEncoding::m0 }, { Symbols::m16int } },
+            { { 0xDB }, { OpEncoding::m0 }, { Symbols::m32int } },
+            { { 0xDF }, { OpEncoding::m5 }, { Symbols::m64int } }
         };
         oplookup["fist"] = {
+            { { 0xDF }, { OpEncoding::m2 }, { Symbols::m16int } },
             { { 0xDB }, { OpEncoding::m2 }, { Symbols::m32int } }
         };
         oplookup["fistp"] = {
-            { { 0xDB }, { OpEncoding::m3 }, { Symbols::m32int } }
+            { { 0xDF }, { OpEncoding::m3 }, { Symbols::m16int } },
+            { { 0xDB }, { OpEncoding::m3 }, { Symbols::m32int } },
+            { { 0xDF }, { OpEncoding::m7 }, { Symbols::m64int } }
         };
+        oplookup["fbld"] = {
+            { { 0xDF }, { OpEncoding::m4 }, { Symbols::m80dec } }
+        };
+        oplookup["fbstp"] = {
+            { { 0xDF }, { OpEncoding::m6 }, { Symbols::m80bcd } }
+        };
+
         oplookup["fcmovnb"] = {
             { { 0xDB, 0xC0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
@@ -571,6 +601,12 @@ namespace Seraph
         };
         oplookup["fucomi"] = {
             { { 0xDB, 0xE8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fucomip"] = {
+            { { 0xDF, 0xE8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fcomip"] = {
+            { { 0xDF, 0xF0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
         oplookup["fucomp"] = {
             { { 0xDD, 0xE8 }, { OpEncoding::i }, { Symbols::sti } },
@@ -596,15 +632,36 @@ namespace Seraph
         };
         oplookup["fadd"] = {
             { { 0xD8 }, { OpEncoding::m0 }, { Symbols::m32real } },
-            { { 0xDC }, { OpEncoding::m0 }, { Symbols::m64real } },
             { { 0xD8, 0xC0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
+            { { 0xDC }, { OpEncoding::m0 }, { Symbols::m64real } },
             { { 0xDC, 0xC0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
         };
         oplookup["faddp"] = {
-
-
-            // 
-
+            { { 0xDE, 0xC0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
+            { { 0xDE, 0xC1 }, { }, { } }
+        };
+        oplookup["fmulp"] = {
+            { { 0xDE, 0xC8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
+            { { 0xDE, 0xC9 }, { }, { } }
+        };
+        oplookup["fcompp"] = {
+            { { 0xDE, 0xD9 }, { }, { } }
+        };
+        oplookup["fsubrp"] = {
+            { { 0xDE, 0xE0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
+            { { 0xDE, 0xE1 }, { }, { } }
+        };
+        oplookup["fsubp"] = {
+            { { 0xDE, 0xE8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
+            { { 0xDE, 0xE9 }, { }, { } }
+        };
+        oplookup["fdivrp"] = {
+            { { 0xDE, 0xF0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
+            { { 0xDE, 0xF1 }, { }, { } }
+        };
+        oplookup["fdivp"] = {
+            { { 0xDE, 0xF8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
+            { { 0xDE, 0xF9 }, { }, { } }
         };
         oplookup["fiadd"] = {
             { { 0xDE }, { OpEncoding::m0 }, { Symbols::m16int } },
@@ -704,7 +761,8 @@ namespace Seraph
             { { 0xDD }, { OpEncoding::m6 }, { Symbols::m94_108byte } }
         };
         oplookup["fnstsw"] = {
-            { { 0xDD }, { OpEncoding::m7 }, { Symbols::m2byte } }
+            { { 0xDD }, { OpEncoding::m7 }, { Symbols::m2byte } },
+            { { 0xDF, 0xE0 }, { }, { Symbols::ax } }
         };
         oplookup["ffree"] = {
             { { 0xDD, 0xC0 }, { OpEncoding::i }, { Symbols::sti } }
@@ -753,8 +811,20 @@ namespace Seraph
         oplookup["fscale"] = { { { 0xD9, 0xFD }, { }, { } } };
         oplookup["fsin"] = { { { 0xD9, 0xFE }, { }, { } } };
         oplookup["fcos"] = { { { 0xD9, 0xFF }, { }, { } } };
+        oplookup["hlt"] = { { { 0xF4 }, { }, { } } };
         oplookup["inc"] = {
-            { { 0x40 }, { OpEncoding::rd }, { Symbols::r32 } }
+            { { 0x40 }, { OpEncoding::rd }, { Symbols::r32 } },
+            { { 0xFE }, { OpEncoding::m0 }, { Symbols::rm8 } },
+            { { 0xFF }, { OpEncoding::m0 }, { Symbols::rm16 } },
+            { { 0xFF }, { OpEncoding::m0 }, { Symbols::rm32 } },
+        };
+        oplookup["in"] = {
+            { { 0xE4 }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
+            { { 0xE5 }, { OpEncoding::ib }, { Symbols::ax, Symbols::imm8 } },
+            { { 0xE5 }, { OpEncoding::ib }, { Symbols::eax, Symbols::imm8 } },
+            { { 0xEC }, { }, { Symbols::al, Symbols::dx } },
+            { { 0xED }, { }, { Symbols::ax, Symbols::dx } },
+            { { 0xED }, { }, { Symbols::eax, Symbols::dx } }
         };
         oplookup["ins"] = {
             { { 0x6C }, { }, { Symbols::m8, Symbols::dx } },
@@ -768,6 +838,11 @@ namespace Seraph
         oplookup["into"] = { { { 0xCE }, { }, { } } };
         oplookup["iret"] = { { { 0xCF }, { }, { } } };
         oplookup["iretd"] = { { { 0xCF }, { }, { } } };
+        oplookup["idiv"] = {
+            { { 0xF6 }, { OpEncoding::m7 }, { Symbols::rm8 } },
+            { { 0xF7 }, { OpEncoding::m7 }, { Symbols::rm16 } },
+            { { 0xF7 }, { OpEncoding::m7 }, { Symbols::rm32 } },
+        };
         oplookup["imul"] = {
             { { 0x69 }, { OpEncoding::r, OpEncoding::iw }, { Symbols::r16, Symbols::rm16, Symbols::imm16 } },
             { { 0x69 }, { OpEncoding::r, OpEncoding::id }, { Symbols::r32, Symbols::rm32, Symbols::imm32 } },
@@ -776,10 +851,21 @@ namespace Seraph
             { { 0x6B }, { OpEncoding::r, OpEncoding::ib }, { Symbols::r16, Symbols::rm16, Symbols::imm8 } },
             { { 0x6B }, { OpEncoding::r, OpEncoding::ib }, { Symbols::r32, Symbols::rm32, Symbols::imm8 } },
             { { 0x6B }, { OpEncoding::r, OpEncoding::ib }, { Symbols::r16, Symbols::imm8 } },
-            { { 0x6B }, { OpEncoding::r, OpEncoding::ib }, { Symbols::r32, Symbols::imm8 } }
+            { { 0x6B }, { OpEncoding::r, OpEncoding::ib }, { Symbols::r32, Symbols::imm8 } },
+            { { 0xF6 }, { OpEncoding::m5 }, { Symbols::rm8 } },
+            { { 0xF7 }, { OpEncoding::m5 }, { Symbols::rm16 } },
+            { { 0xF7 }, { OpEncoding::m5 }, { Symbols::rm32 } },
         };
         oplookup["jmp"] = {
-            { { 0xE9 }, { OpEncoding::cd }, { Symbols::rel32 } }
+            { { 0xEB }, { OpEncoding::cb }, { Symbols::rel8 } },
+            { { 0xE9 }, { OpEncoding::cw }, { Symbols::rel16 } },
+            { { 0xE9 }, { OpEncoding::cd }, { Symbols::rel32 } },
+            { { 0xEA }, { OpEncoding::cd }, { Symbols::ptr16_16 } },
+            { { 0xEA }, { OpEncoding::cp }, { Symbols::ptr16_32 } },
+            { { 0xFF }, { OpEncoding::m4 }, { Symbols::rm16 } },
+            { { 0xFF }, { OpEncoding::m4 }, { Symbols::rm32 } },
+            { { 0xFF }, { OpEncoding::m5 }, { Symbols::m16_16 } },
+            { { 0xFF }, { OpEncoding::m5 }, { Symbols::m16_32 } },
         };
         oplookup["jo"] = {
             { { 0x70 }, { OpEncoding::cb }, { Symbols::rel8 } },
@@ -879,6 +965,11 @@ namespace Seraph
             { { 0xC5 }, { OpEncoding::r }, { Symbols::r16, Symbols::m16_16 } },
             { { 0xC5 }, { OpEncoding::r }, { Symbols::r32, Symbols::m16_32 } }
         };
+        oplookup["loopne"] = { { { 0xE0 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
+        oplookup["loopnz"] = { { { 0xE0 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
+        oplookup["loope"] = { { { 0xE1 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
+        oplookup["loopz"] = { { { 0xE1 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
+        oplookup["loop"] = { { { 0xE2 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
         oplookup["mov"] = {
             { { 0x88 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x89 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
@@ -908,8 +999,31 @@ namespace Seraph
             { { 0xA5 }, { }, { Symbols::m16, Symbols::m16 } },
             { { 0xA5 }, { }, { Symbols::m32, Symbols::m32 } },
         };
+        oplookup["mul"] = {
+            { { 0xF6 }, { OpEncoding::m4 }, { Symbols::rm8 } },
+            { { 0xF7 }, { OpEncoding::m4 }, { Symbols::rm16 } },
+            { { 0xF7 }, { OpEncoding::m4 }, { Symbols::rm32 } },
+        };
+        oplookup["not"] = {
+            { { 0xF6 }, { OpEncoding::m2 }, { Symbols::rm8 } },
+            { { 0xF7 }, { OpEncoding::m2 }, { Symbols::rm16 } },
+            { { 0xF7 }, { OpEncoding::m2 }, { Symbols::rm32 } },
+        };
+        oplookup["neg"] = {
+            { { 0xF6 }, { OpEncoding::m3 }, { Symbols::rm8 } },
+            { { 0xF7 }, { OpEncoding::m3 }, { Symbols::rm16 } },
+            { { 0xF7 }, { OpEncoding::m3 }, { Symbols::rm32 } },
+        };
         oplookup["nop"] = {
-            { { 0x90 }, { } }
+            { { 0x90 }, { }, { } }
+        };
+        oplookup["out"] = {
+            { { 0xE6 }, { OpEncoding::ib }, { Symbols::imm8, Symbols::al } },
+            { { 0xE7 }, { OpEncoding::ib }, { Symbols::imm8, Symbols::ax } },
+            { { 0xE7 }, { OpEncoding::ib }, { Symbols::imm8, Symbols::eax } },
+            { { 0xEE }, { }, { Symbols::dx, Symbols::al } },
+            { { 0xEF }, { }, { Symbols::dx, Symbols::ax } },
+            { { 0xEF }, { }, { Symbols::dx, Symbols::eax } }
         };
         oplookup["outs"] = {
             { { 0x6E }, { }, { Symbols::m8, Symbols::dx } },
@@ -936,7 +1050,9 @@ namespace Seraph
             { { 0x06 }, { }, { Symbols::es } },
             { { 0x0E }, { }, { Symbols::cs } },
             { { 0x16 }, { }, { Symbols::ss } },
-            { { 0x1E }, { }, { Symbols::ds } }
+            { { 0x1E }, { }, { Symbols::ds } },
+            { { 0xFF }, { OpEncoding::m6 }, { Symbols::rm16 } },
+            { { 0xFF }, { OpEncoding::m6 }, { Symbols::rm32 } },
         };
         oplookup["pushf"] = { { { 0x9C }, { } } };
         oplookup["pushfd"] = { { { 0x9C }, { } } };
@@ -981,7 +1097,13 @@ namespace Seraph
         oplookup["lodsd"] = { { { 0xAD }, { } } };
         oplookup["scasb"] = { { { 0xAE }, { } } };
         oplookup["scasd"] = { { { 0xAF }, { } } };
+        oplookup["stc"] = { { { 0xF9 }, { } } };
+        oplookup["std"] = { { { 0xFD }, { } } };
+        oplookup["sti"] = { { { 0xFB }, { } } };
         oplookup["test"] = {
+            { { 0xF6 }, { OpEncoding::m0, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0xF7 }, { OpEncoding::m0, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
+            { { 0xF7 }, { OpEncoding::m0, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
             { { 0x84 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x85 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x85 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
@@ -1006,11 +1128,55 @@ namespace Seraph
         };
         oplookup["xlatb"] = { { { 0xD7 }, { } } };
 
+        // Extended SIMD instructions
+        oplookup["sldt"] = {
+            { { 0x0F, 0x00 }, { OpEncoding::m0 }, { Symbols::rm16 } },
+            { { 0x0F, 0x00 }, { OpEncoding::m0 }, { Symbols::rm32 } },
+        };
+        oplookup["str"] = {
+            { { 0x0F, 0x00 }, { OpEncoding::m1 }, { Symbols::rm16 } },
+        };
+        oplookup["lldt"] = {
+            { { 0x0F, 0x00 }, { OpEncoding::m2 }, { Symbols::rm16 } },
+        };
+        oplookup["ltr"] = {
+            { { 0x0F, 0x00 }, { OpEncoding::m3 }, { Symbols::rm16 } },
+        };
+        oplookup["verr"] = {
+            { { 0x0F, 0x00 }, { OpEncoding::m4 }, { Symbols::rm16 } },
+        };
+        oplookup["verw"] = {
+            { { 0x0F, 0x00 }, { OpEncoding::m5 }, { Symbols::rm16 } },
+        };
+        oplookup["sgdt"] = {
+            { { 0x0F, 0x01 }, { OpEncoding::m0 }, { Symbols::m } },
+        };
+        oplookup["sidt"] = {
+            { { 0x0F, 0x01 }, { OpEncoding::m1 }, { Symbols::m } },
+        };
+        oplookup["lgdt"] = {
+            { { 0x0F, 0x01 }, { OpEncoding::m2 }, { Symbols::m16_32 } },
+        };
+        oplookup["lidt"] = {
+            { { 0x0F, 0x01 }, { OpEncoding::m3 }, { Symbols::m16_32 } },
+        };
+        oplookup["smsw"] = {
+            { { 0x0F, 0x01 }, { OpEncoding::m4 }, { Symbols::rm16 } },
+            { { 0x0F, 0x01 }, { OpEncoding::m5 }, { Symbols::rm32 } },
+        };
+        oplookup["lmsw"] = {
+            { { 0x0F, 0x01 }, { OpEncoding::m6 }, { Symbols::rm16 } },
+        };
+        oplookup["invlpg"] = {
+            { { 0x0F, 0x01 }, { OpEncoding::m7 }, { Symbols::m } },
+        };
+
         // Used to identify the correct prefix bytecode to use
         std::unordered_map<std::string, uint8_t> prelookup;
         prelookup["lock"] = BaseSet_x86::B_LOCK;
         prelookup["repne"] = BaseSet_x86::B_REPNE;
         prelookup["repe"] = BaseSet_x86::B_REPE;
+        prelookup["rep"] = BaseSet_x86::B_REPE;
 
 
         // Phase 2: Go through nodes and start 
@@ -1074,8 +1240,8 @@ namespace Seraph
 
                                 while (n < r.length() - 8)
                                 {
-                                    // a-z or A-Z or 0-9 and accepted characters for operands ('[', ']', '+', '-', '*')
-                                    if ((r[n] >= 0x61 && r[n] <= 0x7A) || (r[n] >= 0x41 && r[n] <= 0x5A) || (r[n] >= 0x30 && r[n] <= 0x39))
+                                    // a-z or A-Z or 0-9 and accepted characters for tokens ('(', ')')
+                                    if ((r[n] >= 0x61 && r[n] <= 0x7A) || (r[n] >= 0x41 && r[n] <= 0x5A) || (r[n] >= 0x30 && r[n] <= 0x39) || r[n] == '(' || r[n] == ')')
                                         label += r[n++];
                                     else
                                         break;
@@ -1172,6 +1338,13 @@ namespace Seraph
                                     {
                                         operand.opmode = Symbols::dri;
                                         parts.push_back("dri");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                    else if (token == Mnemonics::XMM[i])
+                                    {
+                                        operand.opmode = Symbols::xmm;
+                                        parts.push_back("xmm");
                                         operand.regs.push_back(i);
                                         isReserved = true;
                                     }
@@ -1290,8 +1463,6 @@ namespace Seraph
                         node.opData.operands.push_back(operand);
                     }
                 }
-
-                printf("Doing a NIGGER thing\n");
 
                 // if both operands are a reg, then use an "rm" on the left or right
                 // because then we can match it to the correct { r32, rm32 } opcode.
@@ -1443,6 +1614,7 @@ namespace Seraph
                                     // in the case of registers, we use a single label to denote
                                     // any of 8 registers. Some opcodes specify 1 particular register,
                                     // so we must check for those cases here (and allow them to pass)
+                                    case Symbols::xmm:
                                     case Symbols::sti:
                                     case Symbols::sreg:
                                     case Symbols::r8:
@@ -1613,6 +1785,7 @@ namespace Seraph
                         }
 
                         const auto noperands = node.opData.operands.size();
+                        auto insCode = opvariant.code;
 
                         for (const auto entry : opvariant.entries)
                         {
@@ -1659,15 +1832,22 @@ namespace Seraph
 
                                 wroteCode = true;
                                 break;
+                            case OpEncoding::i:
+                                // Write all bytes except for the one that i applies to
+                                // (Which we presume is always the final byte)
+                                for (size_t i = 0; i < opvariant.code.size() - 1; i++)
+                                    stream.add(opvariant.code[i]);
+
+                                modbyte += opvariant.code.back();
+                                wroteCode = true;
+                                break;
                             }
                         }
 
                         if (!wroteCode)
-                        {
                             // append code for this instruction
                             for (const auto b : opvariant.code)
                                 stream.add(b);
-                        }
 
                         // Continue -- generate the rest of the code for this instruction
                         // 
@@ -1715,9 +1895,24 @@ namespace Seraph
                                     hasImm32 = true;
                                     break;
                                 case Symbols::sti:
+                                    if (!opvariant.entries.empty())
+                                    {
+                                        if (opvariant.entries.front() == OpEncoding::i)
+                                        {
+                                            if (opvariant.symbols[i] == Symbols::st0)
+                                                break;
+                                            else
+                                            {
+                                                useModByte = true;
+                                                modbyte += op.regs.front();
+                                                break;
+                                            }
+                                        }
+                                    }
                                 case Symbols::cri:
                                 case Symbols::dri:
                                 case Symbols::sreg:
+                                case Symbols::xmm:
                                 case Symbols::r8:
                                 case Symbols::r16:
                                 case Symbols::r32:
