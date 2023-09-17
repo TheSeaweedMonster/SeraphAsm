@@ -78,11 +78,13 @@ It's important to note that there is a syntax to follow<br>
 when using Seraph assembler, otherwise bytecode will fail to generate.<br>
 For example, hex numbers must be specified as hex by adding <br>
 an 'h' at the end. Ex: 0Ch, 0FF03380h, ...<br>
-More about format to be explained later<br>
+By default, Intel syntax is used.<br>
 
 Notice we use a "ByteStream" class, which is really<br>
 just a basic byte-vector container, that offers a lot of<br>
 extra control.<br>
+
+I will document the rest of the ByteStream class soon<br>
 
 DM for more information: jayyy#5764<br>
 
