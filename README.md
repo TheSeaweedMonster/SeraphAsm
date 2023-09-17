@@ -17,6 +17,16 @@ Percentage of progress/completion: 40%<br>
 Open to contributions (please give credit where due<br>
 if this has been forked or modified. thanks!)<br>
 
+# Release Notes
+
+Currently, compilation for x86 assembly is (technically) done.<br>
+Support for all opcodes is almost complete. I estimate<br>
+that it's 80% done.<br>
+
+Next step will be to write the disassembler for x86.<br>
+From there on, I will transpose both of these to x64.<br>
+
+
 
 
 # Documentation
