@@ -208,7 +208,7 @@ namespace Seraph
             ebp,
             esi,
             edi,
-            cs,             // segment registers
+            cs,             // Segment registers
             ds,
             es,
             fs,
@@ -216,6 +216,9 @@ namespace Seraph
             ss,
             hs,
             is,
+            cri,            // Control registers
+            dri,            // Debug registers
+            one,            // When the number "1" is present in the operand -- for instructions that perform an operation once
             rel8,           // A relative address in the range from 128 bytes before the end of the instruction to 127 bytes after the end of the instruction
             rel16,          // A 16-bit relative address within the same code segment as the instruction.
             rel32,          // A 32-bit relative address within the same code segment as the instruction.
@@ -265,6 +268,9 @@ namespace Seraph
             xmm_m32,        // A SIMD floating-points register or a 32-bit memory operand. The 128-bit SIMD floating-point registers are XMM0 through XMM7
             xmm_m64,        // A SIMD floating-point register or a 64-bit memory operand. The 64-bi SIMD floating-point registers are XMM0 through XMM7
             xmm_m128,       // A SIMD floating-point register or a 128-bit memory operand. The 128-bit SIMD floating-point registers are XMM0 through XMM7
+            m14_28byte,     // used with FSTENV
+            m2byte,         // used with FSTCW//FSTSW
+            m94_108byte,    // used with FSAVE
         };
 
         struct Operand
