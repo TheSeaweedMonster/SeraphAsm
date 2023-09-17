@@ -1182,8 +1182,6 @@ namespace Seraph
         // Phase 2: Go through nodes and start 
         for (auto& node : mainBody.nodes)
         {
-            printf("Compiling node...\n");
-
             switch (node.type)
             {
             case Node::NodeType::Label:
@@ -1453,11 +1451,10 @@ namespace Seraph
                             }
                         };
 
-
-                        printf("(%s) operand pattern: ", node.opName.c_str());
-                        for (auto s : parts)
-                            printf("%s ", s.c_str());
-                        printf("\n");
+                        //printf("(%s) operand pattern: ", node.opName.c_str());
+                        //for (auto s : parts)
+                        //    printf("%s ", s.c_str());
+                        //printf("\n");
 
                         operand.pattern = parts;
                         node.opData.operands.push_back(operand);
@@ -1529,7 +1526,6 @@ namespace Seraph
             }
             }
 
-            printf("Looking up...\n");
             bool solved = false;
 
             // Look up the corresponding opcode information
@@ -1538,11 +1534,9 @@ namespace Seraph
             {
                 if (lookup->first == node.opName)
                 {
-                    printf("Found lookup match. Going through variants...\n");
                     int v = 0;
                     for (const auto& opvariant : lookup->second)
                     {
-                        printf("variant %i\n", v++);
                         bool reject = false;
 
                         // Test the operands tied to this opcode, if there are any
@@ -2038,8 +2032,6 @@ namespace Seraph
                     }
                 }
             }
-
-            printf("Finished node.\n");
         }
 
 
