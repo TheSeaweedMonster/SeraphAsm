@@ -259,6 +259,8 @@ namespace Seraph
             m16int,         // A word-, short-, and long-integer (respectively*) floating-point operand in memory.
             m32int,         // *
             m64int,         // *
+            m80dec,
+            m80bcd,
             st0,            // (or ST) - The top element of the FPU register stack.
             sti,            // The ith element from the top of the FPU register stack. (i = 0 through 7)
             mm,             // An MMX™ technology register. The 64-bit MMX™ technology registers are: MM0 through MM7
