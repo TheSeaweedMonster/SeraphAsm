@@ -40,6 +40,9 @@ namespace Seraph
         static const std::vector<std::string> R16 = { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di" };
         static const std::vector<std::string> R32 = { "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi" };
         static const std::vector<std::string> SREG = { "es", "cx", "ss", "ds", "fs", "gs", "hs", "is"};
+        static const std::vector<std::string> STI = { "st0", "st1", "st2", "st3", "st4", "st5", "st6", "st7"};
+        static const std::vector<std::string> CRI = { "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7"};
+        static const std::vector<std::string> DRI = { "dr0", "dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7"};
     };
 
     BaseSet_x86::Opcode Disassembler<TargetArchitecture::x86>::readNext()
@@ -108,6 +111,8 @@ namespace Seraph
                 const auto c = source[at];
                 switch (c)
                 {
+                case ';':
+                    break;
                 case ',': // asm node, moving to next operand
                 case ' ':
                     if (!label.empty())
@@ -235,38 +240,6 @@ namespace Seraph
             return labels;
         };
 
-        /*
-        //printf("body label: %s\n", body.label.c_str());
-        // const std::vector<std::pair<std::string, void*>>& locations
-        // 
-        // Phase 1: Initial set up; Go through and parse LABELS
-        for (auto& node : mainBody.nodes)
-        {
-            switch (node.type)
-            {
-            case Node::NodeType::AsmNode:
-                // If the label is a location specified by the user, then we
-                // replace any occurrences of the label with its corresponding
-                // location, as a hex-string -- which is easy to parse later on
-                for (auto& l : locations)
-                {
-                    for (auto& op : node.operands)
-                    {
-                        std::string::size_type n = 0;
-                        while ((n = op.find(l.first, n)) != std::string::npos)
-                        {
-                            char str[10];
-                            sprintf_s(str, "%08Xh", reinterpret_cast<uint32_t>(l.second));
-                            op.replace(n, l.first.size(), str);
-                            n += strlen(str);
-                        }
-                    }
-                }
-                break;
-            }
-        }
-        */
-
         // Initialize reference table for instructions,
         // and other opcode format information
 
@@ -328,10 +301,17 @@ namespace Seraph
         // Used to identify the correct bytecode to use
         // based on the instruction's name, type and format(s)
         std::unordered_map<std::string, std::vector<OpData>> oplookup;
+
+        // To-do: this should be reorganized. I will probably 
+        // sort it by just opcode number rather than alphabetically
+        oplookup["aam"] = { { { 0xD4, 0x0A }, { }, { } } };
+        oplookup["aad"] = { { { 0xD5, 0x0A }, { }, { } } };
         oplookup["add"] = {
             { { 0x00 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
+            { { 0x01 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x01 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
             { { 0x02 }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
+            { { 0x03 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x03 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
             { { 0x04 }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
             { { 0x05 }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
@@ -343,8 +323,10 @@ namespace Seraph
         };
         oplookup["or"] = {
             { { 0x08 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
+            { { 0x09 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x09 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
             { { 0x0A }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
+            { { 0x0B }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0B }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
             { { 0x0C }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
             { { 0x0D }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
@@ -356,68 +338,78 @@ namespace Seraph
         };
         oplookup["adc"] = {
             { { 0x10 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
+            { { 0x11 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x11 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
             { { 0x12 }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
+            { { 0x13 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x13 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
             { { 0x14 }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
             { { 0x15 }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
             { { 0x15 }, { OpEncoding::id }, { Symbols::eax, Symbols::imm32 } },
-            { { 0x80 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
-            { { 0x83 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
+            { { 0x80 }, { OpEncoding::m2, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0x81 }, { OpEncoding::m2, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
+            { { 0x81 }, { OpEncoding::m2, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
+            { { 0x83 }, { OpEncoding::m2, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
         oplookup["sbb"] = {
             { { 0x18 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
+            { { 0x19 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x19 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
             { { 0x1A }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
+            { { 0x1B }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x1B }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
             { { 0x1C }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
             { { 0x1D }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
             { { 0x1D }, { OpEncoding::id }, { Symbols::eax, Symbols::imm32 } },
-            { { 0x80 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
-            { { 0x83 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
+            { { 0x80 }, { OpEncoding::m3, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0x81 }, { OpEncoding::m3, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
+            { { 0x81 }, { OpEncoding::m3, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
+            { { 0x83 }, { OpEncoding::m3, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
         oplookup["and"] = {
             { { 0x20 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
+            { { 0x21 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x21 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
             { { 0x22 }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
+            { { 0x23 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x23 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
             { { 0x24 }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
             { { 0x25 }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
             { { 0x25 }, { OpEncoding::id }, { Symbols::eax, Symbols::imm32 } },
-            { { 0x80 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
-            { { 0x83 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
+            { { 0x80 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0x81 }, { OpEncoding::m4, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
+            { { 0x81 }, { OpEncoding::m4, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
+            { { 0x83 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
         oplookup["sub"] = {
             { { 0x28 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
+            { { 0x29 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x29 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
             { { 0x2A }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
+            { { 0x2B }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x2B }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
             { { 0x2C }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
             { { 0x2D }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
             { { 0x2D }, { OpEncoding::id }, { Symbols::eax, Symbols::imm32 } },
-            { { 0x80 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
-            { { 0x83 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
+            { { 0x80 }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0x81 }, { OpEncoding::m5, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
+            { { 0x81 }, { OpEncoding::m5, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
+            { { 0x83 }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
         oplookup["xor"] = {
             { { 0x30 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
+            { { 0x31 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x31 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
             { { 0x32 }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
+            { { 0x33 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x33 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
             { { 0x34 }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
             { { 0x35 }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
             { { 0x35 }, { OpEncoding::id }, { Symbols::eax, Symbols::imm32 } },
-            { { 0x80 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
-            { { 0x83 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
+            { { 0x80 }, { OpEncoding::m6, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0x81 }, { OpEncoding::m6, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
+            { { 0x81 }, { OpEncoding::m6, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
+            { { 0x83 }, { OpEncoding::m6, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
         oplookup["cmp"] = {
             { { 0x38 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
@@ -427,23 +419,367 @@ namespace Seraph
             { { 0x3C }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
             { { 0x3D }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
             { { 0x3D }, { OpEncoding::id }, { Symbols::eax, Symbols::imm32 } },
-            { { 0x80 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
-            { { 0x81 }, { OpEncoding::m1, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
-            { { 0x83 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
+            { { 0x80 }, { OpEncoding::m7, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0x81 }, { OpEncoding::m7, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
+            { { 0x81 }, { OpEncoding::m7, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
+            { { 0x83 }, { OpEncoding::m7, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup["inc"] = {
-            { { 0x40 }, { OpEncoding::rd }, { Symbols::r32 } }
+        oplookup["cmps"] = {
+            { { 0xA6 }, { }, { Symbols::m8, Symbols::m8 } },
+            { { 0xA7 }, { }, { Symbols::m16, Symbols::m16 } },
+            { { 0xA7 }, { }, { Symbols::m32, Symbols::m32 } },
+        };
+        oplookup["arpl"] = {
+            { { 0x63 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
+        };
+        oplookup["bound"] = {
+            { { 0x62 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x62 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cbw"] = { { { 0x98 }, { }, { } } };
+        oplookup["cwd"] = { { { 0x99 }, { }, { } } };
+        oplookup["call"] = {
+            { { 0xE8 }, { OpEncoding::cd }, { Symbols::rel32 } },
+            { { 0x9A }, { OpEncoding::cd }, { Symbols::ptr16_16 } },
+            { { 0x9A }, { OpEncoding::cp }, { Symbols::ptr16_32 } },
+        };
+        oplookup["cmovo"] = {
+            { { 0x0F, 0x40 }, { OpEncoding::m0, OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x40 }, { OpEncoding::m0, OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovno"] = {
+            { { 0x0F, 0x41 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x41 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovb"] = {
+            { { 0x0F, 0x42 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x42 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovnb"] = {
+            { { 0x0F, 0x43 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x43 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovae"] = {
+            { { 0x0F, 0x43 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x43 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmove"] = {
+            { { 0x0F, 0x44 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x44 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovz"] = {
+            { { 0x0F, 0x44 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x44 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovne"] = {
+            { { 0x0F, 0x45 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x45 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovnz"] = {
+            { { 0x0F, 0x45 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x45 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovbe"] = {
+            { { 0x0F, 0x46 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x46 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovna"] = {
+            { { 0x0F, 0x46 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x46 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmova"] = {
+            { { 0x0F, 0x47 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x47 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovs"] = {
+            { { 0x0F, 0x48 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x48 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovns"] = {
+            { { 0x0F, 0x49 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x49 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovp"] = {
+            { { 0x0F, 0x4A }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x4A }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovnp"] = {
+            { { 0x0F, 0x4B }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x4B }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovl"] = {
+            { { 0x0F, 0x4C }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x4C }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovnl"] = {
+            { { 0x0F, 0x4D }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x4D }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovng"] = {
+            { { 0x0F, 0x4E }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x4E }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+        };
+        oplookup["cmovg"] = {
+            { { 0x0F, 0x4F }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x0F, 0x4F }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
         oplookup["dec"] = {
             { { 0x48 }, { OpEncoding::rd }, { Symbols::r32 } }
         };
-        oplookup["push"] = {
-            { { 0x50 }, { OpEncoding::rd }, { Symbols::r32 } }
+        oplookup["enter"] = {
+            { { 0xC8 }, { OpEncoding::iw }, { Symbols::imm16, Symbols::imm8 } }
         };
-        oplookup["pop"] = {
-            { { 0x58 }, { OpEncoding::rd }, { Symbols::r32 } },
-            { { 0x8F }, { OpEncoding::m0 }, { Symbols::m32 } }
+        oplookup["fcmovb"] = {
+            { { 0xDA, 0xC0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fcmove"] = {
+            { { 0xDA, 0xC8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fcmovbe"] = {
+            { { 0xDA, 0xD0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fcmovu"] = {
+            { { 0xDA, 0xD8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fucompp"] = { { { 0xDA, 0xE9 }, { }, { } } };
+        oplookup["fild"] = {
+            { { 0xDB }, { OpEncoding::m0 }, { Symbols::m32int } }
+        };
+        oplookup["fist"] = {
+            { { 0xDB }, { OpEncoding::m2 }, { Symbols::m32int } }
+        };
+        oplookup["fistp"] = {
+            { { 0xDB }, { OpEncoding::m3 }, { Symbols::m32int } }
+        };
+        oplookup["fcmovnb"] = {
+            { { 0xDB, 0xC0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fcmovne"] = {
+            { { 0xDB, 0xC8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fcmovnbe"] = {
+            { { 0xDB, 0xD0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fcmovnu"] = {
+            { { 0xDB, 0xD8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fnclex"] = { { { 0xDB, 0xE2 }, { }, { } } };
+        oplookup["fninit"] = { { { 0xDB, 0xE3 }, { }, { } } };
+        oplookup["fucom"] = {
+            { { 0xDD, 0xE0 }, { OpEncoding::i }, { Symbols::sti } },
+            { { 0xDD, 0xE1 }, { }, { } }
+        };
+        oplookup["fucomi"] = {
+            { { 0xDB, 0xE8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fucomp"] = {
+            { { 0xDD, 0xE8 }, { OpEncoding::i }, { Symbols::sti } },
+            { { 0xDD, 0xE9 }, { }, { } }
+        };
+        oplookup["fcomi"] = {
+            { { 0xDB, 0xF0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
+        };
+        oplookup["fstenv"] = {
+            { { 0x9B, 0xD9 }, { OpEncoding::m6 }, { Symbols::m14_28byte } }
+        };
+        oplookup["fstcw"] = {
+            { { 0x9B, 0xD9 }, { OpEncoding::m7 }, { Symbols::m2byte } }
+        };
+        oplookup["fclex"] = { { { 0x9B, 0xDB, 0xE2 }, { }, { } } };
+        oplookup["finit"] = { { { 0x9B, 0xDB, 0xE3 }, { }, { } } };
+        oplookup["fsave"] = {
+            { { 0x9B, 0xDD }, { OpEncoding::m6 }, { Symbols::m94_108byte } }
+        };
+        oplookup["fstsw"] = {
+            { { 0x9B, 0xDD }, { OpEncoding::m7 }, { Symbols::m2byte } },
+            { { 0x9B, 0xDF, 0xE0 }, { }, { Symbols::ax } }
+        };
+        oplookup["fadd"] = {
+            { { 0xD8 }, { OpEncoding::m0 }, { Symbols::m32real } },
+            { { 0xDC }, { OpEncoding::m0 }, { Symbols::m64real } },
+            { { 0xD8, 0xC0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
+            { { 0xDC, 0xC0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
+        };
+        oplookup["faddp"] = {
+
+
+            // 
+
+        };
+        oplookup["fiadd"] = {
+            { { 0xDE }, { OpEncoding::m0 }, { Symbols::m16int } },
+            { { 0xDA }, { OpEncoding::m0 }, { Symbols::m32int } },
+        };
+        oplookup["fmul"] = {
+            { { 0xD8 }, { OpEncoding::m1 }, { Symbols::m32real } },
+            { { 0xDC }, { OpEncoding::m1 }, { Symbols::m64real } },
+            { { 0xD8, 0xC8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
+            { { 0xDC, 0xC8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
+        };
+        oplookup["fimul"] = {
+            { { 0xDE }, { OpEncoding::m1 }, { Symbols::m16int } },
+            { { 0xDA }, { OpEncoding::m1 }, { Symbols::m32int } }
+        };
+        oplookup["fcom"] = {
+            { { 0xD8 }, { OpEncoding::m2 }, { Symbols::m32real } },
+            { { 0xDC }, { OpEncoding::m2 }, { Symbols::m64real } },
+            { { 0xD8, 0xD0 }, { OpEncoding::i }, { Symbols::sti } },
+            { { 0xD8, 0xD1 }, { }, { } }
+        };
+        oplookup["ficom"] = {
+            { { 0xDE }, { OpEncoding::m2 }, { Symbols::m16int } },
+            { { 0xDA }, { OpEncoding::m2 }, { Symbols::m32int } }
+        };
+        oplookup["fcomp"] = {
+            { { 0xD8 }, { OpEncoding::m3 }, { Symbols::m32real } },
+            { { 0xDC }, { OpEncoding::m3 }, { Symbols::m64real } },
+            { { 0xD8, 0xD8 }, { OpEncoding::i }, { Symbols::sti } },
+            { { 0xD8, 0xD9 }, { }, { } }
+        };
+        oplookup["ficomp"] = {
+            { { 0xDE }, { OpEncoding::m3 }, { Symbols::m16int } },
+            { { 0xDA }, { OpEncoding::m3 }, { Symbols::m32int } }
+        };
+        oplookup["fsub"] = {
+            { { 0xD8 }, { OpEncoding::m4 }, { Symbols::m32real } },
+            { { 0xDC }, { OpEncoding::m4 }, { Symbols::m64real } },
+            { { 0xD8, 0xE0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
+            { { 0xDC, 0xE0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
+        };
+        oplookup["fisub"] = {
+            { { 0xDE }, { OpEncoding::m4 }, { Symbols::m16int } },
+            { { 0xDA }, { OpEncoding::m4 }, { Symbols::m32int } }
+        };
+        oplookup["fsubr"] = {
+            { { 0xD8 }, { OpEncoding::m5 }, { Symbols::m32real } },
+            { { 0xDC }, { OpEncoding::m5 }, { Symbols::m64real } },
+            { { 0xD8, 0xE8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
+            { { 0xDC, 0xE8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
+        };
+        oplookup["fisubr"] = {
+            { { 0xDE }, { OpEncoding::m5 }, { Symbols::m16int } },
+            { { 0xDA }, { OpEncoding::m5 }, { Symbols::m32int } }
+        };
+        oplookup["fdiv"] = {
+            { { 0xD8 }, { OpEncoding::m6 }, { Symbols::m32real } },
+            { { 0xDC }, { OpEncoding::m6 }, { Symbols::m64real } },
+            { { 0xD8, 0xF0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
+            { { 0xDC, 0xF0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
+        };
+        oplookup["fidiv"] = {
+            { { 0xDE }, { OpEncoding::m6 }, { Symbols::m16int } },
+            { { 0xDA }, { OpEncoding::m6 }, { Symbols::m32int } }
+        };
+        oplookup["fdivr"] = {
+            { { 0xD8 }, { OpEncoding::m7 }, { Symbols::m32real } },
+            { { 0xDC }, { OpEncoding::m7 }, { Symbols::m64real } },
+            { { 0xD8, 0xF8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
+            { { 0xDC, 0xF8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
+        };
+        oplookup["fidivr"] = {
+            { { 0xDE }, { OpEncoding::m7 }, { Symbols::m16int } },
+            { { 0xDA }, { OpEncoding::m7 }, { Symbols::m32int } }
+        };
+        oplookup["fld"] = {
+            { { 0xD9 }, { OpEncoding::m0 }, { Symbols::m32real } },
+            { { 0xDD }, { OpEncoding::m0 }, { Symbols::m64real } },
+            { { 0xD9, 0xC0 }, { OpEncoding::i }, { Symbols::sti } },
+            { { 0xDB }, { OpEncoding::m5 }, { Symbols::m80real } }
+        };
+        oplookup["fst"] = {
+            { { 0xD9 }, { OpEncoding::m2 }, { Symbols::m32real } },
+            { { 0xDD }, { OpEncoding::m2 }, { Symbols::m64real } },
+            { { 0xDD, 0xD0 }, { OpEncoding::i }, { Symbols::sti } }
+        };
+        oplookup["fstp"] = {
+            { { 0xD9 }, { OpEncoding::m3 }, { Symbols::m32real } },
+            { { 0xDB }, { OpEncoding::m7 }, { Symbols::m80real } },
+            { { 0xDD }, { OpEncoding::m3 }, { Symbols::m64real } },
+            { { 0xDD, 0xD8 }, { OpEncoding::i }, { Symbols::sti } }
+        };
+        oplookup["frstor"] = {
+            { { 0xDD }, { OpEncoding::m4 }, { Symbols::m94_108byte } }
+        };
+        oplookup["fnsave"] = {
+            { { 0xDD }, { OpEncoding::m6 }, { Symbols::m94_108byte } }
+        };
+        oplookup["fnstsw"] = {
+            { { 0xDD }, { OpEncoding::m7 }, { Symbols::m2byte } }
+        };
+        oplookup["ffree"] = {
+            { { 0xDD, 0xC0 }, { OpEncoding::i }, { Symbols::sti } }
+        };
+        oplookup["fldenv"] = {
+            { { 0xD9 }, { OpEncoding::m4 }, { Symbols::m14_28byte } }
+        };
+        oplookup["fldcw"] = {
+            { { 0xD9 }, { OpEncoding::m5 }, { Symbols::m2byte } }
+        };
+        oplookup["fnstenv"] = {
+            { { 0xD9 }, { OpEncoding::m6 }, { Symbols::m14_28byte } }
+        };
+        oplookup["fnstcw"] = {
+            { { 0xD9 }, { OpEncoding::m7 }, { Symbols::m2byte } }
+        };
+        oplookup["fxch"] = {
+            { { 0xD9, 0xC8 }, { OpEncoding::i }, { Symbols::sti } },
+            { { 0xD9, 0xC9 }, { }, { } }
+        };
+        oplookup["fnop"] = { { { 0xD9, 0xD0 }, { }, { } } };
+        oplookup["fchs"] = { { { 0xD9, 0xE0 }, { }, { } } };
+        oplookup["fabs"] = { { { 0xD9, 0xE1 }, { }, { } } };
+        oplookup["ftst"] = { { { 0xD9, 0xE4 }, { }, { } } };
+        oplookup["fxam"] = { { { 0xD9, 0xE5 }, { }, { } } };
+        oplookup["fld1"] = { { { 0xD9, 0xE8 }, { }, { } } };
+        oplookup["fldl2t"] = { { { 0xD9, 0xE9 }, { }, { } } };
+        oplookup["fldl2e"] = { { { 0xD9, 0xEA }, { }, { } } };
+        oplookup["fldpi"] = { { { 0xD9, 0xEB }, { }, { } } };
+        oplookup["fldlg2"] = { { { 0xD9, 0xEC }, { }, { } } };
+        oplookup["fldln2"] = { { { 0xD9, 0xED }, { }, { } } };
+        oplookup["fldz"] = { { { 0xD9, 0xEE }, { }, { } } };
+        oplookup["f2xm1"] = { { { 0xD9, 0xF0 }, { }, { } } };
+        oplookup["fyl2x"] = { { { 0xD9, 0xF1 }, { }, { } } };
+        oplookup["fptan"] = { { { 0xD9, 0xF2 }, { }, { } } };
+        oplookup["fpatan"] = { { { 0xD9, 0xF3 }, { }, { } } };
+        oplookup["fxtract"] = { { { 0xD9, 0xF4 }, { }, { } } };
+        oplookup["fprem1"] = { { { 0xD9, 0xF5 }, { }, { } } };
+        oplookup["fdecstp"] = { { { 0xD9, 0xF6 }, { }, { } } };
+        oplookup["fincstp"] = { { { 0xD9, 0xF7 }, { }, { } } };
+        oplookup["fprem"] = { { { 0xD9, 0xF8 }, { }, { } } };
+        oplookup["fyl2xp1"] = { { { 0xD9, 0xF9 }, { }, { } } };
+        oplookup["fsqrt"] = { { { 0xD9, 0xFA }, { }, { } } };
+        oplookup["fsincos"] = { { { 0xD9, 0xFB }, { }, { } } };
+        oplookup["frndint"] = { { { 0xD9, 0xFC }, { }, { } } };
+        oplookup["fscale"] = { { { 0xD9, 0xFD }, { }, { } } };
+        oplookup["fsin"] = { { { 0xD9, 0xFE }, { }, { } } };
+        oplookup["fcos"] = { { { 0xD9, 0xFF }, { }, { } } };
+        oplookup["inc"] = {
+            { { 0x40 }, { OpEncoding::rd }, { Symbols::r32 } }
+        };
+        oplookup["ins"] = {
+            { { 0x6C }, { }, { Symbols::m8, Symbols::dx } },
+            { { 0x6D }, { }, { Symbols::m16, Symbols::dx } },
+            { { 0x6D }, { }, { Symbols::m32, Symbols::dx } }
+        };
+        oplookup["int3"] = { { { 0xCC }, { }, { } } };
+        oplookup["int"] = {
+            { { 0xCD }, { OpEncoding::ib }, { Symbols::imm8 } }
+        };
+        oplookup["into"] = { { { 0xCE }, { }, { } } };
+        oplookup["iret"] = { { { 0xCF }, { }, { } } };
+        oplookup["iretd"] = { { { 0xCF }, { }, { } } };
+        oplookup["imul"] = {
+            { { 0x69 }, { OpEncoding::r, OpEncoding::iw }, { Symbols::r16, Symbols::rm16, Symbols::imm16 } },
+            { { 0x69 }, { OpEncoding::r, OpEncoding::id }, { Symbols::r32, Symbols::rm32, Symbols::imm32 } },
+            { { 0x69 }, { OpEncoding::r, OpEncoding::iw }, { Symbols::r16, Symbols::imm16 } },
+            { { 0x69 }, { OpEncoding::r, OpEncoding::id }, { Symbols::r32, Symbols::imm32 } },
+            { { 0x6B }, { OpEncoding::r, OpEncoding::ib }, { Symbols::r16, Symbols::rm16, Symbols::imm8 } },
+            { { 0x6B }, { OpEncoding::r, OpEncoding::ib }, { Symbols::r32, Symbols::rm32, Symbols::imm8 } },
+            { { 0x6B }, { OpEncoding::r, OpEncoding::ib }, { Symbols::r16, Symbols::imm8 } },
+            { { 0x6B }, { OpEncoding::r, OpEncoding::ib }, { Symbols::r32, Symbols::imm8 } }
+        };
+        oplookup["jmp"] = {
+            { { 0xE9 }, { OpEncoding::cd }, { Symbols::rel32 } }
         };
         oplookup["jo"] = {
             { { 0x70 }, { OpEncoding::cb }, { Symbols::rel8 } },
@@ -529,14 +865,37 @@ namespace Seraph
             { { 0x7F }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x8F }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
+        oplookup["lahf"] = { { { 0x9F }, { } } };
+        oplookup["leave"] = { { { 0xC9 }, { } } };
+        oplookup["lea"] = {
+            { { 0x8D }, { OpEncoding::r }, { Symbols::r16, Symbols::m } },
+            { { 0x8D }, { OpEncoding::r }, { Symbols::r32, Symbols::m } },
+        };
+        oplookup["les"] = {
+            { { 0xC4 }, { OpEncoding::r }, { Symbols::r16, Symbols::m16_16 } },
+            { { 0xC4 }, { OpEncoding::r }, { Symbols::r32, Symbols::m16_32 } }
+        };
+        oplookup["lds"] = {
+            { { 0xC5 }, { OpEncoding::r }, { Symbols::r16, Symbols::m16_16 } },
+            { { 0xC5 }, { OpEncoding::r }, { Symbols::r32, Symbols::m16_32 } }
+        };
         oplookup["mov"] = {
             { { 0x88 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x89 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x89 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
+            { { 0x8A }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
             { { 0x8B }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x8B }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
             { { 0x8C }, { OpEncoding::r }, { Symbols::rm16, Symbols::sreg } },
             { { 0x8C }, { OpEncoding::r }, { Symbols::rm32, Symbols::sreg } },
+            { { 0x8E }, { OpEncoding::r }, { Symbols::sreg, Symbols::rm16 } },
+            { { 0x8E }, { OpEncoding::r }, { Symbols::sreg, Symbols::rm32 } },
+            { { 0xA0 }, { }, { Symbols::al, Symbols::moffs8 } }, 
+            { { 0xA1 }, { }, { Symbols::ax, Symbols::moffs16 } },
+            { { 0xA1 }, { }, { Symbols::eax, Symbols::moffs32 } },
+            { { 0xA2 }, { }, { Symbols::moffs8, Symbols::al } },
+            { { 0xA3 }, { }, { Symbols::moffs16, Symbols::ax } },
+            { { 0xA3 }, { }, { Symbols::moffs32, Symbols::eax } },
             { { 0xB0 }, { OpEncoding::rb }, { Symbols::r8, Symbols::imm8 } },
             { { 0xB8 }, { OpEncoding::rw }, { Symbols::r16, Symbols::imm16 } },
             { { 0xB8 }, { OpEncoding::rd }, { Symbols::r32, Symbols::imm32 } },
@@ -544,21 +903,108 @@ namespace Seraph
             { { 0xC7 }, { OpEncoding::m0 }, { Symbols::rm16, Symbols::imm16 } },
             { { 0xC7 }, { OpEncoding::m0 }, { Symbols::rm32, Symbols::imm32 } },
         };
-        oplookup["lea"] = {
-            { { 0x8D }, { OpEncoding::r }, { Symbols::r16, Symbols::m } },
-            { { 0x8D }, { OpEncoding::r }, { Symbols::r32, Symbols::m } },
+        oplookup["movs"] = {
+            { { 0xA4 }, { }, { Symbols::m8, Symbols::m8 } }, 
+            { { 0xA5 }, { }, { Symbols::m16, Symbols::m16 } },
+            { { 0xA5 }, { }, { Symbols::m32, Symbols::m32 } },
         };
-        oplookup["nop"] = { { { 0x90 }, { } } };
-        oplookup["pushf"] = { { { 0x9C }, { } } };
-        oplookup["pushfd"] = { { { 0x9C }, { } } };
+        oplookup["nop"] = {
+            { { 0x90 }, { } }
+        };
+        oplookup["outs"] = {
+            { { 0x6E }, { }, { Symbols::m8, Symbols::dx } },
+            { { 0x6F }, { }, { Symbols::m16, Symbols::dx } },
+            { { 0x6F }, { }, { Symbols::m32, Symbols::dx } }
+        };
+        oplookup["daa"] = { { { 0x27 }, { } } };
+        oplookup["das"] = { { { 0x2F }, { } } };
+        oplookup["aaa"] = { { { 0x37 }, { } } };
+        oplookup["aas"] = { { { 0x3F }, { } } };
+        oplookup["pop"] = {
+            { { 0x58 }, { OpEncoding::rd }, { Symbols::r32 } },
+            { { 0x8F }, { OpEncoding::m0 }, { Symbols::m32 } },
+            { { 0x07 }, { }, { Symbols::es } },
+            { { 0x17 }, { }, { Symbols::ss } },
+            { { 0x1F }, { }, { Symbols::ds } }
+        };
         oplookup["popf"] = { { { 0x9D }, { } } };
         oplookup["popfd"] = { { { 0x9D }, { } } };
-        oplookup["sahf"] = { { { 0x9E }, { } } };
-        oplookup["lahf"] = { { { 0x9F }, { } } };
-        oplookup["call"] = { { { 0xE8 }, { OpEncoding::cd }, { Symbols::rel32 } } };
-        oplookup["jmp"] = { { { 0xE9 }, { OpEncoding::cd }, { Symbols::rel32 } }};
-        oplookup["ret"] = { { { 0xC2 }, { OpEncoding::iw }, { Symbols::imm16 } } };
+        oplookup["push"] = {
+            { { 0x68 }, { }, { Symbols::imm32 } },
+            { { 0x6A }, { }, { Symbols::imm8 } },
+            { { 0x50 }, { OpEncoding::rd }, { Symbols::r32 } },
+            { { 0x06 }, { }, { Symbols::es } },
+            { { 0x0E }, { }, { Symbols::cs } },
+            { { 0x16 }, { }, { Symbols::ss } },
+            { { 0x1E }, { }, { Symbols::ds } }
+        };
+        oplookup["pushf"] = { { { 0x9C }, { } } };
+        oplookup["pushfd"] = { { { 0x9C }, { } } };
+        oplookup["ret"] = {
+            { { 0xC2 }, { OpEncoding::iw }, { Symbols::imm16 } },
+            { { 0xCA }, { OpEncoding::iw }, { Symbols::imm16 } },
+            { { 0xCB }, { }, { } }
+        };
         oplookup["retn"] = { { { 0xC3 }, { } } };
+        oplookup["rcl"] = {
+            { { 0xC0 }, { OpEncoding::m2, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0xC1 }, { OpEncoding::m2, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
+        };
+        oplookup["rcr"] = {
+            { { 0xC0 }, { OpEncoding::m3, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0xC1 }, { OpEncoding::m3, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
+        };
+        oplookup["rol"] = {
+            { { 0xC0 }, { OpEncoding::m0, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0xC1 }, { OpEncoding::m0, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
+        };
+        oplookup["ror"] = {
+            { { 0xC0 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0xC1 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
+        };
+        oplookup["sahf"] = { { { 0x9E }, { } } };
+        oplookup["sal"] = {
+            { { 0xC0 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0xC1 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
+        };
+        oplookup["sar"] = {
+            { { 0xC0 }, { OpEncoding::m7, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0xC1 }, { OpEncoding::m7, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
+        };
+        oplookup["shr"] = {
+            { { 0xC0 }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0xC1 }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
+        };
+        oplookup["stosb"] = { { { 0xAA }, { } } };
+        oplookup["stosd"] = { { { 0xAB }, { } } };
+        oplookup["lodsb"] = { { { 0xAC }, { } } };
+        oplookup["lodsd"] = { { { 0xAD }, { } } };
+        oplookup["scasb"] = { { { 0xAE }, { } } };
+        oplookup["scasd"] = { { { 0xAF }, { } } };
+        oplookup["test"] = {
+            { { 0x84 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
+            { { 0x85 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
+            { { 0x85 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
+            { { 0xA8 }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
+            { { 0xA9 }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
+            { { 0xA9 }, { OpEncoding::id }, { Symbols::eax, Symbols::imm32 } },
+        };
+        oplookup["wait"] = {
+            { { 0x9B }, { }, { } }
+        };
+        oplookup["xchg"] = {
+            { { 0x86 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
+            { { 0x86 }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
+            { { 0x87 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
+            { { 0x87 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
+            { { 0x87 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
+            { { 0x87 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
+            { { 0x90 }, { OpEncoding::rw }, { Symbols::ax, Symbols::r16 } },
+            { { 0x90 }, { OpEncoding::rw }, { Symbols::r16, Symbols::ax } },
+            { { 0x90 }, { OpEncoding::rd }, { Symbols::eax, Symbols::r32 } },
+            { { 0x90 }, { OpEncoding::rd }, { Symbols::r32, Symbols::eax } },
+        };
+        oplookup["xlatb"] = { { { 0xD7 }, { } } };
 
         // Used to identify the correct prefix bytecode to use
         std::unordered_map<std::string, uint8_t> prelookup;
@@ -566,9 +1012,12 @@ namespace Seraph
         prelookup["repne"] = BaseSet_x86::B_REPNE;
         prelookup["repe"] = BaseSet_x86::B_REPE;
 
+
         // Phase 2: Go through nodes and start 
         for (auto& node : mainBody.nodes)
         {
+            printf("Compiling node...\n");
+
             switch (node.type)
             {
             case Node::NodeType::Label:
@@ -576,321 +1025,302 @@ namespace Seraph
                 break;
             case Node::NodeType::AsmNode:
             {
-                for (size_t opIndex = 0; opIndex < node.operands.size(); opIndex++)
+                if (node.operands.size())
                 {
-                    // Parse labels in this operand by replacing it with
-                    // a corresponding address in memory
-                    for (auto labelNode : getLabels())
+                    // Go through each operand and determine
+                    // its type and mode
+                    // (to ultimately figure out what instruction this is)
+                    for (size_t opIndex = 0; opIndex < node.operands.size(); opIndex++)
                     {
-                        std::string::size_type n = 0;
-                        while ((n = node.operands[opIndex].find(labelNode->label, n)) != std::string::npos)
+                        // Parse labels in this operand by replacing it with
+                        // a corresponding address in memory
+                        for (auto labelNode : getLabels())
                         {
-                            char str[10];
-                            sprintf_s(str, "%08Xh", static_cast<uint32_t>(offset + labelNode->streamIndex));
-                            node.operands[opIndex].replace(n, labelNode->label.size(), str);
-                            n += strlen(str);
-                        }
-                    }
-                    
-                    Operand operand;
-                    std::vector<std::string>parts = {};
-                    std::string r(node.operands[opIndex] + "........"); // padding for substr
-                    size_t at = 0;
-
-                    bool rm = false;
-
-                    auto next = [&r](size_t& n)
-                    {
-                        if (n >= r.length())
-                            return std::string();
-
-                        switch (r[n])
-                        {
-                        case '.':
-                            return std::string();
-                        case '+':
-                        case '-':
-                        case '*':
-                        case '[':
-                        case ']':
-                            return std::string(1, r[n++]);
-                        default:
-                        {
-                            std::string label = "";
-
-                            while (n < r.length() - 8)
+                            std::string::size_type n = 0;
+                            while ((n = node.operands[opIndex].find(labelNode->label, n)) != std::string::npos)
                             {
-                                // a-z or A-Z or 0-9 and accepted characters for operands ('[', ']', '+', '-', '*')
-                                if ((r[n] >= 0x61 && r[n] <= 0x7A) || (r[n] >= 0x41 && r[n] <= 0x5A) || (r[n] >= 0x30 && r[n] <= 0x39))
-                                    label += r[n++];
-                                else
-                                    break;
+                                char str[10];
+                                sprintf_s(str, "%08Xh", static_cast<uint32_t>(offset + labelNode->streamIndex));
+                                node.operands[opIndex].replace(n, labelNode->label.size(), str);
+                                n += strlen(str);
                             }
-
-                            return label;
                         }
-                        }
-                        return std::string();
-                    };
 
-                    std::string token = "", prevToken = "";
+                        Operand operand;
+                        std::vector<std::string>parts = {};
+                        std::string r(node.operands[opIndex] + "........"); // padding for substr
+                        size_t at = 0;
 
-                    while (token != "]")
-                    {
-                        prevToken = token;
-                        token = next(at);
-                        if (token.empty())
-                            break;
+                        bool rm = false;
 
-                        switch (token.front())
+                        auto next = [&r](size_t& n)
                         {
-                        case '+':
-                        case '-':
-                            parts.push_back(token);
-                            break;
-                        case '*':
-                            parts.push_back(token);
-                            token = next(at);
-                            parts.push_back("mul");
-                            operand.mul = std::atoi(token.c_str());
-                            continue;
-                        case '[':
-                            node.hasMod = true;
-                            node.modIndex = opIndex;
-                            operand.flags |= BaseSet_x86::OP_RM;
-                            operand.opmode = Symbols::rm32;
-                            rm = true;
-                            break;
-                        default:
-                        {
-                            bool isReserved = false;
+                            if (n >= r.length())
+                                return std::string();
 
-                            for (size_t i = 0; i < 8; i++)
+                            switch (r[n])
                             {
-                                if (token == Mnemonics::R8[i])
-                                {
-                                    operand.opmode = (rm) ? Symbols::rm8 : Symbols::r8;
-                                    node.bitSize = (node.bitSize == 0) ? 8 : node.bitSize;
-                                    parts.push_back("r8");
-                                    operand.regs.push_back(i);
-                                    isReserved = true;
-                                }
-                                else if (token == Mnemonics::R16[i])
-                                {
-                                    operand.opmode = (rm) ? Symbols::rm16 : Symbols::r16;
-                                    node.bitSize = (node.bitSize == 0) ? 16 : node.bitSize;
-                                    parts.push_back("r16");
-                                    operand.regs.push_back(i);
-                                    isReserved = true;
-                                }
-                                else if (token == Mnemonics::R32[i])
-                                {
-                                    operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
-                                    node.bitSize = (node.bitSize == 0) ? 32 : node.bitSize;
-                                    parts.push_back("r32");
-                                    operand.regs.push_back(i);
-                                    isReserved = true;
-                                }
-                                else if (token == Mnemonics::SREG[i])
-                                {
-                                    operand.opmode = Symbols::sreg;
-                                    node.bitSize = (node.bitSize == 0) ? 16 : node.bitSize;
-                                    parts.push_back("sreg");
-                                    operand.regs.push_back(i);
-                                    isReserved = true; 
-                                }
-                            }
-
-                            if (isReserved)
-                                continue;
-
-                            bool isNumber = true;
-                            bool isNumberHex = false;
-                            size_t sizeNumber = 0; // calculate size
-
-                            if (token.back() == 'h' && token.length() <= 9)
+                            case '.':
+                                return std::string();
+                            case '+':
+                            case '-':
+                            case '*':
+                            case '[':
+                            case ']':
+                                return std::string(1, r[n++]);
+                            default:
                             {
-                                // Verify hex-encoded numbers (0-9, a-f, A-F)
-                                for (size_t i = 0; i < token.length() - 1; i++)
+                                std::string label = "";
+
+                                while (n < r.length() - 8)
                                 {
-                                    if (!((token[i] >= 0x30 && token[i] <= 0x39) || (token[i] >= 0x41 && token[i] <= 0x46) || (token[i] >= 0x61 && token[i] <= 0x66)))
-                                    {
-                                        isNumber = false;
+                                    // a-z or A-Z or 0-9 and accepted characters for operands ('[', ']', '+', '-', '*')
+                                    if ((r[n] >= 0x61 && r[n] <= 0x7A) || (r[n] >= 0x41 && r[n] <= 0x5A) || (r[n] >= 0x30 && r[n] <= 0x39))
+                                        label += r[n++];
+                                    else
                                         break;
+                                }
+
+                                return label;
+                            }
+                            }
+                            return std::string();
+                        };
+
+                        std::string token = "", prevToken = "";
+
+                        while (token != "]")
+                        {
+                            prevToken = token;
+                            token = next(at);
+                            if (token.empty())
+                                break;
+
+                            switch (token.front())
+                            {
+                            case '+':
+                            case '-':
+                                parts.push_back(token);
+                                break;
+                            case '*':
+                                parts.push_back(token);
+                                token = next(at);
+                                parts.push_back("mul");
+                                operand.mul = std::atoi(token.c_str());
+                                continue;
+                            case '[':
+                                node.hasMod = true;
+                                node.modIndex = opIndex;
+                                operand.flags |= BaseSet_x86::OP_RM;
+                                operand.opmode = Symbols::rm32;
+                                rm = true;
+                                break;
+                            default:
+                            {
+                                bool isReserved = false;
+
+                                // Conveniently, there are always 8 registers
+                                for (size_t i = 0; i < 8; i++)
+                                {
+                                    if (token == Mnemonics::R8[i])
+                                    {
+                                        operand.opmode = (rm) ? Symbols::rm8 : Symbols::r8;
+                                        node.bitSize = (node.bitSize == 0) ? 8 : node.bitSize;
+                                        parts.push_back("r8");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                    else if (token == Mnemonics::R16[i])
+                                    {
+                                        operand.opmode = (rm) ? Symbols::rm16 : Symbols::r16;
+                                        node.bitSize = (node.bitSize == 0) ? 16 : node.bitSize;
+                                        parts.push_back("r16");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                    else if (token == Mnemonics::R32[i])
+                                    {
+                                        operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
+                                        node.bitSize = (node.bitSize == 0) ? 32 : node.bitSize;
+                                        parts.push_back("r32");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                    else if (token == Mnemonics::SREG[i])
+                                    {
+                                        operand.opmode = Symbols::sreg;
+                                        node.bitSize = (node.bitSize == 0) ? 16 : node.bitSize;
+                                        parts.push_back("sreg");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                    else if (token == Mnemonics::STI[i])
+                                    {
+                                        operand.opmode = Symbols::sti;
+                                        parts.push_back("sti");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                    else if (token == Mnemonics::CRI[i])
+                                    {
+                                        operand.opmode = Symbols::cri;
+                                        parts.push_back("cri");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                    else if (token == Mnemonics::DRI[i])
+                                    {
+                                        operand.opmode = Symbols::dri;
+                                        parts.push_back("dri");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                }
+
+                                if (isReserved)
+                                    continue;
+
+                                bool isNumber = true;
+                                bool isNumberHex = false;
+                                size_t sizeNumber = 0; // calculate size
+
+                                if (token.back() == 'h' && token.length() <= 9)
+                                {
+                                    // Verify hex-encoded numbers (0-9, a-f, A-F)
+                                    for (size_t i = 0; i < token.length() - 1; i++)
+                                    {
+                                        if (!((token[i] >= 0x30 && token[i] <= 0x39) || (token[i] >= 0x41 && token[i] <= 0x46) || (token[i] >= 0x61 && token[i] <= 0x66)))
+                                        {
+                                            isNumber = false;
+                                            break;
+                                        }
+                                    }
+
+                                    if (isNumber)
+                                    {
+                                        isNumberHex = true;
+                                        token.pop_back();
+                                    }
+                                }
+                                else if (token.length() <= 9)
+                                {
+                                    // Verify standard numbers (0-9)
+                                    for (size_t i = 0; i < token.length(); i++)
+                                    {
+                                        if (!(token[i] >= 0x30 && token[i] <= 0x39))
+                                        {
+                                            isNumber = false;
+                                            break;
+                                        }
                                     }
                                 }
 
                                 if (isNumber)
                                 {
-                                    isNumberHex = true;
-                                    token.pop_back();
-                                }
-                            }
-                            else if (token.length() <= 9)
-                            {
-                                // Verify standard numbers (0-9)
-                                for (size_t i = 0; i < token.length(); i++)
-                                {
-                                    if (!(token[i] >= 0x30 && token[i] <= 0x39))
+                                    if (token.length() <= 8) sizeNumber = 8;
+                                    if (token.length() <= 4) sizeNumber = 4;
+                                    if (token.length() <= 2) sizeNumber = 2;
+
+                                    if (isNumberHex)
                                     {
-                                        isNumber = false;
-                                        break;
+                                        switch (sizeNumber)
+                                        {
+                                        case 2:
+                                            operand.opmode = (rm) ? operand.opmode : Symbols::imm8;
+                                            operand.imm8 = std::strtoul(token.c_str(), nullptr, 16);
+                                            operand.flags |= BaseSet_x86::OP_IMM8;
+                                            parts.push_back("imm8");
+                                            break;
+                                        case 4:
+                                            operand.opmode = (rm) ? operand.opmode : Symbols::imm16;
+                                            operand.imm16 = std::strtoul(token.c_str(), nullptr, 16);
+                                            operand.flags |= BaseSet_x86::OP_IMM16;
+                                            parts.push_back("imm16");
+                                            break;
+                                        case 8:
+                                            operand.opmode = (rm) ? operand.opmode : Symbols::imm32;
+                                            operand.imm32 = std::strtoul(token.c_str(), nullptr, 16);
+                                            operand.flags |= BaseSet_x86::OP_IMM32;
+                                            parts.push_back("imm32");
+                                            break;
+                                        }
                                     }
-                                }
-                            }
-
-                            if (isNumber)
-                            {
-                                if (token.length() <= 8) sizeNumber = 8;
-                                if (token.length() <= 4) sizeNumber = 4;
-                                if (token.length() <= 2) sizeNumber = 2;
-
-                                if (isNumberHex)
-                                {
-                                    switch (sizeNumber)
+                                    else
                                     {
-                                    case 2:
-                                        operand.opmode = (rm) ? operand.opmode : Symbols::imm8;
-                                        operand.imm8 = std::strtoul(token.c_str(), nullptr, 16);
-                                        operand.flags |= BaseSet_x86::OP_IMM8;
-                                        parts.push_back("imm8");
-                                        break;
-                                    case 4:
-                                        operand.opmode = (rm) ? operand.opmode : Symbols::imm16;
-                                        operand.imm16 = std::strtoul(token.c_str(), nullptr, 16);
-                                        operand.flags |= BaseSet_x86::OP_IMM16;
-                                        parts.push_back("imm16");
-                                        break;
-                                    case 8:
-                                        operand.opmode = (rm) ? operand.opmode : Symbols::imm32;
-                                        operand.imm32 = std::strtoul(token.c_str(), nullptr, 16);
-                                        operand.flags |= BaseSet_x86::OP_IMM32;
-                                        parts.push_back("imm32");
-                                        break;
+                                        switch (sizeNumber)
+                                        {
+                                        case 2:
+                                            operand.opmode = (rm) ? operand.opmode : Symbols::imm8;
+                                            operand.imm8 = std::atoi(token.c_str());
+                                            operand.flags |= BaseSet_x86::OP_IMM8;
+                                            parts.push_back("imm8");
+                                            break;
+                                        case 4:
+                                            operand.opmode = (rm) ? operand.opmode : Symbols::imm16;
+                                            operand.imm16 = std::atoi(token.c_str());
+                                            operand.flags |= BaseSet_x86::OP_IMM16;
+                                            parts.push_back("imm16");
+                                            break;
+                                        case 8:
+                                            operand.opmode = (rm) ? operand.opmode : Symbols::imm32;
+                                            operand.imm32 = std::atoi(token.c_str());
+                                            operand.flags |= BaseSet_x86::OP_IMM32;
+                                            parts.push_back("imm32");
+                                            break;
+                                        }
                                     }
                                 }
                                 else
                                 {
-                                    switch (sizeNumber)
-                                    {
-                                    case 2:
-                                        operand.opmode = (rm) ? operand.opmode : Symbols::imm8;
-                                        operand.imm8 = std::atoi(token.c_str());
-                                        operand.flags |= BaseSet_x86::OP_IMM8;
-                                        parts.push_back("imm8");
-                                        break;
-                                    case 4:
-                                        operand.opmode = (rm) ? operand.opmode : Symbols::imm16;
-                                        operand.imm16 = std::atoi(token.c_str());
-                                        operand.flags |= BaseSet_x86::OP_IMM16;
-                                        parts.push_back("imm16");
-                                        break;
-                                    case 8:
-                                        operand.opmode = (rm) ? operand.opmode : Symbols::imm32;
-                                        operand.imm32 = std::atoi(token.c_str());
-                                        operand.flags |= BaseSet_x86::OP_IMM32;
-                                        parts.push_back("imm32");
-                                        break;
-                                    }
+                                    //printf("Unknown label: %s\n", token.c_str());
                                 }
-                            }
-                            else
-                            {
-                                //printf("Unknown label: %s\n", token.c_str());
-                            }
 
-                            break;
-                        }
-                        }
-                    };
-
-                    // Differentiate between relative32 values and imm32 values
-                    // which we cant do without some sort of context
-                    // and update the operands, directly
-                    if (oplookup.find(node.opName) != oplookup.end())
-                    {
-                        for (auto& opvariant : oplookup[node.opName])
-                        {
-                            if (parts.size() == 1)
-                            {
-                                if (opvariant.symbols.size() - 1 >= opIndex)
-                                {
-                                    if (opvariant.symbols[opIndex] == Symbols::imm16 && parts.back() == "imm8")
-                                    {
-                                        operand.imm16 = operand.imm8;
-                                        operand.imm8 = 0;
-                                        operand.opmode = Symbols::imm16;
-                                    }
-                                    else if (opvariant.symbols[opIndex] == Symbols::imm32)
-                                    {
-                                        if (parts.back() == "imm8")
-                                        {
-                                            operand.imm32 = operand.imm8;
-                                            operand.imm8 = 0;
-                                            operand.opmode = Symbols::imm32;
-                                        }
-                                        else if (parts.back() == "imm16")
-                                        {
-                                            operand.imm32 = operand.imm16;
-                                            operand.imm16 = 0;
-                                            operand.opmode = Symbols::imm32;
-                                        }
-                                    }
-                                    else if (opvariant.symbols[opIndex] == Symbols::rel8 && parts.back() == "imm8")
-                                    {
-                                        operand.rel8 = operand.imm8;
-                                        operand.imm8 = 0;
-                                        operand.opmode = Symbols::rel8;
-                                    }
-                                    else if (opvariant.symbols[opIndex] == Symbols::rel16 && parts.back() == "imm16")
-                                    {
-                                        operand.rel16 = operand.imm16;
-                                        operand.imm16 = 0;
-                                        operand.opmode = Symbols::rel16;
-                                    }
-                                    else if (opvariant.symbols[opIndex] == Symbols::rel32 && parts.back() == "imm16")
-                                    {
-                                        operand.rel32 = operand.imm16;
-                                        operand.imm16 = 0;
-                                        operand.opmode = Symbols::rel32;
-                                    }
-                                    else if (opvariant.symbols[opIndex] == Symbols::rel32 && parts.back() == "imm32")
-                                    {
-                                        operand.rel32 = operand.imm32;
-                                        operand.imm32 = 0;
-                                        operand.opmode = Symbols::rel32;
-                                    }
-                                }
+                                break;
                             }
-                        }
+                            }
+                        };
+
+
+                        printf("(%s) operand pattern: ", node.opName.c_str());
+                        for (auto s : parts)
+                            printf("%s ", s.c_str());
+                        printf("\n");
+
+                        operand.pattern = parts;
+                        node.opData.operands.push_back(operand);
                     }
-
-                    operand.pattern = parts;
-                    node.opData.operands.push_back(operand);
                 }
+
+                printf("Doing a NIGGER thing\n");
 
                 // if both operands are a reg, then use an "rm" on the left or right
                 // because then we can match it to the correct { r32, rm32 } opcode.
                 // We determine the mode later.
                 if (!node.hasMod && node.opData.operands.size() > 1)
                 {
-                    for (auto op = node.opData.operands.begin(); op != node.opData.operands.end(); op++)
+                    bool set = false;
+
+                    for (auto op = node.opData.operands.rbegin(); op != node.opData.operands.rend() && !set; op++)
                     {
                         switch (op->opmode)
                         {
                         case Symbols::r8:
                             op->opmode = Symbols::rm8;
+                            set = true;
                             break;
                         case Symbols::r16:
                             op->opmode = Symbols::rm16;
+                            set = true;
                             break;
                         case Symbols::r32:
-                            auto operand1 = &node.opData.operands.front();
-                            auto operand2 = &node.opData.operands.back();
+                            //auto operand1 = &node.opData.operands.front();
+                            //auto operand2 = &node.opData.operands.back();
 
-                            if (operand1->opmode == operand2->opmode)
-                                operand2->opmode = Symbols::rm32;
-                            
+                            //if (operand1->opmode == operand2->opmode)
+                            //    operand2->opmode = Symbols::rm32;
+
+                            op->opmode = Symbols::rm32;
+                            set = true;
                             break;
                         }
                     }
@@ -928,14 +1358,20 @@ namespace Seraph
             }
             }
 
+            printf("Looking up...\n");
+            bool solved = false;
+
             // Look up the corresponding opcode information
             // for our parsed opcode
-            for (const auto& lookup : oplookup)
+            for (auto lookup = oplookup.begin(); lookup != oplookup.end() && !solved; lookup++)
             {
-                if (lookup.first == node.opName)
+                if (lookup->first == node.opName)
                 {
-                    for (auto& opvariant : lookup.second)
+                    printf("Found lookup match. Going through variants...\n");
+                    int v = 0;
+                    for (const auto& opvariant : lookup->second)
                     {
+                        printf("variant %i\n", v++);
                         bool reject = false;
 
                         // Test the operands tied to this opcode, if there are any
@@ -953,19 +1389,61 @@ namespace Seraph
 
                                     switch (op.opmode)
                                     {
-                                    case Symbols::rm32:
+                                    // in the case of imm8-imm32 values, these could
+                                    // represent rel8-rel32 values instead, so we must
+                                    // compare with the opcode variant we look up.
+                                    case Symbols::imm8:
+                                        if (opvariant.symbols[i] == Symbols::rel8)
+                                            forceValidate = true;
+                                    case Symbols::imm16: // To-do: optimize by enabling shorter (rel8) jump when necessary
+                                    case Symbols::imm32:
                                         switch (opvariant.symbols[i])
                                         {
-                                        // If this opcode variation uses m or m32, we accept
-                                        // it because our parser only stores it under rm32
-                                        case Symbols::m:
-                                            forceValidate = true;
-                                            break;
-                                        case Symbols::m32:
+                                        case Symbols::rel16:
+                                        case Symbols::rel32:
+                                        case Symbols::imm16:
+                                        case Symbols::imm32:
                                             forceValidate = true;
                                             break;
                                         }
                                         break;
+                                    case Symbols::rm8:
+                                    case Symbols::rm16:
+                                    case Symbols::rm32:
+                                        if (node.hasMod && op.regs.empty() && op.pattern.size() == 1)
+                                        {
+                                            if (op.pattern.front() == "imm32")
+                                            {
+                                                switch (opvariant.symbols[i])
+                                                {
+                                                case Symbols::moffs8:
+                                                case Symbols::moffs16:
+                                                case Symbols::moffs32:
+                                                    forceValidate = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        if (op.opmode == Symbols::rm32)
+                                        {
+                                            switch (opvariant.symbols[i])
+                                            {
+                                                // If this opcode variation uses m or m32, we accept
+                                                // it because our parser only stores it under rm32
+                                            case Symbols::m:
+                                                forceValidate = true;
+                                                break;
+                                            case Symbols::m32:
+                                                forceValidate = true;
+                                                break;
+                                            }
+                                        }
+                                        break;
+                                    // in the case of registers, we use a single label to denote
+                                    // any of 8 registers. Some opcodes specify 1 particular register,
+                                    // so we must check for those cases here (and allow them to pass)
+                                    case Symbols::sti:
                                     case Symbols::sreg:
                                     case Symbols::r8:
                                     case Symbols::r16:
@@ -1000,6 +1478,7 @@ namespace Seraph
                                             case Symbols::is:
                                                 forceValidate = (reg == 7);
                                                 break;
+                                            case Symbols::st0:
                                             case Symbols::al:
                                             case Symbols::ax:
                                             case Symbols::eax:
@@ -1066,7 +1545,7 @@ namespace Seraph
                             }
                         }
 
-                        if (node.bitSize == 16)
+                        if (node.bitSize == 16 && node.hasMod) // node.hasMod?
                             stream.add(BaseSet_x86::B_66);
 
                         // Add the prefix flag
@@ -1077,6 +1556,7 @@ namespace Seraph
                         uint8_t modbyte = 0;
                         uint8_t sibbyte = 0;
 
+                        bool ignoreMode = false;
                         bool wroteCode = false;
                         bool hasSib = false;
                         bool hasImm8 = false, hasImm16 = false, hasImm32 = false;
@@ -1090,6 +1570,47 @@ namespace Seraph
                         uint8_t disp8value = 0;
                         uint16_t disp16value = 0;
                         uint32_t disp32value = 0;
+
+                        // Differentiate between relative32 values and imm32 values
+                        // and the various sizes of imm values (by shifting them over).
+                        // our check may allow these variants to pass.
+                        for (size_t i = 0; i < opvariant.symbols.size(); i++)
+                        {
+                            Operand* op = &node.opData.operands[i];
+                            switch (opvariant.symbols[i])
+                            {
+                            case Symbols::rel8:
+                                op->opmode = Symbols::rel8;
+                                op->rel8 = op->imm8;
+                                op->imm8 = 0;
+                                break;
+                            case Symbols::rel16:
+                                op->opmode = Symbols::rel16;
+                                op->rel16 = op->imm16;
+                                op->imm16 = 0;
+                                break;
+                            case Symbols::rel32:
+                                op->opmode = Symbols::rel32;
+                                op->rel32 = op->imm32;
+                                op->imm32 = 0;
+                                break;
+                            case Symbols::imm32:
+                                switch (op->opmode)
+                                {
+                                // user passed imm8 but this look-up opcode specifies a 32-bit value...
+                                case Symbols::imm8:
+                                    op->imm32 = op->imm8;
+                                    op->opmode = Symbols::imm32;
+                                    op->imm8 = 0;
+                                    break;
+                                case Symbols::imm16:
+                                    op->imm32 = op->imm16;
+                                    op->opmode = Symbols::imm32;
+                                    op->imm16 = 0;
+                                    break;
+                                }
+                            }
+                        }
 
                         const auto noperands = node.opData.operands.size();
 
@@ -1164,9 +1685,9 @@ namespace Seraph
                             // Immediate        (1, 2 or 4 bytes)       optional
                             // 
 
-                            for (auto iter = node.opData.operands.begin(); iter != node.opData.operands.end(); iter++)
+                            for (size_t i = 0; i < node.opData.operands.size(); i++)
                             {
-                                Operand op = *iter;
+                                Operand op = node.opData.operands[i];
                                 switch (op.opmode)
                                 {
                                 case Symbols::imm8:
@@ -1193,6 +1714,9 @@ namespace Seraph
                                     imm32value = op.rel32 - (offset + stream.size() + 4);
                                     hasImm32 = true;
                                     break;
+                                case Symbols::sti:
+                                case Symbols::cri:
+                                case Symbols::dri:
                                 case Symbols::sreg:
                                 case Symbols::r8:
                                 case Symbols::r16:
@@ -1203,6 +1727,22 @@ namespace Seraph
                                 case Symbols::rm8:
                                 case Symbols::rm16:
                                 case Symbols::rm32:
+                                    switch (opvariant.symbols[i])
+                                    {
+                                    // These can look just like a rm8/rm32 when parsing so we want
+                                    // to differentiate between it and the opcode we looked up
+                                    case Symbols::moffs8:
+                                    case Symbols::moffs16:
+                                    case Symbols::moffs32:
+                                        imm32value = op.imm32;
+                                        hasImm32 = true;
+                                        ignoreMode = true;
+                                        break;
+                                    }
+
+                                    if (ignoreMode)
+                                        break;
+
                                     useModByte = true;
                                     if (op.flags & BaseSet_x86::OP_IMM8)
                                     {
@@ -1253,7 +1793,6 @@ namespace Seraph
                                         sibbyte += op.regs.back() << 3;
                                         break;
                                     }
-
                                     break;
                                 }
                             }
@@ -1299,10 +1838,13 @@ namespace Seraph
                             }
                         }
 
+                        solved = true;
                         break;
                     }
                 }
             }
+
+            printf("Finished node.\n");
         }
 
 
