@@ -44,9 +44,9 @@ int main()
 	Seraph::Assembler<Seraph::TargetArchitecture::x86> assembler;
 	Seraph::ByteStream stream = assembler.compile(R"(
 push ebp
-mov ebp,esp
+mov ebp, esp
 mov eax,[ebp+08h]
-add eax,[ebp+0Ch]
+add eax,dword ptr[ebp+0Ch]
 pop ebp
 retn
 	)");
