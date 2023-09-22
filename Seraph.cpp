@@ -43,7 +43,250 @@ namespace Seraph
         static const std::vector<std::string> STI = { "st0", "st1", "st2", "st3", "st4", "st5", "st6", "st7"};
         static const std::vector<std::string> CRI = { "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7"};
         static const std::vector<std::string> DRI = { "dr0", "dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7"};
+        static const std::vector<std::string> MM = { "mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7"};
         static const std::vector<std::string> XMM = { "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7"};
+    };
+
+    class Parser
+    {
+    protected:
+        ByteStream stream;
+    public:
+        Parser(ByteStream& refStream) : stream(refStream) { };
+        struct Node
+        {
+            enum class NodeType {
+                Label,
+                AsmNode
+            } type;
+
+            enum class Specifier {
+                None,
+                BytePtr,
+                WordPtr,
+                DwordPtr,
+                QwordPtr,
+                TwordPtr
+            };
+
+            std::string opPrefix = "";
+            std::string opName = "";
+            std::string label = "";
+
+            Specifier sizeIndicator = Specifier::None;
+
+            std::vector<std::string> operands = {};
+
+            BaseSet_x86::Opcode opData;
+
+            size_t streamIndex = 0;
+            int32_t bitSize = 0;
+            bool hasMod = false;
+            int32_t modIndex = 0xFF;
+        };
+
+        struct Body
+        {
+            std::string label; // or memory location
+            std::vector<Node> nodes;
+        };
+
+        struct Scope
+        {
+            std::vector<Body>bodies;
+        };
+
+        template<TargetArchitecture archType>
+        static Scope compile(const std::string& source)
+        {
+            switch (archType)
+            {
+            case TargetArchitecture::x86:
+            case TargetArchitecture::x64:
+            {
+                Scope scope = Scope();
+                Body body = Body();
+                Node currentNode = Node();
+
+                if (source.empty())
+                    return Scope();
+                else
+                {
+                    std::vector<Scope>scopes = {};
+                    std::string label = "";
+                    bool isNewLine = false;
+
+                    // Begin parsing...
+                    size_t at = 0;
+                    while (at < source.length())
+                    {
+                        const auto c = source[at];
+                        switch (c)
+                        {
+                        case ';':
+                            break;
+                        case ',': // asm node, moving to next operand
+                        case ' ':
+                            if (!label.empty())
+                            {
+                                // Check for keywords used (at the operands)
+                                if (c == ' ' && !isNewLine)
+                                {
+                                    const std::vector<std::string> keywords = { "none", "byte", "word", "dword", "qword", "tword" };
+
+                                    size_t isKeyword, keywordIndex;
+
+                                    for (keywordIndex = 0, isKeyword = 0; keywordIndex < keywords.size(); keywordIndex++)
+                                    {
+                                        if (label == keywords[keywordIndex])
+                                        {
+                                            isKeyword = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if (isKeyword)
+                                    {
+                                        // Use the enumerator value (corresponds to the array index)
+                                        currentNode.sizeIndicator = static_cast<Node::Specifier>(keywordIndex);
+
+                                        at++; // Skip past the space character
+
+                                        // Skip over "ptr" in the case of "byte ptr", "dword ptr", ...
+                                        if (source.length() > at + 3)
+                                        {
+                                            if (source.substr(at, 3) == "ptr")
+                                            {
+                                                at += 3;
+                                                while (source[at] == ' ') at++;
+                                                at--;
+                                            }
+                                        }
+
+                                        // The label has been used; start the next one
+                                        label = "";
+                                        break;
+                                    }
+                                }
+
+                                // Exception or rule here for spaces ' ': allows us to do ', '
+                                // between operands. because normally a space may indicate
+                                // that we're going into the operands
+                                if (c == ',' || (c == ' ' && !isNewLine))
+                                {
+                                    // asm node, moving to (next) operand
+                                    if (currentNode.type == Node::NodeType::AsmNode)
+                                        currentNode.operands.push_back(label);
+                                }
+
+                                // Is this the first word on a new line ?
+                                if (c == ' ' && isNewLine)
+                                {
+                                    const std::vector<std::string> prefixes = { "lock", "rep", "repe", "repne" };
+                                    bool isPrefix = false;
+
+                                    // Check prefixes...In the case of a prefix there
+                                    // is more than one space character in the instruction
+                                    for (const auto& prefix : prefixes)
+                                    {
+                                        if (label == prefix)
+                                        {
+                                            isPrefix = true;
+
+                                            // Set the prefix first
+                                            currentNode.type = Node::NodeType::AsmNode;
+                                            currentNode.opPrefix = label;
+
+                                            break;
+                                        }
+                                    }
+
+                                    if (!isPrefix)
+                                    {
+                                        // asm node, moving to operand(s) 
+                                        currentNode.type = Node::NodeType::AsmNode;
+                                        currentNode.opName = label;
+                                        isNewLine = false;
+                                    }
+                                }
+
+                                // The label has been used; start the next one
+                                label = "";
+                            }
+
+                            break;
+                        case '\n':
+                        case '\r': // asm node is finished.
+                            if (!label.empty() && currentNode.type == Node::NodeType::AsmNode)
+                            {
+                                currentNode.operands.push_back(label);
+                                label = "";
+
+                                body.nodes.push_back(currentNode);
+                                currentNode = Node();
+                            }
+
+                            // Exception for single opcodes -- careful: not a label
+                            if (!label.empty() && at > 0)
+                            {
+                                if (source[at - 1] != ':')
+                                {
+                                    currentNode.type = Node::NodeType::AsmNode;
+                                    currentNode.opName = label;
+                                    body.nodes.push_back(currentNode);
+                                    currentNode = Node();
+                                    label = "";
+                                }
+                            }
+
+                            isNewLine = true;
+                            break;
+                        case ':': // initializing a label
+                            if (isNewLine)
+                            {
+                                // if we want to expand the scope
+                                //scope.bodies.push_back(body); // redundant?
+                                //body = Body();
+                                currentNode.type = Node::NodeType::Label;
+                                currentNode.label = label;
+                                body.nodes.push_back(currentNode);
+                                //body.label = label;
+                                currentNode = Node();
+                                label = "";
+                                isNewLine = false;
+                                break;
+                            }
+
+                            label += c;
+                            break;
+                        case '[':
+                        case ']':
+                        case '+':
+                        case '-':
+                        case '*':
+                            label += c;
+                            break;
+                        default:
+                            // a-z or A-Z or 0-9 and accepted characters for operands 
+                            if ((c >= 0x61 && c <= 0x7A) || (c >= 0x41 && c <= 0x5A) || (c >= 0x30 && c <= 0x39))
+                                label += c;
+                            break;
+                        }
+
+                        at++;
+                    }
+
+                    scope.bodies.push_back(body); // redundant?
+                    scopes.push_back(scope);
+
+                    return scope;
+                }
+            }
+            }
+
+            return Scope(); 
+        }
+
     };
 
     BaseSet_x86::Opcode Disassembler<TargetArchitecture::x86>::readNext()
@@ -820,6 +1063,10 @@ namespace Seraph
             { { 0xC6 }, { OpEncoding::m0 }, { Symbols::rm8, Symbols::imm8 } },
             { { 0xC7 }, { OpEncoding::m0 }, { Symbols::rm16, Symbols::imm16 } },
             { { 0xC7 }, { OpEncoding::m0 }, { Symbols::rm32, Symbols::imm32 } },
+            { { 0x0F, 0x20 }, { OpEncoding::r }, { Symbols::r32, Symbols::cri } },
+            { { 0x0F, 0x21 }, { OpEncoding::r }, { Symbols::r32, Symbols::dri } },
+            { { 0x0F, 0x22 }, { OpEncoding::r }, { Symbols::cri, Symbols::r32 } },
+            { { 0x0F, 0x23 }, { OpEncoding::r }, { Symbols::dri, Symbols::r32 } }
         };
         oplookup["movs"] = {
             { { 0xA4 }, { }, { Symbols::m8, Symbols::m8 } },
@@ -1004,7 +1251,50 @@ namespace Seraph
         oplookup["wbinvd"] = { { { 0x0F, 0x09 }, { }, { } } };
         oplookup["ud2"] = { { { 0x0F, 0x0B }, { }, { } } };
         oplookup["movups"] = {
-            { { 0x0F, 0x10 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
+            { { 0x0F, 0x10 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } },
+            { { 0x0F, 0x11 }, { OpEncoding::r }, { Symbols::xmm_m128, Symbols::xmm } }
+        };
+        oplookup["movhlps"] = {
+            { { 0x0F, 0x12 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm2 } }
+        };
+        oplookup["movlps"] = {
+            { { 0x0F, 0x12 }, { OpEncoding::r }, { Symbols::xmm, Symbols::m64 } },
+            { { 0x0F, 0x13 }, { OpEncoding::r }, { Symbols::m64, Symbols::xmm } }
+        };
+        oplookup["unpcklps"] = {
+            { { 0x0F, 0x14 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
+        };
+        oplookup["unpckhps"] = {
+            { { 0x0F, 0x15 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
+        };
+        oplookup["movhps"] = {
+            { { 0x0F, 0x16 }, { OpEncoding::r }, { Symbols::xmm, Symbols::m64 } },
+            { { 0x0F, 0x17 }, { OpEncoding::r }, { Symbols::m64, Symbols::xmm } }
+        };
+        oplookup["movlhps"] = {
+            { { 0x0F, 0x16 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm2 } }
+        };
+        oplookup["prefetcht0"] = {
+            { { 0x0F, 0x18 }, { OpEncoding::m0 }, { Symbols::m8 } }
+        };
+        oplookup["prefetcht1"] = {
+            { { 0x0F, 0x18 }, { OpEncoding::m1 }, { Symbols::m8 } }
+        };
+        oplookup["prefetcht2"] = {
+            { { 0x0F, 0x18 }, { OpEncoding::m2 }, { Symbols::m8 } }
+        };
+        oplookup["prefetchnta"] = {
+            { { 0x0F, 0x18 }, { OpEncoding::m3 }, { Symbols::m8 } }
+        };
+        oplookup["movaps"] = {
+            { { 0x0F, 0x28 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } },
+            { { 0x0F, 0x29 }, { OpEncoding::r }, { Symbols::xmm_m128, Symbols::xmm } }
+        };
+        oplookup["cvtpi2ps"] = {
+            { { 0x0F, 0x2A }, { OpEncoding::r }, { Symbols::xmm, Symbols::mm_m64 } },
+        };
+        oplookup["movntps"] = {
+            { { 0x0F, 0x2B }, { OpEncoding::r }, { Symbols::m128, Symbols::xmm } },
         };
 
         // Used to identify the correct prefix bytecode to use
@@ -1014,236 +1304,18 @@ namespace Seraph
         prelookup["repe"] = BaseSet_x86::B_REPE;
         prelookup["rep"] = BaseSet_x86::B_REPE;
 
-        struct Node
-        {
-            enum class NodeType {
-                Label,
-                AsmNode
-            } type;
-
-            enum class Specifier {
-                None,
-                BytePtr,
-                WordPtr,
-                DwordPtr,
-                QwordPtr,
-                TwordPtr
-            };
-
-            std::string opPrefix = "";
-            std::string opName = "";
-            std::string label = "";
-
-            Specifier sizeIndicator = Specifier::None;
-
-            std::vector<std::string> operands = {};
-
-            BaseSet_x86::Opcode opData;
-
-            size_t streamIndex = 0;
-            int32_t bitSize = 0;
-            bool hasMod = false;
-            int32_t modIndex = 0xFF;
-        };
-
-        struct Body
-        {
-            std::string label; // or memory location
-            std::vector<Node> nodes;
-        };
-
-        struct Scope
-        {
-            std::vector<Body>bodies;
-        };
-
-        Scope scope = Scope();
-        Body body = Body();
-        Node currentNode = Node();
-
-        if (source.empty())
-            return stream;
-        else
-        {
-            std::vector<Scope>scopes = {};
-            std::string label = "";
-            bool isNewLine = false;
-
-            // Begin parsing...
-            size_t at = 0;
-            while (at < source.length())
-            {
-                const auto c = source[at];
-                switch (c)
-                {
-                case ';':
-                    break;
-                case ',': // asm node, moving to next operand
-                case ' ':
-                    if (!label.empty())
-                    {
-                        // Check for keywords used (at the operands)
-                        if (c == ' ' && !isNewLine)
-                        {
-                            const std::vector<std::string> keywords = { "none", "byte", "word", "dword", "qword", "tword" };
-                            
-                            size_t isKeyword, keywordIndex;
-
-                            for (keywordIndex = 0, isKeyword = 0; keywordIndex < keywords.size(); keywordIndex++)
-                            {
-                                if (label == keywords[keywordIndex])
-                                {
-                                    isKeyword = true;
-                                    break;
-                                }
-                            }
-
-                            if (isKeyword)
-                            {
-                                // Use the enumerator value (corresponds to the array index)
-                                currentNode.sizeIndicator = static_cast<Node::Specifier>(keywordIndex);
-
-                                at++; // Skip past the space character
-
-                                // Skip over "ptr" in the case of "byte ptr", "dword ptr", ...
-                                if (source.length() > at + 3)
-                                {
-                                    if (source.substr(at, 3) == "ptr")
-                                    {
-                                        at += 3;
-                                        while (source[at] == ' ') at++;
-                                        at--;
-                                    }
-                                }
-
-                                // The label has been used; start the next one
-                                label = "";
-                                break;
-                            }
-                        }
-
-                        // Exception or rule here for spaces ' ': allows us to do ', '
-                        // between operands. because normally a space may indicate
-                        // that we're going into the operands
-                        if (c == ',' || (c == ' ' && !isNewLine))
-                        {
-                            // asm node, moving to (next) operand
-                            if (currentNode.type == Node::NodeType::AsmNode)
-                                currentNode.operands.push_back(label);
-                        }
-
-                        // Is this the first word on a new line ?
-                        if (c == ' ' && isNewLine)
-                        {
-                            const std::vector<std::string> prefixes = { "lock", "rep", "repe", "repne" };
-                            bool isPrefix = false;
-
-                            // Check prefixes...In the case of a prefix there
-                            // is more than one space character in the instruction
-                            for (const auto& prefix : prefixes)
-                            {
-                                if (label == prefix)
-                                {
-                                    isPrefix = true;
-
-                                    // Set the prefix first
-                                    currentNode.type = Node::NodeType::AsmNode;
-                                    currentNode.opPrefix = label;
-
-                                    break;
-                                }
-                            }
-
-                            if (!isPrefix)
-                            {
-                                // asm node, moving to operand(s) 
-                                currentNode.type = Node::NodeType::AsmNode;
-                                currentNode.opName = label;
-                                isNewLine = false;
-                            }
-                        }
-
-                        // The label has been used; start the next one
-                        label = "";
-                    }
-
-                    break;
-                case '\n':
-                case '\r': // asm node is finished.
-                    if (!label.empty() && currentNode.type == Node::NodeType::AsmNode)
-                    {
-                        currentNode.operands.push_back(label);
-                        label = "";
-
-                        body.nodes.push_back(currentNode);
-                        currentNode = Node();
-                    }
-
-                    // Exception for single opcodes -- careful: not a label
-                    if (!label.empty() && at > 0)
-                    {
-                        if (source[at - 1] != ':')
-                        {
-                            currentNode.type = Node::NodeType::AsmNode;
-                            currentNode.opName = label;
-                            body.nodes.push_back(currentNode);
-                            currentNode = Node();
-                            label = "";
-                        }
-                    }
-
-                    isNewLine = true;
-                    break;
-                case ':': // initializing a label
-                    if (isNewLine)
-                    {
-                        // if we want to expand the scope
-                        //scope.bodies.push_back(body); // redundant?
-                        //body = Body();
-                        currentNode.type = Node::NodeType::Label;
-                        currentNode.label = label;
-                        body.nodes.push_back(currentNode);
-                        //body.label = label;
-                        currentNode = Node();
-                        label = "";
-                        isNewLine = false;
-                        break;
-                    }
-
-                    label += c;
-                    break;
-                case '[':
-                case ']':
-                case '+':
-                case '-':
-                case '*':
-                    label += c;
-                    break;
-                default:
-                    // a-z or A-Z or 0-9 and accepted characters for operands 
-                    if ((c >= 0x61 && c <= 0x7A) || (c >= 0x41 && c <= 0x5A) || (c >= 0x30 && c <= 0x39))
-                        label += c;
-                    break;
-                }
-
-                at++;
-            }
-
-            scope.bodies.push_back(body); // redundant?
-            scopes.push_back(scope);
-        }
-
-        Body mainBody = scope.bodies.front();
+        Parser::Scope scope = Parser::compile<TargetArchitecture::x86>(source);
+        Parser::Body mainBody = scope.bodies.front();
 
         auto getLabels = [&mainBody]()
         {
-            std::vector<Node*> labels = {};
+            std::vector<Parser::Node*> labels = {};
 
             for (auto& node : mainBody.nodes)
             {
                 switch (node.type)
                 {
-                case Node::NodeType::Label:
+                case Parser::Node::NodeType::Label:
                     labels.push_back(&node);
                     break;
                 }
@@ -1257,10 +1329,10 @@ namespace Seraph
         {
             switch (node.type)
             {
-            case Node::NodeType::Label:
+            case Parser::Node::NodeType::Label:
                 node.streamIndex = stream.size();
                 break;
-            case Node::NodeType::AsmNode:
+            case Parser::Node::NodeType::AsmNode:
             {
                 if (node.operands.size())
                 {
@@ -1413,6 +1485,13 @@ namespace Seraph
                                         operand.regs.push_back(i);
                                         isReserved = true;
                                     }
+                                    else if (token == Mnemonics::MM[i])
+                                    {
+                                        operand.opmode = (rm) ? Symbols::mm_m64 : Symbols::mm;
+                                        parts.push_back("mm");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
                                     else if (token == Mnemonics::XMM[i])
                                     {
                                         operand.opmode = (rm) ? Symbols::xmm_m128 : Symbols::xmm;
@@ -1481,18 +1560,24 @@ namespace Seraph
                                         case 2:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm8;
                                             operand.imm8 = std::strtoul(token.c_str(), nullptr, 16);
+                                            if (!parts.empty()) if (parts.back() == "-")
+                                                operand.imm8 = UINT8_MAX - operand.imm8 + 1; // invert sign
                                             operand.flags |= BaseSet_x86::OP_IMM8;
                                             parts.push_back("imm8");
                                             break;
                                         case 4:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm16;
                                             operand.imm16 = std::strtoul(token.c_str(), nullptr, 16);
+                                            if (!parts.empty()) if (parts.back() == "-")
+                                                operand.imm16 = UINT16_MAX - operand.imm16 + 1; // invert sign
                                             operand.flags |= BaseSet_x86::OP_IMM16;
                                             parts.push_back("imm16");
                                             break;
                                         case 8:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm32;
                                             operand.imm32 = std::strtoul(token.c_str(), nullptr, 16);
+                                            if (!parts.empty()) if (parts.back() == "-")
+                                                operand.imm32 = UINT32_MAX - operand.imm32 + 1; // invert sign
                                             operand.flags |= BaseSet_x86::OP_IMM32;
                                             parts.push_back("imm32");
                                             break;
@@ -1515,18 +1600,24 @@ namespace Seraph
                                         case 2:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm8;
                                             operand.imm8 = std::atoi(token.c_str());
+                                            if (!parts.empty()) if (parts.back() == "-")
+                                                operand.imm8 = UINT8_MAX - operand.imm8 + 1;
                                             operand.flags |= BaseSet_x86::OP_IMM8;
                                             parts.push_back("imm8");
                                             break;
                                         case 4:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm16;
                                             operand.imm16 = std::atoi(token.c_str());
+                                            if (!parts.empty()) if (parts.back() == "-")
+                                                operand.imm16 = UINT16_MAX - operand.imm16 + 1;
                                             operand.flags |= BaseSet_x86::OP_IMM16;
                                             parts.push_back("imm16");
                                             break;
                                         case 8:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm32;
                                             operand.imm32 = std::atoi(token.c_str());
+                                            if (!parts.empty()) if (parts.back() == "-")
+                                                operand.imm32 = UINT32_MAX - operand.imm32 + 1;
                                             operand.flags |= BaseSet_x86::OP_IMM32;
                                             parts.push_back("imm32");
                                             break;
@@ -1649,10 +1740,15 @@ namespace Seraph
                                     {
                                     // in the case of imm8-imm32 values, these could
                                     // represent rel8-rel32 values instead, so we must
-                                    // compare with the opcode variant we look up.
+                                    // compare that with the opcode variant we looked up.
+                                    // Similarly, this applies to many other operand types
                                     case Symbols::imm8:
-                                        if (opvariant.symbols[i] == Symbols::rel8)
+                                        switch (opvariant.symbols[i])
+                                        {
+                                        case Symbols::rel8:
                                             forceValidate = true;
+                                            break;
+                                        }
                                     case Symbols::imm16: // To-do: optimize by enabling shorter (rel8) jump when necessary
                                         switch (opvariant.symbols[i])
                                         {
@@ -1692,14 +1788,15 @@ namespace Seraph
                                         {
                                             switch (opvariant.symbols[i])
                                             {
-                                                // If this opcode variation uses m or m32, we accept
-                                                // it because our parser only stores it under rm32
+                                            // If this opcode variation uses m or m32, we accept
+                                            // it because our parser only stores it under rm32
                                             case Symbols::m:
-                                                forceValidate = true;
-                                                break;
+                                            case Symbols::m8:
                                             case Symbols::m32:
-                                                forceValidate = true;
-                                                break;
+                                            case Symbols::m64:
+                                            case Symbols::m128:
+                                            case Symbols::mm_m32:
+                                            case Symbols::mm_m64:
                                             case Symbols::xmm_m32:
                                             case Symbols::xmm_m64:
                                             case Symbols::xmm_m128:
@@ -1714,9 +1811,17 @@ namespace Seraph
                                     case Symbols::xmm:
                                         switch (opvariant.symbols[i])
                                         {
+                                        case Symbols::xmm2:
+                                            userOperands[i].opmode = Symbols::xmm2;
+                                            forceValidate = true;
+                                            break;
+                                        case Symbols::mm_m32:
+                                        case Symbols::mm_m64:
+                                            forceValidate = true;
+                                            break;
+                                        case Symbols::m128:
                                         case Symbols::xmm_m32:
                                         case Symbols::xmm_m64:
-                                        case Symbols::xmm_m128:
                                             userOperands[i].opmode = Symbols::xmm_m128;
                                             forceValidate = true;
                                             break;
@@ -2031,9 +2136,16 @@ namespace Seraph
                                     useModByte = true;
                                     modbyte += op.regs.front() << 3;
                                     break;
+                                case Symbols::xmm2:
+                                    useModByte = true;
+                                    modbyte += 3 << 6;
+                                    modbyte += +op.regs.front();
+                                    break;
                                 case Symbols::rm8:
                                 case Symbols::rm16:
                                 case Symbols::rm32:
+                                case Symbols::mm_m32:
+                                case Symbols::mm_m64:
                                 case Symbols::xmm_m32:
                                 case Symbols::xmm_m64:
                                 case Symbols::xmm_m128:
