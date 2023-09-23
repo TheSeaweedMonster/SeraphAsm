@@ -265,6 +265,7 @@ namespace Seraph
             sti,            // The ith element from the top of the FPU register stack. (i = 0 through 7)
             mm,             // An MMX™ technology register. The 64-bit MMX™ technology registers are: MM0 through MM7
             xmm,            // A SIMD floating-point register. The 128-bit SIMD floating-point registers are: XMM0 through XMM7.
+            xmm2,           // Indicates the instruction uses xmm register(s) and does not use mod. (0xC0+)
             mm_m32,         // The low order 32 bits of an MMX™ technology register or a 32-bit memory operand. The 64-bit MMX™ technology registers are: MM0 through MM7
             mm_m64,         // An MMX™ technology register or a 64-bit memory operand. The 64-bit MMX™ technology registers are: MM0 through MM7.
             xmm_m32,        // A SIMD floating-points register or a 32-bit memory operand. The 128-bit SIMD floating-point registers are XMM0 through XMM7
@@ -273,6 +274,59 @@ namespace Seraph
             m14_28byte,     // used with FSTENV
             m2byte,         // used with FSTCW//FSTSW
             m94_108byte,    // used with FSAVE
+            m512byte        // used with FXSAVE/FXRSTOR
+        };
+
+        enum class OpEncoding
+        {
+            // Placeholder -- No format used.
+            none,
+            /* A digit between 0 and 7 indicates that the ModR/M byte of the instruction uses
+            only the r/m (register or memory) operand. The reg field contains the digit that provides an
+            extension to the instruction's opcode */
+            digit,
+            /* Indicates that the ModR/M byte of the instruction contains both a register operand and an r/m operand. */
+            r,
+            /* A 1-byte (cb), 2-byte (cw), 4-byte (cd), or 6-byte (cp) value following the
+            opcode that is used to specify a code offset and possibly a new value for the code segment
+            register. */
+            cb,
+            cw,
+            cd,
+            cp,
+            /* A 1 - byte(ib), 2 - byte(iw), or 4 - byte(id) immediate operand to the instruction
+            that follows the opcode, ModR/M bytes or scale-indexing bytes. The opcode determines if
+            the operand is a signed value. All words and doublewords are given with the low-order
+            byte first. */
+            ib,
+            iw,
+            id,
+            /* A register code, from 0 through 7, added to the hexadecimal byte given at
+            the left of the plus sign to form a single opcode byte. The register codes are given in Table
+            3-1. */
+            rb,
+            rw,
+            rd,
+            /* A number used in floating-point instructions when one of the operands is ST(i) from
+            the FPU register stack. The number i (which can range from 0 to 7) is added to the
+            hexadecimal byte given at the left of the plus sign to form a single opcode byte */
+            i,
+            // Used to denote a different instruction depending on the RM byte
+            m0,
+            m1,
+            m2,
+            m3,
+            m4,
+            m5,
+            m6,
+            m7
+        };
+
+        struct OpData
+        {
+            std::vector<uint8_t> code;
+            std::vector<OpEncoding> entries;
+            std::vector<BaseSet_x86::Symbols> symbols;
         };
 
         struct Operand
@@ -334,9 +388,15 @@ namespace Seraph
 	{
     protected:
         TargetArchitecture targetArch = ArchType;
+
+        // Used to identify the correct bytecode to use
+        // based on the instruction's name, type and format(s)
+        std::unordered_map<std::string, std::vector<BaseSet_x86::OpData>> oplookup_x86;
+
+        // Used to identify the correct prefix bytecode to use
+        std::unordered_map<std::string, uint8_t> prelookup_x86;
     public:
-        Assembler(void) { }
-        Assembler(const TargetArchitecture arch) : targetArch(arch) { }
+        Assembler();
 
         // Parse assembly code string to raw instructions
         //std::vector<GenericOpcode> parse(const std::string& source);
