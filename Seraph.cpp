@@ -1,4 +1,4 @@
-// Written by TheSeaweedMonster, copyright 09/13/2023
+// Written by TheSeaweedMonster, 09/13/2023
 // Leave these credits please
 // And thank you
 #include "Seraph.hpp"
