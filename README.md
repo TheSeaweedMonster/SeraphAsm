@@ -15,7 +15,8 @@ Release date: N/A<br>
 Percentage of progress/completion: 40%<br>
 
 CURRENTLY SUPPORTS ASSEMBLING FOR X86 AND X64!<br>
-For more information, see Release Notes!<br>
+Disassembly not yet supported!
+For more information, see Release Notes<br>
 
 I am open to contributions (please give credit where due,<br>
 if this has been forked or modified. Thanks!)<br>
