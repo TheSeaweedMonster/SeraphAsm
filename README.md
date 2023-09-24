@@ -14,7 +14,7 @@ Features:<br>
 Release date: N/A<br>
 Percentage of progress/completion: 40%<br>
 
-CURRENTLY SUPPORTS ASSEMBLING FOR X86!<br>
+CURRENTLY SUPPORTS ASSEMBLING FOR X86 AND X64!<br>
 The rest is currently under development. For more information, see Release Notes!<br>
 
 I am open to contributions (please give credit where due,<br>
@@ -22,8 +22,8 @@ if this has been forked or modified. Thanks!)<br>
 
 # Release Notes
 
-Currently, compilation for x86 assembly is finished.<br>
-All opcodes are supported<br>
+Currently, compilation for x86 assembly is finished, while x64 is under development.<br>
+All opcodes are supported, however testing is needed.<br>
 
 Please report any problems or incorrect outputs<br>
 It is much appreciated so I can fine-tune the compilation output.<br>
@@ -115,7 +115,42 @@ Notice we use a "ByteStream" class, which is really<br>
 just a basic byte-vector container, that offers a lot of<br>
 extra control.<br>
 
-I will document the rest of the ByteStream class soon<br>
+I will document the rest of the ByteStream class eventually.<br>
+
+Let's take a look at compiling x64 assembly:<br>
+
+```
+	Seraph::Assembler<Seraph::TargetArchitecture::x64> assembler;
+	Seraph::ByteStream stream;
+
+	try
+	{
+		stream = assembler.compile(R"(
+push rbp
+mov rbp, rsp
+mov rax, [rbp+08h]
+add rax, [rbp+0Ch]
+mov rax, AC000F0000h
+jmp qword ptr[rax]
+jmp AF001F0000h
+pop rbp
+retn
+		)", 0xAF000F0000);
+
+		printf("\nOutput: \n\n");
+		while (stream.good())
+			printf("%02X ", stream.next());
+		printf("\n\n");
+	}
+	catch (std::exception e)
+	{
+		printf("Exception: %s\n", e.what());
+	}
+```
+
+All we have to do here is create a 64-bit assembler under the TargetArchitecture::x64 template instead.<br>
+Easy peazy! :-)<br>
+
 
 DM for more information: jayyy#5764<br>
 
