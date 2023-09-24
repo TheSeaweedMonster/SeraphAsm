@@ -43,7 +43,7 @@ from a separate file. It also means we don't need a separate format or worry abo
 being a reference file in the project directory.<br>
 
 However, that means SeraphAsm will generate a bit of code.<br>
-This isnt much of a problem if you aren't overly concerned about project size or compile time.<br>
+This isnt much of a problem if you aren't overly concerned about project size or compilation speed.<br>
 
 
 
