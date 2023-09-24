@@ -154,6 +154,7 @@ namespace Seraph
         static const uint8_t B_66           = 0x66;
         static const uint8_t B_67           = 0x67;
         static const uint8_t B_X64          = 0x48;
+        static const uint8_t B_X64EXT       = 0x44;
         static const uint8_t B_SEG_CS       = 0x2E;
         static const uint8_t B_SEG_SS       = 0x36;
         static const uint8_t B_SEG_DS       = 0x3E;
@@ -354,7 +355,7 @@ namespace Seraph
         {
             uint32_t flags = 0;
             Symbols opmode = Symbols::not_set;
-            uint8_t is64bit = 0;
+            uint8_t regExt = 0;
             uint8_t mul = 0;
             std::vector<uint8_t> regs = {};
             std::vector<std::string> pattern = {}; // reserved
