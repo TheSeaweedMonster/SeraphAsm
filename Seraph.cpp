@@ -39,6 +39,7 @@ namespace Seraph
         static const std::vector<std::string> R8 = { "al", "cl", "dl", "bl", "ah", "ch", "dh", "bh" };
         static const std::vector<std::string> R16 = { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di" };
         static const std::vector<std::string> R32 = { "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi" };
+        static const std::vector<std::string> R64 = { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi" };
         static const std::vector<std::string> SREG = { "es", "cx", "ss", "ds", "fs", "gs", "hs", "is" };
         static const std::vector<std::string> STI = { "st0", "st1", "st2", "st3", "st4", "st5", "st6", "st7" };
         static const std::vector<std::string> CRI = { "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7" };
@@ -48,9 +49,9 @@ namespace Seraph
     };
 
 
-    BaseSet_x86::Opcode Disassembler<TargetArchitecture::x86>::readNext()
+    BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x86>::readNext()
     {
-        BaseSet_x86::Opcode opcode;
+        BaseSet_x86_64::Opcode opcode;
 
         // Coming soon!
 
@@ -88,7 +89,7 @@ namespace Seraph
 
             std::vector<std::string> operands = {};
 
-            BaseSet_x86::Opcode opData;
+            BaseSet_x86_64::Opcode opData;
 
             size_t streamIndex = 0;
             int32_t bitSize = 0;
@@ -300,30 +301,31 @@ namespace Seraph
 
     };
 
-    Assembler<TargetArchitecture::x86>::Assembler()
+    void initTables(std::unordered_map<std::string, uint8_t>& prelookup_x86_64, std::unordered_map<std::string, std::vector<BaseSet_x86_64::OpData>>&oplookup_x86_64)
     {
-        using OpEncoding = BaseSet_x86::OpEncoding;
-        using OpData = BaseSet_x86::OpData;
-        using Symbols = BaseSet_x86::Symbols;
+        using OpEncoding = BaseSet_x86_64::OpEncoding;
+        using OpData = BaseSet_x86_64::OpData;
+        using Symbols = BaseSet_x86_64::Symbols;
 
-        prelookup_x86 = std::unordered_map<std::string, uint8_t>();
+        prelookup_x86_64 = std::unordered_map<std::string, uint8_t>();
 
-        prelookup_x86["lock"] = BaseSet_x86::B_LOCK;
-        prelookup_x86["66"] = BaseSet_x86::B_66;
-        prelookup_x86["67"] = BaseSet_x86::B_67;
-        prelookup_x86["repne"] = BaseSet_x86::B_REPNE;
-        prelookup_x86["repe"] = BaseSet_x86::B_REPE;
-        prelookup_x86["rep"] = BaseSet_x86::B_REPE;
+        prelookup_x86_64["lock"] = BaseSet_x86_64::B_LOCK;
+        prelookup_x86_64["66"] = BaseSet_x86_64::B_66;
+        prelookup_x86_64["67"] = BaseSet_x86_64::B_67;
+        prelookup_x86_64["x64"] = BaseSet_x86_64::B_X64;
+        prelookup_x86_64["repne"] = BaseSet_x86_64::B_REPNE;
+        prelookup_x86_64["repe"] = BaseSet_x86_64::B_REPE;
+        prelookup_x86_64["rep"] = BaseSet_x86_64::B_REPE;
 
-        oplookup_x86 = std::unordered_map<std::string, std::vector<BaseSet_x86::OpData>>();
+        oplookup_x86_64 = std::unordered_map<std::string, std::vector<BaseSet_x86_64::OpData>>();
 
         // To-do: this should be reorganized. I will probably 
         // sort it by just opcode number rather than alphabetically
-        oplookup_x86["aaa"] = { { { 0x37 }, { } } };
-        oplookup_x86["aad"] = { { { 0xD5, 0x0A }, { }, { } } };
-        oplookup_x86["aam"] = { { { 0xD4, 0x0A }, { }, { } } };
-        oplookup_x86["aas"] = { { { 0x3F }, { } } };
-        oplookup_x86["add"] = {
+        oplookup_x86_64["aaa"] = { { { 0x37 }, { } } };
+        oplookup_x86_64["aad"] = { { { 0xD5, 0x0A }, { }, { } } };
+        oplookup_x86_64["aam"] = { { { 0xD4, 0x0A }, { }, { } } };
+        oplookup_x86_64["aas"] = { { { 0x3F }, { } } };
+        oplookup_x86_64["add"] = {
             { { 0x00 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x01 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x01 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
@@ -338,7 +340,7 @@ namespace Seraph
             { { 0x81 }, { OpEncoding::m0, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
             { { 0x83 }, { OpEncoding::m0, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["or"] = {
+        oplookup_x86_64["or"] = {
             { { 0x08 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x09 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x09 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
@@ -353,7 +355,7 @@ namespace Seraph
             { { 0x81 }, { OpEncoding::m1, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
             { { 0x83 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["adc"] = {
+        oplookup_x86_64["adc"] = {
             { { 0x10 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x11 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x11 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
@@ -368,7 +370,7 @@ namespace Seraph
             { { 0x81 }, { OpEncoding::m2, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
             { { 0x83 }, { OpEncoding::m2, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["sbb"] = {
+        oplookup_x86_64["sbb"] = {
             { { 0x18 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x19 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x19 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
@@ -383,7 +385,7 @@ namespace Seraph
             { { 0x81 }, { OpEncoding::m3, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
             { { 0x83 }, { OpEncoding::m3, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["and"] = {
+        oplookup_x86_64["and"] = {
             { { 0x20 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x21 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x21 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
@@ -398,7 +400,7 @@ namespace Seraph
             { { 0x81 }, { OpEncoding::m4, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
             { { 0x83 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["sub"] = {
+        oplookup_x86_64["sub"] = {
             { { 0x28 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x29 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x29 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
@@ -413,7 +415,7 @@ namespace Seraph
             { { 0x81 }, { OpEncoding::m5, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
             { { 0x83 }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["xor"] = {
+        oplookup_x86_64["xor"] = {
             { { 0x30 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x31 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x31 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
@@ -428,7 +430,7 @@ namespace Seraph
             { { 0x81 }, { OpEncoding::m6, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
             { { 0x83 }, { OpEncoding::m6, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["cmp"] = {
+        oplookup_x86_64["cmp"] = {
             { { 0x38 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x39 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
             { { 0x3A }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
@@ -441,19 +443,19 @@ namespace Seraph
             { { 0x81 }, { OpEncoding::m7, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
             { { 0x83 }, { OpEncoding::m7, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["cmps"] = {
+        oplookup_x86_64["cmps"] = {
             { { 0xA6 }, { }, { Symbols::m8, Symbols::m8 } },
             { { 0xA7 }, { }, { Symbols::m16, Symbols::m16 } },
             { { 0xA7 }, { }, { Symbols::m32, Symbols::m32 } },
         };
-        oplookup_x86["arpl"] = {
+        oplookup_x86_64["arpl"] = {
             { { 0x63 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
         };
-        oplookup_x86["bound"] = {
+        oplookup_x86_64["bound"] = {
             { { 0x62 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x62 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["call"] = {
+        oplookup_x86_64["call"] = {
             { { 0xE8 }, { OpEncoding::cw }, { Symbols::rel16 } },
             { { 0xE8 }, { OpEncoding::cd }, { Symbols::rel32 } },
             { { 0x9A }, { OpEncoding::cd }, { Symbols::ptr16_16 } },
@@ -463,380 +465,380 @@ namespace Seraph
             { { 0xFF }, { OpEncoding::m3 }, { Symbols::m16_16 } },
             { { 0xFF }, { OpEncoding::m3 }, { Symbols::m16_32 } },
         };
-        oplookup_x86["cbw"] = { { { 0x98 }, { }, { } } };
-        oplookup_x86["clc"] = { { { 0xF8 }, { } } };
-        oplookup_x86["cld"] = { { { 0xFC }, { } } };
-        oplookup_x86["cli"] = { { { 0xFA }, { } } };
-        oplookup_x86["cmc"] = { { { 0xF5 }, { }, { } } };
-        oplookup_x86["cmovo"] = {
+        oplookup_x86_64["cbw"] = { { { 0x98 }, { }, { } } };
+        oplookup_x86_64["clc"] = { { { 0xF8 }, { } } };
+        oplookup_x86_64["cld"] = { { { 0xFC }, { } } };
+        oplookup_x86_64["cli"] = { { { 0xFA }, { } } };
+        oplookup_x86_64["cmc"] = { { { 0xF5 }, { }, { } } };
+        oplookup_x86_64["cmovo"] = {
             { { 0x0F, 0x40 }, { OpEncoding::m0, OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x40 }, { OpEncoding::m0, OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovno"] = {
+        oplookup_x86_64["cmovno"] = {
             { { 0x0F, 0x41 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x41 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovb"] = {
+        oplookup_x86_64["cmovb"] = {
             { { 0x0F, 0x42 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x42 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovnb"] = {
+        oplookup_x86_64["cmovnb"] = {
             { { 0x0F, 0x43 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x43 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovae"] = {
+        oplookup_x86_64["cmovae"] = {
             { { 0x0F, 0x43 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x43 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmove"] = {
+        oplookup_x86_64["cmove"] = {
             { { 0x0F, 0x44 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x44 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovz"] = {
+        oplookup_x86_64["cmovz"] = {
             { { 0x0F, 0x44 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x44 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovne"] = {
+        oplookup_x86_64["cmovne"] = {
             { { 0x0F, 0x45 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x45 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovnz"] = {
+        oplookup_x86_64["cmovnz"] = {
             { { 0x0F, 0x45 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x45 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovbe"] = {
+        oplookup_x86_64["cmovbe"] = {
             { { 0x0F, 0x46 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x46 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovna"] = {
+        oplookup_x86_64["cmovna"] = {
             { { 0x0F, 0x46 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x46 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmova"] = {
+        oplookup_x86_64["cmova"] = {
             { { 0x0F, 0x47 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x47 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovs"] = {
+        oplookup_x86_64["cmovs"] = {
             { { 0x0F, 0x48 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x48 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovns"] = {
+        oplookup_x86_64["cmovns"] = {
             { { 0x0F, 0x49 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x49 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovp"] = {
+        oplookup_x86_64["cmovp"] = {
             { { 0x0F, 0x4A }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x4A }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovnp"] = {
+        oplookup_x86_64["cmovnp"] = {
             { { 0x0F, 0x4B }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x4B }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovl"] = {
+        oplookup_x86_64["cmovl"] = {
             { { 0x0F, 0x4C }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x4C }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovnl"] = {
+        oplookup_x86_64["cmovnl"] = {
             { { 0x0F, 0x4D }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x4D }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovng"] = {
+        oplookup_x86_64["cmovng"] = {
             { { 0x0F, 0x4E }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x4E }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cmovg"] = {
+        oplookup_x86_64["cmovg"] = {
             { { 0x0F, 0x4F }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x4F }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["cwd"] = { { { 0x99 }, { }, { } } };
-        oplookup_x86["daa"] = { { { 0x27 }, { } } };
-        oplookup_x86["das"] = { { { 0x2F }, { } } };
-        oplookup_x86["dec"] = {
+        oplookup_x86_64["cwd"] = { { { 0x99 }, { }, { } } };
+        oplookup_x86_64["daa"] = { { { 0x27 }, { } } };
+        oplookup_x86_64["das"] = { { { 0x2F }, { } } };
+        oplookup_x86_64["dec"] = {
             { { 0x48 }, { OpEncoding::rd }, { Symbols::r32 } },
             { { 0xFE }, { OpEncoding::m1 }, { Symbols::rm8 } },
             { { 0xFF }, { OpEncoding::m1 }, { Symbols::rm16 } },
             { { 0xFF }, { OpEncoding::m1 }, { Symbols::rm32 } },
         };
-        oplookup_x86["div"] = {
+        oplookup_x86_64["div"] = {
             { { 0xF6 }, { OpEncoding::m6 }, { Symbols::rm8 } },
             { { 0xF7 }, { OpEncoding::m6 }, { Symbols::rm16 } },
             { { 0xF7 }, { OpEncoding::m6 }, { Symbols::rm32 } },
         };
-        oplookup_x86["enter"] = {
+        oplookup_x86_64["enter"] = {
             { { 0xC8 }, { OpEncoding::iw }, { Symbols::imm16, Symbols::imm8 } }
         };
-        oplookup_x86["fcmovb"] = {
+        oplookup_x86_64["fcmovb"] = {
             { { 0xDA, 0xC0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fcmove"] = {
+        oplookup_x86_64["fcmove"] = {
             { { 0xDA, 0xC8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fcmovbe"] = {
+        oplookup_x86_64["fcmovbe"] = {
             { { 0xDA, 0xD0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fcmovu"] = {
+        oplookup_x86_64["fcmovu"] = {
             { { 0xDA, 0xD8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fild"] = {
+        oplookup_x86_64["fild"] = {
             { { 0xDF }, { OpEncoding::m0 }, { Symbols::m16int } },
             { { 0xDB }, { OpEncoding::m0 }, { Symbols::m32int } },
             { { 0xDF }, { OpEncoding::m5 }, { Symbols::m64int } }
         };
-        oplookup_x86["fist"] = {
+        oplookup_x86_64["fist"] = {
             { { 0xDF }, { OpEncoding::m2 }, { Symbols::m16int } },
             { { 0xDB }, { OpEncoding::m2 }, { Symbols::m32int } }
         };
-        oplookup_x86["fistp"] = {
+        oplookup_x86_64["fistp"] = {
             { { 0xDF }, { OpEncoding::m3 }, { Symbols::m16int } },
             { { 0xDB }, { OpEncoding::m3 }, { Symbols::m32int } },
             { { 0xDF }, { OpEncoding::m7 }, { Symbols::m64int } }
         };
-        oplookup_x86["fbld"] = {
+        oplookup_x86_64["fbld"] = {
             { { 0xDF }, { OpEncoding::m4 }, { Symbols::m80dec } }
         };
-        oplookup_x86["fbstp"] = {
+        oplookup_x86_64["fbstp"] = {
             { { 0xDF }, { OpEncoding::m6 }, { Symbols::m80bcd } }
         };
 
-        oplookup_x86["fcmovnb"] = {
+        oplookup_x86_64["fcmovnb"] = {
             { { 0xDB, 0xC0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fcmovne"] = {
+        oplookup_x86_64["fcmovne"] = {
             { { 0xDB, 0xC8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fcmovnbe"] = {
+        oplookup_x86_64["fcmovnbe"] = {
             { { 0xDB, 0xD0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fcmovnu"] = {
+        oplookup_x86_64["fcmovnu"] = {
             { { 0xDB, 0xD8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fnclex"] = { { { 0xDB, 0xE2 }, { }, { } } };
-        oplookup_x86["fninit"] = { { { 0xDB, 0xE3 }, { }, { } } };
-        oplookup_x86["fucompp"] = { { { 0xDA, 0xE9 }, { }, { } } };
-        oplookup_x86["fucom"] = {
+        oplookup_x86_64["fnclex"] = { { { 0xDB, 0xE2 }, { }, { } } };
+        oplookup_x86_64["fninit"] = { { { 0xDB, 0xE3 }, { }, { } } };
+        oplookup_x86_64["fucompp"] = { { { 0xDA, 0xE9 }, { }, { } } };
+        oplookup_x86_64["fucom"] = {
             { { 0xDD, 0xE0 }, { OpEncoding::i }, { Symbols::sti } },
             { { 0xDD, 0xE1 }, { }, { } }
         };
-        oplookup_x86["fucomi"] = {
+        oplookup_x86_64["fucomi"] = {
             { { 0xDB, 0xE8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fucomip"] = {
+        oplookup_x86_64["fucomip"] = {
             { { 0xDF, 0xE8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fcomip"] = {
+        oplookup_x86_64["fcomip"] = {
             { { 0xDF, 0xF0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fucomp"] = {
+        oplookup_x86_64["fucomp"] = {
             { { 0xDD, 0xE8 }, { OpEncoding::i }, { Symbols::sti } },
             { { 0xDD, 0xE9 }, { }, { } }
         };
-        oplookup_x86["fcomi"] = {
+        oplookup_x86_64["fcomi"] = {
             { { 0xDB, 0xF0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } }
         };
-        oplookup_x86["fstenv"] = {
+        oplookup_x86_64["fstenv"] = {
             { { 0x9B, 0xD9 }, { OpEncoding::m6 }, { Symbols::m14_28byte } }
         };
-        oplookup_x86["fstcw"] = {
+        oplookup_x86_64["fstcw"] = {
             { { 0x9B, 0xD9 }, { OpEncoding::m7 }, { Symbols::m2byte } }
         };
-        oplookup_x86["fclex"] = { { { 0x9B, 0xDB, 0xE2 }, { }, { } } };
-        oplookup_x86["finit"] = { { { 0x9B, 0xDB, 0xE3 }, { }, { } } };
-        oplookup_x86["fsave"] = {
+        oplookup_x86_64["fclex"] = { { { 0x9B, 0xDB, 0xE2 }, { }, { } } };
+        oplookup_x86_64["finit"] = { { { 0x9B, 0xDB, 0xE3 }, { }, { } } };
+        oplookup_x86_64["fsave"] = {
             { { 0x9B, 0xDD }, { OpEncoding::m6 }, { Symbols::m94_108byte } }
         };
-        oplookup_x86["fstsw"] = {
+        oplookup_x86_64["fstsw"] = {
             { { 0x9B, 0xDD }, { OpEncoding::m7 }, { Symbols::m2byte } },
             { { 0x9B, 0xDF, 0xE0 }, { }, { Symbols::ax } }
         };
-        oplookup_x86["fadd"] = {
+        oplookup_x86_64["fadd"] = {
             { { 0xD8 }, { OpEncoding::m0 }, { Symbols::m32real } },
             { { 0xD8, 0xC0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
             { { 0xDC }, { OpEncoding::m0 }, { Symbols::m64real } },
             { { 0xDC, 0xC0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
         };
-        oplookup_x86["faddp"] = {
+        oplookup_x86_64["faddp"] = {
             { { 0xDE, 0xC0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
             { { 0xDE, 0xC1 }, { }, { } }
         };
-        oplookup_x86["fmulp"] = {
+        oplookup_x86_64["fmulp"] = {
             { { 0xDE, 0xC8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
             { { 0xDE, 0xC9 }, { }, { } }
         };
-        oplookup_x86["fcompp"] = {
+        oplookup_x86_64["fcompp"] = {
             { { 0xDE, 0xD9 }, { }, { } }
         };
-        oplookup_x86["fsubrp"] = {
+        oplookup_x86_64["fsubrp"] = {
             { { 0xDE, 0xE0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
             { { 0xDE, 0xE1 }, { }, { } }
         };
-        oplookup_x86["fsubp"] = {
+        oplookup_x86_64["fsubp"] = {
             { { 0xDE, 0xE8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
             { { 0xDE, 0xE9 }, { }, { } }
         };
-        oplookup_x86["fdivrp"] = {
+        oplookup_x86_64["fdivrp"] = {
             { { 0xDE, 0xF0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
             { { 0xDE, 0xF1 }, { }, { } }
         };
-        oplookup_x86["fdivp"] = {
+        oplookup_x86_64["fdivp"] = {
             { { 0xDE, 0xF8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } },
             { { 0xDE, 0xF9 }, { }, { } }
         };
-        oplookup_x86["fiadd"] = {
+        oplookup_x86_64["fiadd"] = {
             { { 0xDE }, { OpEncoding::m0 }, { Symbols::m16int } },
             { { 0xDA }, { OpEncoding::m0 }, { Symbols::m32int } },
         };
-        oplookup_x86["fmul"] = {
+        oplookup_x86_64["fmul"] = {
             { { 0xD8 }, { OpEncoding::m1 }, { Symbols::m32real } },
             { { 0xDC }, { OpEncoding::m1 }, { Symbols::m64real } },
             { { 0xD8, 0xC8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
             { { 0xDC, 0xC8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
         };
-        oplookup_x86["fimul"] = {
+        oplookup_x86_64["fimul"] = {
             { { 0xDE }, { OpEncoding::m1 }, { Symbols::m16int } },
             { { 0xDA }, { OpEncoding::m1 }, { Symbols::m32int } }
         };
-        oplookup_x86["fcom"] = {
+        oplookup_x86_64["fcom"] = {
             { { 0xD8 }, { OpEncoding::m2 }, { Symbols::m32real } },
             { { 0xDC }, { OpEncoding::m2 }, { Symbols::m64real } },
             { { 0xD8, 0xD0 }, { OpEncoding::i }, { Symbols::sti } },
             { { 0xD8, 0xD1 }, { }, { } }
         };
-        oplookup_x86["ficom"] = {
+        oplookup_x86_64["ficom"] = {
             { { 0xDE }, { OpEncoding::m2 }, { Symbols::m16int } },
             { { 0xDA }, { OpEncoding::m2 }, { Symbols::m32int } }
         };
-        oplookup_x86["fcomp"] = {
+        oplookup_x86_64["fcomp"] = {
             { { 0xD8 }, { OpEncoding::m3 }, { Symbols::m32real } },
             { { 0xDC }, { OpEncoding::m3 }, { Symbols::m64real } },
             { { 0xD8, 0xD8 }, { OpEncoding::i }, { Symbols::sti } },
             { { 0xD8, 0xD9 }, { }, { } }
         };
-        oplookup_x86["ficomp"] = {
+        oplookup_x86_64["ficomp"] = {
             { { 0xDE }, { OpEncoding::m3 }, { Symbols::m16int } },
             { { 0xDA }, { OpEncoding::m3 }, { Symbols::m32int } }
         };
-        oplookup_x86["fsub"] = {
+        oplookup_x86_64["fsub"] = {
             { { 0xD8 }, { OpEncoding::m4 }, { Symbols::m32real } },
             { { 0xDC }, { OpEncoding::m4 }, { Symbols::m64real } },
             { { 0xD8, 0xE0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
             { { 0xDC, 0xE0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
         };
-        oplookup_x86["fisub"] = {
+        oplookup_x86_64["fisub"] = {
             { { 0xDE }, { OpEncoding::m4 }, { Symbols::m16int } },
             { { 0xDA }, { OpEncoding::m4 }, { Symbols::m32int } }
         };
-        oplookup_x86["fsubr"] = {
+        oplookup_x86_64["fsubr"] = {
             { { 0xD8 }, { OpEncoding::m5 }, { Symbols::m32real } },
             { { 0xDC }, { OpEncoding::m5 }, { Symbols::m64real } },
             { { 0xD8, 0xE8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
             { { 0xDC, 0xE8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
         };
-        oplookup_x86["fisubr"] = {
+        oplookup_x86_64["fisubr"] = {
             { { 0xDE }, { OpEncoding::m5 }, { Symbols::m16int } },
             { { 0xDA }, { OpEncoding::m5 }, { Symbols::m32int } }
         };
-        oplookup_x86["fdiv"] = {
+        oplookup_x86_64["fdiv"] = {
             { { 0xD8 }, { OpEncoding::m6 }, { Symbols::m32real } },
             { { 0xDC }, { OpEncoding::m6 }, { Symbols::m64real } },
             { { 0xD8, 0xF0 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
             { { 0xDC, 0xF0 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
         };
-        oplookup_x86["fidiv"] = {
+        oplookup_x86_64["fidiv"] = {
             { { 0xDE }, { OpEncoding::m6 }, { Symbols::m16int } },
             { { 0xDA }, { OpEncoding::m6 }, { Symbols::m32int } }
         };
-        oplookup_x86["fdivr"] = {
+        oplookup_x86_64["fdivr"] = {
             { { 0xD8 }, { OpEncoding::m7 }, { Symbols::m32real } },
             { { 0xDC }, { OpEncoding::m7 }, { Symbols::m64real } },
             { { 0xD8, 0xF8 }, { OpEncoding::i }, { Symbols::st0, Symbols::sti } },
             { { 0xDC, 0xF8 }, { OpEncoding::i }, { Symbols::sti, Symbols::st0 } }
         };
-        oplookup_x86["fidivr"] = {
+        oplookup_x86_64["fidivr"] = {
             { { 0xDE }, { OpEncoding::m7 }, { Symbols::m16int } },
             { { 0xDA }, { OpEncoding::m7 }, { Symbols::m32int } }
         };
-        oplookup_x86["fld"] = {
+        oplookup_x86_64["fld"] = {
             { { 0xD9 }, { OpEncoding::m0 }, { Symbols::m32real } },
             { { 0xDD }, { OpEncoding::m0 }, { Symbols::m64real } },
             { { 0xD9, 0xC0 }, { OpEncoding::i }, { Symbols::sti } },
             { { 0xDB }, { OpEncoding::m5 }, { Symbols::m80real } }
         };
-        oplookup_x86["fst"] = {
+        oplookup_x86_64["fst"] = {
             { { 0xD9 }, { OpEncoding::m2 }, { Symbols::m32real } },
             { { 0xDD }, { OpEncoding::m2 }, { Symbols::m64real } },
             { { 0xDD, 0xD0 }, { OpEncoding::i }, { Symbols::sti } }
         };
-        oplookup_x86["fstp"] = {
+        oplookup_x86_64["fstp"] = {
             { { 0xD9 }, { OpEncoding::m3 }, { Symbols::m32real } },
             { { 0xDB }, { OpEncoding::m7 }, { Symbols::m80real } },
             { { 0xDD }, { OpEncoding::m3 }, { Symbols::m64real } },
             { { 0xDD, 0xD8 }, { OpEncoding::i }, { Symbols::sti } }
         };
-        oplookup_x86["frstor"] = {
+        oplookup_x86_64["frstor"] = {
             { { 0xDD }, { OpEncoding::m4 }, { Symbols::m94_108byte } }
         };
-        oplookup_x86["fnsave"] = {
+        oplookup_x86_64["fnsave"] = {
             { { 0xDD }, { OpEncoding::m6 }, { Symbols::m94_108byte } }
         };
-        oplookup_x86["fnstsw"] = {
+        oplookup_x86_64["fnstsw"] = {
             { { 0xDD }, { OpEncoding::m7 }, { Symbols::m2byte } },
             { { 0xDF, 0xE0 }, { }, { Symbols::ax } }
         };
-        oplookup_x86["ffree"] = {
+        oplookup_x86_64["ffree"] = {
             { { 0xDD, 0xC0 }, { OpEncoding::i }, { Symbols::sti } }
         };
-        oplookup_x86["fldenv"] = {
+        oplookup_x86_64["fldenv"] = {
             { { 0xD9 }, { OpEncoding::m4 }, { Symbols::m14_28byte } }
         };
-        oplookup_x86["fldcw"] = {
+        oplookup_x86_64["fldcw"] = {
             { { 0xD9 }, { OpEncoding::m5 }, { Symbols::m2byte } }
         };
-        oplookup_x86["fnstenv"] = {
+        oplookup_x86_64["fnstenv"] = {
             { { 0xD9 }, { OpEncoding::m6 }, { Symbols::m14_28byte } }
         };
-        oplookup_x86["fnstcw"] = {
+        oplookup_x86_64["fnstcw"] = {
             { { 0xD9 }, { OpEncoding::m7 }, { Symbols::m2byte } }
         };
-        oplookup_x86["fxch"] = {
+        oplookup_x86_64["fxch"] = {
             { { 0xD9, 0xC8 }, { OpEncoding::i }, { Symbols::sti } },
             { { 0xD9, 0xC9 }, { }, { } }
         };
-        oplookup_x86["fnop"] = { { { 0xD9, 0xD0 }, { }, { } } };
-        oplookup_x86["fchs"] = { { { 0xD9, 0xE0 }, { }, { } } };
-        oplookup_x86["fabs"] = { { { 0xD9, 0xE1 }, { }, { } } };
-        oplookup_x86["ftst"] = { { { 0xD9, 0xE4 }, { }, { } } };
-        oplookup_x86["fxam"] = { { { 0xD9, 0xE5 }, { }, { } } };
-        oplookup_x86["fld1"] = { { { 0xD9, 0xE8 }, { }, { } } };
-        oplookup_x86["fldl2t"] = { { { 0xD9, 0xE9 }, { }, { } } };
-        oplookup_x86["fldl2e"] = { { { 0xD9, 0xEA }, { }, { } } };
-        oplookup_x86["fldpi"] = { { { 0xD9, 0xEB }, { }, { } } };
-        oplookup_x86["fldlg2"] = { { { 0xD9, 0xEC }, { }, { } } };
-        oplookup_x86["fldln2"] = { { { 0xD9, 0xED }, { }, { } } };
-        oplookup_x86["fldz"] = { { { 0xD9, 0xEE }, { }, { } } };
-        oplookup_x86["f2xm1"] = { { { 0xD9, 0xF0 }, { }, { } } };
-        oplookup_x86["fyl2x"] = { { { 0xD9, 0xF1 }, { }, { } } };
-        oplookup_x86["fptan"] = { { { 0xD9, 0xF2 }, { }, { } } };
-        oplookup_x86["fpatan"] = { { { 0xD9, 0xF3 }, { }, { } } };
-        oplookup_x86["fxtract"] = { { { 0xD9, 0xF4 }, { }, { } } };
-        oplookup_x86["fprem1"] = { { { 0xD9, 0xF5 }, { }, { } } };
-        oplookup_x86["fdecstp"] = { { { 0xD9, 0xF6 }, { }, { } } };
-        oplookup_x86["fincstp"] = { { { 0xD9, 0xF7 }, { }, { } } };
-        oplookup_x86["fprem"] = { { { 0xD9, 0xF8 }, { }, { } } };
-        oplookup_x86["fyl2xp1"] = { { { 0xD9, 0xF9 }, { }, { } } };
-        oplookup_x86["fsqrt"] = { { { 0xD9, 0xFA }, { }, { } } };
-        oplookup_x86["fsincos"] = { { { 0xD9, 0xFB }, { }, { } } };
-        oplookup_x86["frndint"] = { { { 0xD9, 0xFC }, { }, { } } };
-        oplookup_x86["fscale"] = { { { 0xD9, 0xFD }, { }, { } } };
-        oplookup_x86["fsin"] = { { { 0xD9, 0xFE }, { }, { } } };
-        oplookup_x86["fcos"] = { { { 0xD9, 0xFF }, { }, { } } };
-        oplookup_x86["hlt"] = { { { 0xF4 }, { }, { } } };
-        oplookup_x86["inc"] = {
+        oplookup_x86_64["fnop"] = { { { 0xD9, 0xD0 }, { }, { } } };
+        oplookup_x86_64["fchs"] = { { { 0xD9, 0xE0 }, { }, { } } };
+        oplookup_x86_64["fabs"] = { { { 0xD9, 0xE1 }, { }, { } } };
+        oplookup_x86_64["ftst"] = { { { 0xD9, 0xE4 }, { }, { } } };
+        oplookup_x86_64["fxam"] = { { { 0xD9, 0xE5 }, { }, { } } };
+        oplookup_x86_64["fld1"] = { { { 0xD9, 0xE8 }, { }, { } } };
+        oplookup_x86_64["fldl2t"] = { { { 0xD9, 0xE9 }, { }, { } } };
+        oplookup_x86_64["fldl2e"] = { { { 0xD9, 0xEA }, { }, { } } };
+        oplookup_x86_64["fldpi"] = { { { 0xD9, 0xEB }, { }, { } } };
+        oplookup_x86_64["fldlg2"] = { { { 0xD9, 0xEC }, { }, { } } };
+        oplookup_x86_64["fldln2"] = { { { 0xD9, 0xED }, { }, { } } };
+        oplookup_x86_64["fldz"] = { { { 0xD9, 0xEE }, { }, { } } };
+        oplookup_x86_64["f2xm1"] = { { { 0xD9, 0xF0 }, { }, { } } };
+        oplookup_x86_64["fyl2x"] = { { { 0xD9, 0xF1 }, { }, { } } };
+        oplookup_x86_64["fptan"] = { { { 0xD9, 0xF2 }, { }, { } } };
+        oplookup_x86_64["fpatan"] = { { { 0xD9, 0xF3 }, { }, { } } };
+        oplookup_x86_64["fxtract"] = { { { 0xD9, 0xF4 }, { }, { } } };
+        oplookup_x86_64["fprem1"] = { { { 0xD9, 0xF5 }, { }, { } } };
+        oplookup_x86_64["fdecstp"] = { { { 0xD9, 0xF6 }, { }, { } } };
+        oplookup_x86_64["fincstp"] = { { { 0xD9, 0xF7 }, { }, { } } };
+        oplookup_x86_64["fprem"] = { { { 0xD9, 0xF8 }, { }, { } } };
+        oplookup_x86_64["fyl2xp1"] = { { { 0xD9, 0xF9 }, { }, { } } };
+        oplookup_x86_64["fsqrt"] = { { { 0xD9, 0xFA }, { }, { } } };
+        oplookup_x86_64["fsincos"] = { { { 0xD9, 0xFB }, { }, { } } };
+        oplookup_x86_64["frndint"] = { { { 0xD9, 0xFC }, { }, { } } };
+        oplookup_x86_64["fscale"] = { { { 0xD9, 0xFD }, { }, { } } };
+        oplookup_x86_64["fsin"] = { { { 0xD9, 0xFE }, { }, { } } };
+        oplookup_x86_64["fcos"] = { { { 0xD9, 0xFF }, { }, { } } };
+        oplookup_x86_64["hlt"] = { { { 0xF4 }, { }, { } } };
+        oplookup_x86_64["inc"] = {
             { { 0x40 }, { OpEncoding::rd }, { Symbols::r32 } },
             { { 0xFE }, { OpEncoding::m0 }, { Symbols::rm8 } },
             { { 0xFF }, { OpEncoding::m0 }, { Symbols::rm16 } },
             { { 0xFF }, { OpEncoding::m0 }, { Symbols::rm32 } },
         };
-        oplookup_x86["in"] = {
+        oplookup_x86_64["in"] = {
             { { 0xE4 }, { OpEncoding::ib }, { Symbols::al, Symbols::imm8 } },
             { { 0xE5 }, { OpEncoding::ib }, { Symbols::ax, Symbols::imm8 } },
             { { 0xE5 }, { OpEncoding::ib }, { Symbols::eax, Symbols::imm8 } },
@@ -844,24 +846,24 @@ namespace Seraph
             { { 0xED }, { }, { Symbols::ax, Symbols::dx } },
             { { 0xED }, { }, { Symbols::eax, Symbols::dx } }
         };
-        oplookup_x86["ins"] = {
+        oplookup_x86_64["ins"] = {
             { { 0x6C }, { }, { Symbols::m8, Symbols::dx } },
             { { 0x6D }, { }, { Symbols::m16, Symbols::dx } },
             { { 0x6D }, { }, { Symbols::m32, Symbols::dx } }
         };
-        oplookup_x86["int3"] = { { { 0xCC }, { }, { } } };
-        oplookup_x86["int"] = {
+        oplookup_x86_64["int3"] = { { { 0xCC }, { }, { } } };
+        oplookup_x86_64["int"] = {
             { { 0xCD }, { OpEncoding::ib }, { Symbols::imm8 } }
         };
-        oplookup_x86["into"] = { { { 0xCE }, { }, { } } };
-        oplookup_x86["iret"] = { { { 0xCF }, { }, { } } };
-        oplookup_x86["iretd"] = { { { 0xCF }, { }, { } } };
-        oplookup_x86["idiv"] = {
+        oplookup_x86_64["into"] = { { { 0xCE }, { }, { } } };
+        oplookup_x86_64["iret"] = { { { 0xCF }, { }, { } } };
+        oplookup_x86_64["iretd"] = { { { 0xCF }, { }, { } } };
+        oplookup_x86_64["idiv"] = {
             { { 0xF6 }, { OpEncoding::m7 }, { Symbols::rm8 } },
             { { 0xF7 }, { OpEncoding::m7 }, { Symbols::rm16 } },
             { { 0xF7 }, { OpEncoding::m7 }, { Symbols::rm32 } },
         };
-        oplookup_x86["imul"] = {
+        oplookup_x86_64["imul"] = {
             { { 0x69 }, { OpEncoding::r, OpEncoding::iw }, { Symbols::r16, Symbols::rm16, Symbols::imm16 } },
             { { 0x69 }, { OpEncoding::r, OpEncoding::id }, { Symbols::r32, Symbols::rm32, Symbols::imm32 } },
             { { 0x69 }, { OpEncoding::r, OpEncoding::iw }, { Symbols::r16, Symbols::imm16 } },
@@ -876,7 +878,7 @@ namespace Seraph
             { { 0x0F, 0xAF }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0xAF }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } }
         };
-        oplookup_x86["jmp"] = {
+        oplookup_x86_64["jmp"] = {
             { { 0xEB }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0xE9 }, { OpEncoding::cw }, { Symbols::rel16 } },
             { { 0xE9 }, { OpEncoding::cd }, { Symbols::rel32 } },
@@ -887,112 +889,112 @@ namespace Seraph
             { { 0xFF }, { OpEncoding::m5 }, { Symbols::m16_16 } },
             { { 0xFF }, { OpEncoding::m5 }, { Symbols::m16_32 } },
         };
-        oplookup_x86["jo"] = {
+        oplookup_x86_64["jo"] = {
             { { 0x70 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x80 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jno"] = {
+        oplookup_x86_64["jno"] = {
             { { 0x71 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x81 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jb"] = {
+        oplookup_x86_64["jb"] = {
             { { 0x72 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x82 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jae"] = {
+        oplookup_x86_64["jae"] = {
             { { 0x73 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x83 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jnb"] = {
+        oplookup_x86_64["jnb"] = {
             { { 0x73 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x83 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["je"] = {
+        oplookup_x86_64["je"] = {
             { { 0x74 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x84 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jz"] = {
+        oplookup_x86_64["jz"] = {
             { { 0x74 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x84 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jne"] = {
+        oplookup_x86_64["jne"] = {
             { { 0x75 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x85 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jnz"] = {
+        oplookup_x86_64["jnz"] = {
             { { 0x75 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x85 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jbe"] = {
+        oplookup_x86_64["jbe"] = {
             { { 0x76 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x86 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jna"] = {
+        oplookup_x86_64["jna"] = {
             { { 0x76 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x86 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["ja"] = {
+        oplookup_x86_64["ja"] = {
             { { 0x77 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x87 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["js"] = {
+        oplookup_x86_64["js"] = {
             { { 0x78 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x88 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jns"] = {
+        oplookup_x86_64["jns"] = {
             { { 0x79 }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x89 }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jp"] = {
+        oplookup_x86_64["jp"] = {
             { { 0x7A }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x8A }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jpo"] = {
+        oplookup_x86_64["jpo"] = {
             { { 0x7B }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x8B }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jl"] = {
+        oplookup_x86_64["jl"] = {
             { { 0x7C }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x8C }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jnl"] = {
+        oplookup_x86_64["jnl"] = {
             { { 0x7D }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x8D }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jle"] = {
+        oplookup_x86_64["jle"] = {
             { { 0x7E }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x8E }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jng"] = {
+        oplookup_x86_64["jng"] = {
             { { 0x7E }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x8E }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["jg"] = {
+        oplookup_x86_64["jg"] = {
             { { 0x7F }, { OpEncoding::cb }, { Symbols::rel8 } },
             { { 0x0F, 0x8F }, { OpEncoding::cd }, { Symbols::rel32 } },
         };
-        oplookup_x86["lahf"] = { { { 0x9F }, { } } };
-        oplookup_x86["leave"] = { { { 0xC9 }, { } } };
-        oplookup_x86["lea"] = {
+        oplookup_x86_64["lahf"] = { { { 0x9F }, { } } };
+        oplookup_x86_64["leave"] = { { { 0xC9 }, { } } };
+        oplookup_x86_64["lea"] = {
             { { 0x8D }, { OpEncoding::r }, { Symbols::r16, Symbols::m } },
             { { 0x8D }, { OpEncoding::r }, { Symbols::r32, Symbols::m } },
         };
-        oplookup_x86["les"] = {
+        oplookup_x86_64["les"] = {
             { { 0xC4 }, { OpEncoding::r }, { Symbols::r16, Symbols::m16_16 } },
             { { 0xC4 }, { OpEncoding::r }, { Symbols::r32, Symbols::m16_32 } }
         };
-        oplookup_x86["lds"] = {
+        oplookup_x86_64["lds"] = {
             { { 0xC5 }, { OpEncoding::r }, { Symbols::r16, Symbols::m16_16 } },
             { { 0xC5 }, { OpEncoding::r }, { Symbols::r32, Symbols::m16_32 } }
         };
-        oplookup_x86["lodsb"] = { { { 0xAC }, { } } };
-        oplookup_x86["lodsd"] = { { { 0xAD }, { } } };
-        oplookup_x86["loopne"] = { { { 0xE0 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
-        oplookup_x86["loopnz"] = { { { 0xE0 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
-        oplookup_x86["loope"] = { { { 0xE1 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
-        oplookup_x86["loopz"] = { { { 0xE1 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
-        oplookup_x86["loop"] = { { { 0xE2 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
-        oplookup_x86["mov"] = {
+        oplookup_x86_64["lodsb"] = { { { 0xAC }, { } } };
+        oplookup_x86_64["lodsd"] = { { { 0xAD }, { } } };
+        oplookup_x86_64["loopne"] = { { { 0xE0 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
+        oplookup_x86_64["loopnz"] = { { { 0xE0 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
+        oplookup_x86_64["loope"] = { { { 0xE1 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
+        oplookup_x86_64["loopz"] = { { { 0xE1 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
+        oplookup_x86_64["loop"] = { { { 0xE2 }, { OpEncoding::cb }, { Symbols::rel8 } }, };
+        oplookup_x86_64["mov"] = {
             { { 0x88 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x89 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x89 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } },
@@ -1020,30 +1022,30 @@ namespace Seraph
             { { 0x0F, 0x22 }, { OpEncoding::r }, { Symbols::cri, Symbols::r32 } },
             { { 0x0F, 0x23 }, { OpEncoding::r }, { Symbols::dri, Symbols::r32 } }
         };
-        oplookup_x86["movs"] = {
+        oplookup_x86_64["movs"] = {
             { { 0xA4 }, { }, { Symbols::m8, Symbols::m8 } },
             { { 0xA5 }, { }, { Symbols::m16, Symbols::m16 } },
             { { 0xA5 }, { }, { Symbols::m32, Symbols::m32 } },
         };
-        oplookup_x86["mul"] = {
+        oplookup_x86_64["mul"] = {
             { { 0xF6 }, { OpEncoding::m4 }, { Symbols::rm8 } },
             { { 0xF7 }, { OpEncoding::m4 }, { Symbols::rm16 } },
             { { 0xF7 }, { OpEncoding::m4 }, { Symbols::rm32 } },
         };
-        oplookup_x86["neg"] = {
+        oplookup_x86_64["neg"] = {
             { { 0xF6 }, { OpEncoding::m3 }, { Symbols::rm8 } },
             { { 0xF7 }, { OpEncoding::m3 }, { Symbols::rm16 } },
             { { 0xF7 }, { OpEncoding::m3 }, { Symbols::rm32 } },
         };
-        oplookup_x86["nop"] = {
+        oplookup_x86_64["nop"] = {
             { { 0x90 }, { }, { } }
         };
-        oplookup_x86["not"] = {
+        oplookup_x86_64["not"] = {
             { { 0xF6 }, { OpEncoding::m2 }, { Symbols::rm8 } },
             { { 0xF7 }, { OpEncoding::m2 }, { Symbols::rm16 } },
             { { 0xF7 }, { OpEncoding::m2 }, { Symbols::rm32 } },
         };
-        oplookup_x86["out"] = {
+        oplookup_x86_64["out"] = {
             { { 0xE6 }, { OpEncoding::ib }, { Symbols::imm8, Symbols::al } },
             { { 0xE7 }, { OpEncoding::ib }, { Symbols::imm8, Symbols::ax } },
             { { 0xE7 }, { OpEncoding::ib }, { Symbols::imm8, Symbols::eax } },
@@ -1051,12 +1053,12 @@ namespace Seraph
             { { 0xEF }, { }, { Symbols::dx, Symbols::ax } },
             { { 0xEF }, { }, { Symbols::dx, Symbols::eax } }
         };
-        oplookup_x86["outs"] = {
+        oplookup_x86_64["outs"] = {
             { { 0x6E }, { }, { Symbols::m8, Symbols::dx } },
             { { 0x6F }, { }, { Symbols::m16, Symbols::dx } },
             { { 0x6F }, { }, { Symbols::m32, Symbols::dx } }
         };
-        oplookup_x86["pop"] = {
+        oplookup_x86_64["pop"] = {
             { { 0x58 }, { OpEncoding::rd }, { Symbols::r32 } },
             { { 0x8F }, { OpEncoding::m0 }, { Symbols::m32 } },
             { { 0x07 }, { }, { Symbols::es } },
@@ -1065,9 +1067,9 @@ namespace Seraph
             { { 0x0F, 0xA1 }, { }, { Symbols::fs } },
             { { 0x0F, 0xA9 }, { }, { Symbols::gs } }
         };
-        oplookup_x86["popf"] = { { { 0x9D }, { } } };
-        oplookup_x86["popfd"] = { { { 0x9D }, { } } };
-        oplookup_x86["push"] = {
+        oplookup_x86_64["popf"] = { { { 0x9D }, { } } };
+        oplookup_x86_64["popfd"] = { { { 0x9D }, { } } };
+        oplookup_x86_64["push"] = {
             { { 0x68 }, { }, { Symbols::imm32 } },
             { { 0x6A }, { }, { Symbols::imm8 } },
             { { 0x50 }, { OpEncoding::rd }, { Symbols::r32 } },
@@ -1080,51 +1082,51 @@ namespace Seraph
             { { 0xFF }, { OpEncoding::m6 }, { Symbols::rm16 } },
             { { 0xFF }, { OpEncoding::m6 }, { Symbols::rm32 } },
         };
-        oplookup_x86["pushf"] = { { { 0x9C }, { } } };
-        oplookup_x86["pushfd"] = { { { 0x9C }, { } } };
-        oplookup_x86["ret"] = {
+        oplookup_x86_64["pushf"] = { { { 0x9C }, { } } };
+        oplookup_x86_64["pushfd"] = { { { 0x9C }, { } } };
+        oplookup_x86_64["ret"] = {
             { { 0xC2 }, { OpEncoding::iw }, { Symbols::imm16 } },
             { { 0xCA }, { OpEncoding::iw }, { Symbols::imm16 } },
             { { 0xCB }, { }, { } }
         };
-        oplookup_x86["retn"] = { { { 0xC3 }, { } } };
-        oplookup_x86["rcl"] = {
+        oplookup_x86_64["retn"] = { { { 0xC3 }, { } } };
+        oplookup_x86_64["rcl"] = {
             { { 0xC0 }, { OpEncoding::m2, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
             { { 0xC1 }, { OpEncoding::m2, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
         };
-        oplookup_x86["rcr"] = {
+        oplookup_x86_64["rcr"] = {
             { { 0xC0 }, { OpEncoding::m3, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
             { { 0xC1 }, { OpEncoding::m3, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
         };
-        oplookup_x86["rol"] = {
+        oplookup_x86_64["rol"] = {
             { { 0xC0 }, { OpEncoding::m0, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
             { { 0xC1 }, { OpEncoding::m0, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
         };
-        oplookup_x86["ror"] = {
+        oplookup_x86_64["ror"] = {
             { { 0xC0 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
             { { 0xC1 }, { OpEncoding::m1, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
         };
-        oplookup_x86["sahf"] = { { { 0x9E }, { } } };
-        oplookup_x86["sal"] = {
+        oplookup_x86_64["sahf"] = { { { 0x9E }, { } } };
+        oplookup_x86_64["sal"] = {
             { { 0xC0 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
             { { 0xC1 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
         };
-        oplookup_x86["sar"] = {
+        oplookup_x86_64["sar"] = {
             { { 0xC0 }, { OpEncoding::m7, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
             { { 0xC1 }, { OpEncoding::m7, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
         };
-        oplookup_x86["scasb"] = { { { 0xAE }, { } } };
-        oplookup_x86["scasd"] = { { { 0xAF }, { } } };
-        oplookup_x86["shr"] = {
+        oplookup_x86_64["scasb"] = { { { 0xAE }, { } } };
+        oplookup_x86_64["scasd"] = { { { 0xAF }, { } } };
+        oplookup_x86_64["shr"] = {
             { { 0xC0 }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
             { { 0xC1 }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
         };
-        oplookup_x86["stosb"] = { { { 0xAA }, { } } };
-        oplookup_x86["stosd"] = { { { 0xAB }, { } } };
-        oplookup_x86["stc"] = { { { 0xF9 }, { } } };
-        oplookup_x86["std"] = { { { 0xFD }, { } } };
-        oplookup_x86["sti"] = { { { 0xFB }, { } } };
-        oplookup_x86["test"] = {
+        oplookup_x86_64["stosb"] = { { { 0xAA }, { } } };
+        oplookup_x86_64["stosd"] = { { { 0xAB }, { } } };
+        oplookup_x86_64["stc"] = { { { 0xF9 }, { } } };
+        oplookup_x86_64["std"] = { { { 0xFD }, { } } };
+        oplookup_x86_64["sti"] = { { { 0xFB }, { } } };
+        oplookup_x86_64["test"] = {
             { { 0xF6 }, { OpEncoding::m0, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
             { { 0xF7 }, { OpEncoding::m0, OpEncoding::iw }, { Symbols::rm16, Symbols::imm16 } },
             { { 0xF7 }, { OpEncoding::m0, OpEncoding::id }, { Symbols::rm32, Symbols::imm32 } },
@@ -1135,10 +1137,10 @@ namespace Seraph
             { { 0xA9 }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
             { { 0xA9 }, { OpEncoding::id }, { Symbols::eax, Symbols::imm32 } },
         };
-        oplookup_x86["wait"] = {
+        oplookup_x86_64["wait"] = {
             { { 0x9B }, { }, { } }
         };
-        oplookup_x86["xchg"] = {
+        oplookup_x86_64["xchg"] = {
             { { 0x86 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x86 }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
             { { 0x87 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
@@ -1150,566 +1152,576 @@ namespace Seraph
             { { 0x90 }, { OpEncoding::rd }, { Symbols::eax, Symbols::r32 } },
             { { 0x90 }, { OpEncoding::rd }, { Symbols::r32, Symbols::eax } },
         };
-        oplookup_x86["xlatb"] = { { { 0xD7 }, { } } };
+        oplookup_x86_64["xlatb"] = { { { 0xD7 }, { } } };
 
         // Extended SIMD instructions
-        oplookup_x86["sldt"] = {
+        oplookup_x86_64["sldt"] = {
             { { 0x0F, 0x00 }, { OpEncoding::m0 }, { Symbols::rm16 } },
             { { 0x0F, 0x00 }, { OpEncoding::m0 }, { Symbols::rm32 } },
         };
-        oplookup_x86["str"] = {
+        oplookup_x86_64["str"] = {
             { { 0x0F, 0x00 }, { OpEncoding::m1 }, { Symbols::rm16 } },
         };
-        oplookup_x86["lldt"] = {
+        oplookup_x86_64["lldt"] = {
             { { 0x0F, 0x00 }, { OpEncoding::m2 }, { Symbols::rm16 } },
         };
-        oplookup_x86["ltr"] = {
+        oplookup_x86_64["ltr"] = {
             { { 0x0F, 0x00 }, { OpEncoding::m3 }, { Symbols::rm16 } },
         };
-        oplookup_x86["verr"] = {
+        oplookup_x86_64["verr"] = {
             { { 0x0F, 0x00 }, { OpEncoding::m4 }, { Symbols::rm16 } },
         };
-        oplookup_x86["verw"] = {
+        oplookup_x86_64["verw"] = {
             { { 0x0F, 0x00 }, { OpEncoding::m5 }, { Symbols::rm16 } },
         };
-        oplookup_x86["sgdt"] = {
+        oplookup_x86_64["sgdt"] = {
             { { 0x0F, 0x01 }, { OpEncoding::m0 }, { Symbols::m } },
         };
-        oplookup_x86["sidt"] = {
+        oplookup_x86_64["sidt"] = {
             { { 0x0F, 0x01 }, { OpEncoding::m1 }, { Symbols::m } },
         };
-        oplookup_x86["lgdt"] = {
+        oplookup_x86_64["lgdt"] = {
             { { 0x0F, 0x01 }, { OpEncoding::m2 }, { Symbols::m16_32 } },
         };
-        oplookup_x86["lidt"] = {
+        oplookup_x86_64["lidt"] = {
             { { 0x0F, 0x01 }, { OpEncoding::m3 }, { Symbols::m16_32 } },
         };
-        oplookup_x86["smsw"] = {
+        oplookup_x86_64["smsw"] = {
             { { 0x0F, 0x01 }, { OpEncoding::m4 }, { Symbols::rm16 } },
             { { 0x0F, 0x01 }, { OpEncoding::m5 }, { Symbols::rm32 } },
         };
-        oplookup_x86["lmsw"] = {
+        oplookup_x86_64["lmsw"] = {
             { { 0x0F, 0x01 }, { OpEncoding::m6 }, { Symbols::rm16 } },
         };
-        oplookup_x86["invlpg"] = {
+        oplookup_x86_64["invlpg"] = {
             { { 0x0F, 0x01 }, { OpEncoding::m7 }, { Symbols::m } },
         };
-        oplookup_x86["lar"] = {
+        oplookup_x86_64["lar"] = {
             { { 0x0F, 0x02 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x02 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["lsl"] = {
+        oplookup_x86_64["lsl"] = {
             { { 0x0F, 0x03 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x03 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["clts"] = { { { 0x0F, 0x06 }, { }, { } } };
-        oplookup_x86["invd"] = { { { 0x0F, 0x08 }, { }, { } } };
-        oplookup_x86["wbinvd"] = { { { 0x0F, 0x09 }, { }, { } } };
-        oplookup_x86["ud2"] = { { { 0x0F, 0x0B }, { }, { } } };
-        oplookup_x86["movups"] = {
+        oplookup_x86_64["clts"] = { { { 0x0F, 0x06 }, { }, { } } };
+        oplookup_x86_64["invd"] = { { { 0x0F, 0x08 }, { }, { } } };
+        oplookup_x86_64["wbinvd"] = { { { 0x0F, 0x09 }, { }, { } } };
+        oplookup_x86_64["ud2"] = { { { 0x0F, 0x0B }, { }, { } } };
+        oplookup_x86_64["movups"] = {
             { { 0x0F, 0x10 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } },
             { { 0x0F, 0x11 }, { OpEncoding::r }, { Symbols::xmm_m128, Symbols::xmm } }
         };
-        oplookup_x86["movhlps"] = {
+        oplookup_x86_64["movhlps"] = {
             { { 0x0F, 0x12 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm2 } }
         };
-        oplookup_x86["movlps"] = {
+        oplookup_x86_64["movlps"] = {
             { { 0x0F, 0x12 }, { OpEncoding::r }, { Symbols::xmm, Symbols::m64 } },
             { { 0x0F, 0x13 }, { OpEncoding::r }, { Symbols::m64, Symbols::xmm } }
         };
-        oplookup_x86["unpcklps"] = {
+        oplookup_x86_64["unpcklps"] = {
             { { 0x0F, 0x14 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["unpckhps"] = {
+        oplookup_x86_64["unpckhps"] = {
             { { 0x0F, 0x15 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["movhps"] = {
+        oplookup_x86_64["movhps"] = {
             { { 0x0F, 0x16 }, { OpEncoding::r }, { Symbols::xmm, Symbols::m64 } },
             { { 0x0F, 0x17 }, { OpEncoding::r }, { Symbols::m64, Symbols::xmm } }
         };
-        oplookup_x86["movlhps"] = {
+        oplookup_x86_64["movlhps"] = {
             { { 0x0F, 0x16 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm2 } }
         };
-        oplookup_x86["prefetcht0"] = {
+        oplookup_x86_64["prefetcht0"] = {
             { { 0x0F, 0x18 }, { OpEncoding::m0 }, { Symbols::m8 } }
         };
-        oplookup_x86["prefetcht1"] = {
+        oplookup_x86_64["prefetcht1"] = {
             { { 0x0F, 0x18 }, { OpEncoding::m1 }, { Symbols::m8 } }
         };
-        oplookup_x86["prefetcht2"] = {
+        oplookup_x86_64["prefetcht2"] = {
             { { 0x0F, 0x18 }, { OpEncoding::m2 }, { Symbols::m8 } }
         };
-        oplookup_x86["prefetchnta"] = {
+        oplookup_x86_64["prefetchnta"] = {
             { { 0x0F, 0x18 }, { OpEncoding::m3 }, { Symbols::m8 } }
         };
-        oplookup_x86["movaps"] = {
+        oplookup_x86_64["movaps"] = {
             { { 0x0F, 0x28 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } },
             { { 0x0F, 0x29 }, { OpEncoding::r }, { Symbols::xmm_m128, Symbols::xmm } }
         };
-        oplookup_x86["cvtpi2ps"] = {
+        oplookup_x86_64["cvtpi2ps"] = {
             { { 0x0F, 0x2A }, { OpEncoding::r }, { Symbols::xmm, Symbols::mm_m64 } },
         };
-        oplookup_x86["movntps"] = {
+        oplookup_x86_64["movntps"] = {
             { { 0x0F, 0x2B }, { OpEncoding::r }, { Symbols::m128, Symbols::xmm } },
         };
-        oplookup_x86["cvttps2pi"] = {
+        oplookup_x86_64["cvttps2pi"] = {
             { { 0x0F, 0x2C }, { OpEncoding::r }, { Symbols::mm, Symbols::xmm_m64 } },
         };
-        oplookup_x86["cvtps2pi"] = {
+        oplookup_x86_64["cvtps2pi"] = {
             { { 0x0F, 0x2D }, { OpEncoding::r }, { Symbols::mm, Symbols::xmm_m64 } },
         };
-        oplookup_x86["ucomiss"] = {
+        oplookup_x86_64["ucomiss"] = {
             { { 0x0F, 0x2E }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } },
         };
-        oplookup_x86["comiss"] = {
+        oplookup_x86_64["comiss"] = {
             { { 0x0F, 0x2F }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } },
         };
-        oplookup_x86["wrmsr"] = { { { 0x0F, 0x30 }, { }, { } } };
-        oplookup_x86["rdtsc"] = { { { 0x0F, 0x31 }, { }, { } } };
-        oplookup_x86["rdmsr"] = { { { 0x0F, 0x32 }, { }, { } } };
-        oplookup_x86["rdpmc"] = { { { 0x0F, 0x33 }, { }, { } } };
-        oplookup_x86["sysenter"] = { { { 0x0F, 0x34 }, { }, { } } };
-        oplookup_x86["sysexit"] = { { { 0x0F, 0x35 }, { }, { } } };
-        oplookup_x86["movmskps"] = {
+        oplookup_x86_64["wrmsr"] = { { { 0x0F, 0x30 }, { }, { } } };
+        oplookup_x86_64["rdtsc"] = { { { 0x0F, 0x31 }, { }, { } } };
+        oplookup_x86_64["rdmsr"] = { { { 0x0F, 0x32 }, { }, { } } };
+        oplookup_x86_64["rdpmc"] = { { { 0x0F, 0x33 }, { }, { } } };
+        oplookup_x86_64["sysenter"] = { { { 0x0F, 0x34 }, { }, { } } };
+        oplookup_x86_64["sysexit"] = { { { 0x0F, 0x35 }, { }, { } } };
+        oplookup_x86_64["movmskps"] = {
             { { 0x0F, 0x50 }, { OpEncoding::r }, { Symbols::r32, Symbols::xmm } }
         };
-        oplookup_x86["sqrtps"] = {
+        oplookup_x86_64["sqrtps"] = {
             { { 0x0F, 0x51 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["rsqrtps"] = {
+        oplookup_x86_64["rsqrtps"] = {
             { { 0x0F, 0x52 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["rcpps"] = {
+        oplookup_x86_64["rcpps"] = {
             { { 0x0F, 0x53 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["andps"] = {
+        oplookup_x86_64["andps"] = {
             { { 0x0F, 0x54 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["andnps"] = {
+        oplookup_x86_64["andnps"] = {
             { { 0x0F, 0x55 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["orps"] = {
+        oplookup_x86_64["orps"] = {
             { { 0x0F, 0x56 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["xorps"] = {
+        oplookup_x86_64["xorps"] = {
             { { 0x0F, 0x57 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["addps"] = {
+        oplookup_x86_64["addps"] = {
             { { 0x0F, 0x58 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["mulps"] = {
+        oplookup_x86_64["mulps"] = {
             { { 0x0F, 0x59 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["subps"] = {
+        oplookup_x86_64["subps"] = {
             { { 0x0F, 0x5C }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["minps"] = {
+        oplookup_x86_64["minps"] = {
             { { 0x0F, 0x5D }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["divps"] = {
+        oplookup_x86_64["divps"] = {
             { { 0x0F, 0x5E }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["maxps"] = {
+        oplookup_x86_64["maxps"] = {
             { { 0x0F, 0x5F }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m128 } }
         };
-        oplookup_x86["punpcklbw"] = {
+        oplookup_x86_64["punpcklbw"] = {
             { { 0x0F, 0x60 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m32 } }
         };
-        oplookup_x86["punpcklbd"] = {
+        oplookup_x86_64["punpcklbd"] = {
             { { 0x0F, 0x61 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m32 } }
         };
-        oplookup_x86["punpcklbq"] = {
+        oplookup_x86_64["punpcklbq"] = {
             { { 0x0F, 0x62 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m32 } }
         };
-        oplookup_x86["packsswb"] = {
+        oplookup_x86_64["packsswb"] = {
             { { 0x0F, 0x63 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pcmpgtb"] = {
+        oplookup_x86_64["pcmpgtb"] = {
             { { 0x0F, 0x64 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pcmpgtw"] = {
+        oplookup_x86_64["pcmpgtw"] = {
             { { 0x0F, 0x65 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pcmpgtd"] = {
+        oplookup_x86_64["pcmpgtd"] = {
             { { 0x0F, 0x66 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["packuswb"] = {
+        oplookup_x86_64["packuswb"] = {
             { { 0x0F, 0x67 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["punpckhbw"] = {
+        oplookup_x86_64["punpckhbw"] = {
             { { 0x0F, 0x68 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["punpckhbd"] = {
+        oplookup_x86_64["punpckhbd"] = {
             { { 0x0F, 0x69 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["punpckhbq"] = {
+        oplookup_x86_64["punpckhbq"] = {
             { { 0x0F, 0x6A }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["packssdw"] = {
+        oplookup_x86_64["packssdw"] = {
             { { 0x0F, 0x6B }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["movd"] = {
+        oplookup_x86_64["movd"] = {
             { { 0x0F, 0x6E }, { OpEncoding::r }, { Symbols::mm, Symbols::rm32 } },
             { { 0x0F, 0x7E }, { OpEncoding::r }, { Symbols::rm32, Symbols::mm } }
         };
-        oplookup_x86["movq"] = {
+        oplookup_x86_64["movq"] = {
             { { 0x0F, 0x6F }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } },
             { { 0x0F, 0x7F }, { OpEncoding::r }, { Symbols::mm_m64, Symbols::mm } }
         };
-        oplookup_x86["pshufw"] = {
+        oplookup_x86_64["pshufw"] = {
             { { 0x0F, 0x70 }, { OpEncoding::r, OpEncoding::ib }, { Symbols::mm, Symbols::mm_m64, Symbols::imm8 } }
         };
-        oplookup_x86["psrlw"] = {
+        oplookup_x86_64["psrlw"] = {
             { { 0x0F, 0x71 }, { OpEncoding::m2, OpEncoding::ib }, { Symbols::mm, Symbols::imm8 } },
             { { 0x0F, 0xD1 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psraw"] = {
+        oplookup_x86_64["psraw"] = {
             { { 0x0F, 0x71 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::mm, Symbols::imm8 } },
             { { 0x0F, 0xE1 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psllw"] = {
+        oplookup_x86_64["psllw"] = {
             { { 0x0F, 0x71 }, { OpEncoding::m6, OpEncoding::ib }, { Symbols::mm, Symbols::imm8 } },
             { { 0x0F, 0xF1 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psrld"] = {
+        oplookup_x86_64["psrld"] = {
             { { 0x0F, 0x72 }, { OpEncoding::m2, OpEncoding::ib }, { Symbols::mm, Symbols::imm8 } },
             { { 0x0F, 0xD2 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psrad"] = {
+        oplookup_x86_64["psrad"] = {
             { { 0x0F, 0x72 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::mm, Symbols::imm8 } },
             { { 0x0F, 0xE2 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pslld"] = {
+        oplookup_x86_64["pslld"] = {
             { { 0x0F, 0x72 }, { OpEncoding::m6, OpEncoding::ib }, { Symbols::mm, Symbols::imm8 } },
             { { 0x0F, 0xF2 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psrlq"] = {
+        oplookup_x86_64["psrlq"] = {
             { { 0x0F, 0x73 }, { OpEncoding::m2, OpEncoding::ib }, { Symbols::mm, Symbols::imm8 } },
             { { 0x0F, 0xD3 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psllq"] = {
+        oplookup_x86_64["psllq"] = {
             { { 0x0F, 0x73 }, { OpEncoding::m6, OpEncoding::ib }, { Symbols::mm, Symbols::imm8 } },
             { { 0x0F, 0xF3 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pcmpeqb"] = {
+        oplookup_x86_64["pcmpeqb"] = {
             { { 0x0F, 0x74 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pcmpeqw"] = {
+        oplookup_x86_64["pcmpeqw"] = {
             { { 0x0F, 0x75 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pcmpeqd"] = {
+        oplookup_x86_64["pcmpeqd"] = {
             { { 0x0F, 0x76 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["emms"] = { { { 0x0F, 0x77 }, { }, { } } };
-        oplookup_x86["seto"] = { { { 0x0F, 0x90 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setno"] = { { { 0x0F, 0x91 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setb"] = { { { 0x0F, 0x92 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setae"] = { { { 0x0F, 0x93 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setnb"] = { { { 0x0F, 0x93 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["sete"] = { { { 0x0F, 0x94 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setz"] = { { { 0x0F, 0x94 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setne"] = { { { 0x0F, 0x95 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setnz"] = { { { 0x0F, 0x95 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setbe"] = { { { 0x0F, 0x96 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setna"] = { { { 0x0F, 0x96 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["seta"] = { { { 0x0F, 0x97 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["sets"] = { { { 0x0F, 0x98 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setns"] = { { { 0x0F, 0x99 }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setp"] = { { { 0x0F, 0x9A }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setpo"] = { { { 0x0F, 0x9B }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setl"] = { { { 0x0F, 0x9C }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setnl"] = { { { 0x0F, 0x9D }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setle"] = { { { 0x0F, 0x9E }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setng"] = { { { 0x0F, 0x9E }, { }, { Symbols::rm8 } } };
-        oplookup_x86["setg"] = { { { 0x0F, 0x9F }, { }, { Symbols::rm8 } } };
-        oplookup_x86["cpuid"] = { { { 0x0F, 0xA2 }, { }, { } } };
-        oplookup_x86["bt"] = {
+        oplookup_x86_64["emms"] = { { { 0x0F, 0x77 }, { }, { } } };
+        oplookup_x86_64["seto"] = { { { 0x0F, 0x90 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setno"] = { { { 0x0F, 0x91 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setb"] = { { { 0x0F, 0x92 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setae"] = { { { 0x0F, 0x93 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setnb"] = { { { 0x0F, 0x93 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["sete"] = { { { 0x0F, 0x94 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setz"] = { { { 0x0F, 0x94 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setne"] = { { { 0x0F, 0x95 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setnz"] = { { { 0x0F, 0x95 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setbe"] = { { { 0x0F, 0x96 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setna"] = { { { 0x0F, 0x96 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["seta"] = { { { 0x0F, 0x97 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["sets"] = { { { 0x0F, 0x98 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setns"] = { { { 0x0F, 0x99 }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setp"] = { { { 0x0F, 0x9A }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setpo"] = { { { 0x0F, 0x9B }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setl"] = { { { 0x0F, 0x9C }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setnl"] = { { { 0x0F, 0x9D }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setle"] = { { { 0x0F, 0x9E }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setng"] = { { { 0x0F, 0x9E }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["setg"] = { { { 0x0F, 0x9F }, { }, { Symbols::rm8 } } };
+        oplookup_x86_64["cpuid"] = { { { 0x0F, 0xA2 }, { }, { } } };
+        oplookup_x86_64["bt"] = {
             { { 0x0F, 0xA3 }, { }, { Symbols::rm16, Symbols::r16 } },
             { { 0x0F, 0xA3 }, { }, { Symbols::rm32, Symbols::r32 } },
             { { 0x0F, 0xBA }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm16, Symbols::imm8 } },
             { { 0x0F, 0xBA }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["btc"] = {
+        oplookup_x86_64["btc"] = {
             { { 0x0F, 0xBA }, { OpEncoding::m7, OpEncoding::ib }, { Symbols::rm16, Symbols::imm8 } },
             { { 0x0F, 0xBA }, { OpEncoding::m7, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
             { { 0x0F, 0xBB }, { }, { Symbols::rm16, Symbols::r16 } },
             { { 0x0F, 0xBB }, { }, { Symbols::rm32, Symbols::r32 } },
         };
-        oplookup_x86["bsf"] = { 
+        oplookup_x86_64["bsf"] = { 
             { { 0x0F, 0xBC }, { }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0xBC }, { }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["bsr"] = { 
+        oplookup_x86_64["bsr"] = { 
             { { 0x0F, 0xBD }, { }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0xBD }, { }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86["shld"] = {
+        oplookup_x86_64["shld"] = {
             { { 0x0F, 0xA4 }, { }, { Symbols::rm16, Symbols::r16, Symbols::imm8 } },
             { { 0x0F, 0xA4 }, { }, { Symbols::rm32, Symbols::r32, Symbols::imm8 } },
             { { 0x0F, 0xA5 }, { }, { Symbols::rm16, Symbols::r16, Symbols::cl } },
             { { 0x0F, 0xA5 }, { }, { Symbols::rm32, Symbols::r32, Symbols::cl } },
         };
-        oplookup_x86["rsm"] = { { { 0x0F, 0xAA }, { }, { } } };
-        oplookup_x86["bts"] = {
+        oplookup_x86_64["rsm"] = { { { 0x0F, 0xAA }, { }, { } } };
+        oplookup_x86_64["bts"] = {
             { { 0x0F, 0xAB }, { }, { Symbols::rm16, Symbols::r16 } },
             { { 0x0F, 0xAB }, { }, { Symbols::rm32, Symbols::r32 } },
             { { 0x0F, 0xBA }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm16, Symbols::imm8 } },
             { { 0x0F, 0xBA }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["shrd"] = {
+        oplookup_x86_64["shrd"] = {
             { { 0x0F, 0xAC }, { }, { Symbols::rm16, Symbols::r16, Symbols::imm8 } },
             { { 0x0F, 0xAC }, { }, { Symbols::rm32, Symbols::r32, Symbols::imm8 } },
             { { 0x0F, 0xAD }, { }, { Symbols::rm16, Symbols::r16, Symbols::cl } },
             { { 0x0F, 0xAD }, { }, { Symbols::rm32, Symbols::r32, Symbols::cl } },
         };
-        oplookup_x86["fxsave"] = {
+        oplookup_x86_64["fxsave"] = {
             { { 0x0F, 0xAE }, { OpEncoding::m0 }, { Symbols::m512byte } }
         };
-        oplookup_x86["fxrstor"] = {
+        oplookup_x86_64["fxrstor"] = {
             { { 0x0F, 0xAE }, { OpEncoding::m1 }, { Symbols::m512byte } }
         };
-        oplookup_x86["ldmxcsr"] = {
+        oplookup_x86_64["ldmxcsr"] = {
             { { 0x0F, 0xAE }, { OpEncoding::m2 }, { Symbols::m32 } }
         };
-        oplookup_x86["stmxcsr"] = {
+        oplookup_x86_64["stmxcsr"] = {
             { { 0x0F, 0xAE }, { OpEncoding::m3 }, { Symbols::m32 } }
         };
-        oplookup_x86["sfence"] = {
+        oplookup_x86_64["sfence"] = {
             { { 0x0F, 0xAE }, { OpEncoding::m7 }, { } }
         };
-        oplookup_x86["cmpxchg"] = {
+        oplookup_x86_64["cmpxchg"] = {
             { { 0x0F, 0xB0 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x0F, 0xB1 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x0F, 0xB1 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } }
         };
-        oplookup_x86["lss"] = {
+        oplookup_x86_64["lss"] = {
             { { 0x0F, 0xB2 }, { OpEncoding::r }, { Symbols::r16, Symbols::m16_16 } },
             { { 0x0F, 0xB2 }, { OpEncoding::r }, { Symbols::r32, Symbols::m16_32 } },
         };
-        oplookup_x86["btr"] = {
+        oplookup_x86_64["btr"] = {
             { { 0x0F, 0xB3 }, { }, { Symbols::rm16, Symbols::r16 } },
             { { 0x0F, 0xB3 }, { }, { Symbols::rm32, Symbols::r32 } },
             { { 0x0F, 0xBA }, { OpEncoding::m6, OpEncoding::ib }, { Symbols::rm16, Symbols::imm8 } },
             { { 0x0F, 0xBA }, { OpEncoding::m6, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
         };
-        oplookup_x86["lfs"] = {
+        oplookup_x86_64["lfs"] = {
             { { 0x0F, 0xB4 }, { OpEncoding::r }, { Symbols::r16, Symbols::m16_16 } },
             { { 0x0F, 0xB4 }, { OpEncoding::r }, { Symbols::r32, Symbols::m16_32 } },
         };
-        oplookup_x86["lgs"] = {
+        oplookup_x86_64["lgs"] = {
             { { 0x0F, 0xB5 }, { OpEncoding::r }, { Symbols::r16, Symbols::m16_16 } },
             { { 0x0F, 0xB5 }, { OpEncoding::r }, { Symbols::r32, Symbols::m16_32 } },
         };
-        oplookup_x86["movzx"] = {
+        oplookup_x86_64["movzx"] = {
             { { 0x0F, 0xB6 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm8 } },
             { { 0x0F, 0xB6 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm8 } },
             { { 0x0F, 0xB7 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm16 } }
         };
-        oplookup_x86["movsx"] = {
+        oplookup_x86_64["movsx"] = {
             { { 0x0F, 0xBE }, { OpEncoding::r }, { Symbols::r16, Symbols::rm8 } },
             { { 0x0F, 0xBE }, { OpEncoding::r }, { Symbols::r32, Symbols::rm8 } },
             { { 0x0F, 0xBF }, { OpEncoding::r }, { Symbols::r32, Symbols::rm16 } }
         };
-        oplookup_x86["xadd"] = {
+        oplookup_x86_64["xadd"] = {
             { { 0x0F, 0xC0 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x0F, 0xC1 }, { OpEncoding::r }, { Symbols::rm16, Symbols::r16 } },
             { { 0x0F, 0xC1 }, { OpEncoding::r }, { Symbols::rm32, Symbols::r32 } }
         };
-        oplookup_x86["cmpps"] = {
+        oplookup_x86_64["cmpps"] = {
             { { 0x0F, 0xC2 }, { OpEncoding::r, OpEncoding::ib }, { Symbols::xmm, Symbols::xmm_m128, Symbols::imm8 } }
         };
-        oplookup_x86["pinsrw"] = {
+        oplookup_x86_64["pinsrw"] = {
             { { 0x0F, 0xC4 }, { OpEncoding::r, OpEncoding::ib }, { Symbols::mm, Symbols::rm16, Symbols::imm8 } }
         };
-        oplookup_x86["pextrw"] = {
+        oplookup_x86_64["pextrw"] = {
             { { 0x0F, 0xC5 }, { OpEncoding::r, OpEncoding::ib }, { Symbols::r32, Symbols::mm, Symbols::imm8 } }
         };
-        oplookup_x86["shufps"] = {
+        oplookup_x86_64["shufps"] = {
             { { 0x0F, 0xC6 }, { OpEncoding::r, OpEncoding::ib }, { Symbols::xmm, Symbols::xmm_m128, Symbols::imm8 } }
         };
-        oplookup_x86["cmpxchg8b"] = {
+        oplookup_x86_64["cmpxchg8b"] = {
             { { 0x0F, 0xC7 }, { OpEncoding::m1 }, { Symbols::m64 } }
         };
-        oplookup_x86["bswap"] = {
+        oplookup_x86_64["bswap"] = {
             { { 0x0F, 0xC8 }, { OpEncoding::rd }, { Symbols::r32 } }
         };
-        oplookup_x86["pmullw"] = {
+        oplookup_x86_64["pmullw"] = {
             { { 0x0F, 0xD5 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pmovmskb"] = {
+        oplookup_x86_64["pmovmskb"] = {
             { { 0x0F, 0xD7 }, { OpEncoding::r }, { Symbols::r32, Symbols::mm } }
         };
-        oplookup_x86["psubusb"] = {
+        oplookup_x86_64["psubusb"] = {
             { { 0x0F, 0xD8 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psubusw"] = {
+        oplookup_x86_64["psubusw"] = {
             { { 0x0F, 0xD9 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pminub"] = {
+        oplookup_x86_64["pminub"] = {
             { { 0x0F, 0xDA }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pand"] = {
+        oplookup_x86_64["pand"] = {
             { { 0x0F, 0xDB }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["paddusb"] = {
+        oplookup_x86_64["paddusb"] = {
             { { 0x0F, 0xDC }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["paddusw"] = {
+        oplookup_x86_64["paddusw"] = {
             { { 0x0F, 0xDD }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pmaxub"] = {
+        oplookup_x86_64["pmaxub"] = {
             { { 0x0F, 0xDE }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pandn"] = {
+        oplookup_x86_64["pandn"] = {
             { { 0x0F, 0xDF }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["movntq"] = {
+        oplookup_x86_64["movntq"] = {
             { { 0x0F, 0xE7 }, { OpEncoding::r }, { Symbols::m64, Symbols::mm } }
         };
-        oplookup_x86["psadbw"] = {
+        oplookup_x86_64["psadbw"] = {
             { { 0x0F, 0xF6 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["maskmovq"] = {
-            { { 0x0F, 0xF7 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } } /* technically: mm1, mm2 */
+        oplookup_x86_64["maskmovq"] = {
+            { { 0x0F, 0xF7 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pavgb"] = {
+        oplookup_x86_64["pavgb"] = {
             { { 0x0F, 0xE0 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pavgw"] = {
+        oplookup_x86_64["pavgw"] = {
             { { 0x0F, 0xE3 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pmulhuw"] = {
+        oplookup_x86_64["pmulhuw"] = {
             { { 0x0F, 0xE4 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pmulhw"] = {
+        oplookup_x86_64["pmulhw"] = {
             { { 0x0F, 0xE5 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psubsb"] = {
+        oplookup_x86_64["psubsb"] = {
             { { 0x0F, 0xE8 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psubsw"] = {
+        oplookup_x86_64["psubsw"] = {
             { { 0x0F, 0xE9 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pminsw"] = {
+        oplookup_x86_64["pminsw"] = {
             { { 0x0F, 0xEA }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["por"] = {
+        oplookup_x86_64["por"] = {
             { { 0x0F, 0xEB }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["paddsb"] = {
+        oplookup_x86_64["paddsb"] = {
             { { 0x0F, 0xEC }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["paddsw"] = {
+        oplookup_x86_64["paddsw"] = {
             { { 0x0F, 0xED }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pmaxsw"] = {
+        oplookup_x86_64["pmaxsw"] = {
             { { 0x0F, 0xEE }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pxor"] = {
+        oplookup_x86_64["pxor"] = {
             { { 0x0F, 0xEF }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["pmaddwd"] = {
+        oplookup_x86_64["pmaddwd"] = {
             { { 0x0F, 0xF5 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psubb"] = {
+        oplookup_x86_64["psubb"] = {
             { { 0x0F, 0xF8 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psubw"] = {
+        oplookup_x86_64["psubw"] = {
             { { 0x0F, 0xF9 }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["psubd"] = {
+        oplookup_x86_64["psubd"] = {
             { { 0x0F, 0xFA }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["paddb"] = {
+        oplookup_x86_64["paddb"] = {
             { { 0x0F, 0xFC }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["paddw"] = {
+        oplookup_x86_64["paddw"] = {
             { { 0x0F, 0xFD }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
-        oplookup_x86["paddd"] = {
+        oplookup_x86_64["paddd"] = {
             { { 0x0F, 0xFE }, { OpEncoding::r }, { Symbols::mm, Symbols::mm_m64 } }
         };
 
         // Extended simd instructions (F3 PREFIX)
-        oplookup_x86["movss"] = {
+        oplookup_x86_64["movss"] = {
             { { 0xF3, 0x0F, 0x10 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } },
             { { 0xF3, 0x0F, 0x11 }, { OpEncoding::r }, { Symbols::xmm_m32, Symbols::xmm } },
         };
-        oplookup_x86["cvtsi2ss"] = {
+        oplookup_x86_64["cvtsi2ss"] = {
             { { 0xF3, 0x0F, 0x2A }, { OpEncoding::r }, { Symbols::xmm, Symbols::rm32 } }
         };
-        oplookup_x86["cvttss2si"] = {
+        oplookup_x86_64["cvttss2si"] = {
             { { 0xF3, 0x0F, 0x2C }, { OpEncoding::r }, { Symbols::r32, Symbols::xmm_m32 } }
         };
-        oplookup_x86["cvtss2si"] = {
+        oplookup_x86_64["cvtss2si"] = {
             { { 0xF3, 0x0F, 0x2D }, { OpEncoding::r }, { Symbols::r32, Symbols::xmm_m32 } }
         };
-        oplookup_x86["sqrtss"] = {
+        oplookup_x86_64["sqrtss"] = {
             { { 0xF3, 0x0F, 0x51 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } }
         };
-        oplookup_x86["rsqrtss"] = {
+        oplookup_x86_64["rsqrtss"] = {
             { { 0xF3, 0x0F, 0x52 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } }
         };
-        oplookup_x86["rcpss"] = {
+        oplookup_x86_64["rcpss"] = {
             { { 0xF3, 0x0F, 0x53 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } }
         };
-        oplookup_x86["addss"] = {
+        oplookup_x86_64["addss"] = {
             { { 0xF3, 0x0F, 0x58 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } }
         };
-        oplookup_x86["mulss"] = {
+        oplookup_x86_64["mulss"] = {
             { { 0xF3, 0x0F, 0x59 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } }
         };
-        oplookup_x86["subss"] = {
+        oplookup_x86_64["subss"] = {
             { { 0xF3, 0x0F, 0x5C }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } }
         };
-        oplookup_x86["minss"] = {
+        oplookup_x86_64["minss"] = {
             { { 0xF3, 0x0F, 0x5D }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } }
         };
-        oplookup_x86["divss"] = {
+        oplookup_x86_64["divss"] = {
             { { 0xF3, 0x0F, 0x5E }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } }
         };
-        oplookup_x86["maxss"] = {
+        oplookup_x86_64["maxss"] = {
             { { 0xF3, 0x0F, 0x5F }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm_m32 } }
         };
-        oplookup_x86["cmpss"] = {
+        oplookup_x86_64["cmpss"] = {
             { { 0xF3, 0x0F, 0xC2 }, { OpEncoding::r, OpEncoding::ib }, { Symbols::xmm, Symbols::xmm_m32, Symbols::imm8 } }
         };
-        oplookup_x86["cmpeqss"] = {
+        oplookup_x86_64["cmpeqss"] = {
             { { 0xF3, 0x0F, 0xC2 }, { OpEncoding::r, OpEncoding::m0 }, { Symbols::xmm, Symbols::xmm } }
         };
-        oplookup_x86["cmpltss"] = {
+        oplookup_x86_64["cmpltss"] = {
             { { 0xF3, 0x0F, 0xC2 }, { OpEncoding::r, OpEncoding::m1 }, { Symbols::xmm, Symbols::xmm } }
         };
-        oplookup_x86["cmpless"] = {
+        oplookup_x86_64["cmpless"] = {
             { { 0xF3, 0x0F, 0xC2 }, { OpEncoding::r, OpEncoding::m2 }, { Symbols::xmm, Symbols::xmm } }
         };
-        oplookup_x86["cmpunordss"] = {
+        oplookup_x86_64["cmpunordss"] = {
             { { 0xF3, 0x0F, 0xC2 }, { OpEncoding::r, OpEncoding::m3 }, { Symbols::xmm, Symbols::xmm } }
         };
-        oplookup_x86["cmpneqss"] = {
+        oplookup_x86_64["cmpneqss"] = {
             { { 0xF3, 0x0F, 0xC2 }, { OpEncoding::r, OpEncoding::m4 }, { Symbols::xmm, Symbols::xmm } }
         };
-        oplookup_x86["cmpnltss"] = {
+        oplookup_x86_64["cmpnltss"] = {
             { { 0xF3, 0x0F, 0xC2 }, { OpEncoding::r, OpEncoding::m5 }, { Symbols::xmm, Symbols::xmm } }
         };
-        oplookup_x86["cmpnless"] = {
+        oplookup_x86_64["cmpnless"] = {
             { { 0xF3, 0x0F, 0xC2 }, { OpEncoding::r, OpEncoding::m6 }, { Symbols::xmm, Symbols::xmm } }
         };
-        oplookup_x86["cmpordss"] = {
+        oplookup_x86_64["cmpordss"] = {
             { { 0xF3, 0x0F, 0xC2 }, { OpEncoding::r, OpEncoding::m7 }, { Symbols::xmm, Symbols::xmm } }
         };
     }
 
+    Assembler<TargetArchitecture::x86>::Assembler()
+    {
+        initTables(prelookup_x86_64, oplookup_x86_64);
+    }
+
+    Assembler<TargetArchitecture::x64>::Assembler()
+    {
+        initTables(prelookup_x86_64, oplookup_x86_64);
+    }
+
     // Parses and converts assembly code string directly to
     // a stream of bytes
-    ByteStream Assembler<TargetArchitecture::x86>::compile(const std::string& source, const uintptr_t offset)
+    ByteStream compile_x86_64(const std::string& source, std::unordered_map<std::string, uint8_t>& prelookup_x86_64, std::unordered_map<std::string, std::vector<BaseSet_x86_64::OpData>>& oplookup_x86_64, const uintptr_t offset, bool mode64)
     {
         ByteStream stream;
 
-        using Symbols = BaseSet_x86::Symbols;
-        using Operand = BaseSet_x86::Operand;
-        using OpEncoding = BaseSet_x86::OpEncoding;
-        using OpData = BaseSet_x86::OpData;
+        using Symbols = BaseSet_x86_64::Symbols;
+        using Operand = BaseSet_x86_64::Operand;
+        using OpEncoding = BaseSet_x86_64::OpEncoding;
+        using OpData = BaseSet_x86_64::OpData;
 
         Parser::Scope scope = Parser::compile<TargetArchitecture::x86>(source);
         Parser::Body mainBody = scope.bodies.front();
@@ -1731,7 +1743,7 @@ namespace Seraph
             return labels;
         };
 
-        auto findEntry = [](const std::vector<BaseSet_x86::OpEncoding>& entries, const BaseSet_x86::OpEncoding& enc)
+        auto findEntry = [](const std::vector<BaseSet_x86_64::OpEncoding>& entries, const BaseSet_x86_64::OpEncoding& enc)
         {
             if (entries.empty()) return false;
 
@@ -1841,7 +1853,7 @@ namespace Seraph
                             case '[':
                                 node.hasMod = true;
                                 node.modIndex = opIndex;
-                                operand.flags |= BaseSet_x86::OP_RM;
+                                operand.flags |= BaseSet_x86_64::OP_RM;
                                 operand.opmode = Symbols::rm32;
                                 rm = true;
                                 break;
@@ -1872,6 +1884,18 @@ namespace Seraph
                                     {
                                         operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
                                         node.bitSize = (node.bitSize == 0) ? 32 : node.bitSize;
+                                        parts.push_back("r32");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                    else if (token == Mnemonics::R64[i])
+                                    {
+                                        if (!mode64) throw std::exception("64-bit operands not supported");
+
+                                        operand.is64bit = true;
+
+                                        operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
+                                        node.bitSize = (node.bitSize == 0) ? 64 : node.bitSize;
                                         parts.push_back("r32");
                                         operand.regs.push_back(i);
                                         isReserved = true;
@@ -1930,7 +1954,7 @@ namespace Seraph
 
                                 bool isSegment = (token.find(":") != std::string::npos);
 
-                                if (token.length() <= 9 || isSegment)
+                                if (token.length() <= ((mode64) ? 17 : 9) || isSegment)
                                 {
                                     if (token.back() == 'h' || isSegment)
                                     {
@@ -1968,6 +1992,7 @@ namespace Seraph
                                 {
                                     if (!isSegment)
                                     {
+                                        if (token.length() <= 16) sizeNumber = 16;
                                         if (token.length() <= 8) sizeNumber = 8;
                                         if (token.length() <= 4) sizeNumber = 4;
                                         if (token.length() <= 2) sizeNumber = 2;
@@ -1979,33 +2004,45 @@ namespace Seraph
                                         {
                                         case 2:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm8;
-
                                             operand.imm8 = std::strtoul(token.c_str(), nullptr, 16);
+
                                             if (!parts.empty()) if (parts.back() == "-")
                                                 operand.imm8 = UINT8_MAX - operand.imm8 + 1; // invert sign
 
-                                            operand.flags |= BaseSet_x86::OP_IMM8;
+                                            operand.flags |= BaseSet_x86_64::OP_IMM8;
                                             parts.push_back("imm8");
                                             break;
                                         case 4:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm16;
-
                                             operand.imm16 = std::strtoul(token.c_str(), nullptr, 16);
+
                                             if (!parts.empty()) if (parts.back() == "-")
                                                 operand.imm16 = UINT16_MAX - operand.imm16 + 1; // invert sign
 
-                                            operand.flags |= BaseSet_x86::OP_IMM16;
+                                            operand.flags |= BaseSet_x86_64::OP_IMM16;
                                             parts.push_back("imm16");
                                             break;
                                         case 8:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm32;
-
                                             operand.imm32 = std::strtoul(token.c_str(), nullptr, 16);
+
                                             if (!parts.empty()) if (parts.back() == "-")
                                                 operand.imm32 = UINT32_MAX - operand.imm32 + 1; // invert sign
 
-                                            operand.flags |= BaseSet_x86::OP_IMM32;
+                                            operand.flags |= BaseSet_x86_64::OP_IMM32;
                                             parts.push_back("imm32");
+                                            break;
+                                        case 16:
+                                            if (!mode64) throw std::exception("64-bit values not supported");
+
+                                            operand.opmode = (rm) ? operand.opmode : Symbols::imm64;
+                                            operand.imm64 = std::strtoull(token.c_str(), nullptr, 16);
+
+                                            if (!parts.empty()) if (parts.back() == "-")
+                                                operand.imm64 = UINT64_MAX - operand.imm64 + 1; // invert sign
+
+                                            operand.flags |= BaseSet_x86_64::OP_IMM64;
+                                            parts.push_back("imm64");
                                             break;
                                         default: // Segment/Pointer Offset (Only supports hex)
                                         {
@@ -2013,7 +2050,7 @@ namespace Seraph
                                             operand.opmode = Symbols::ptr16_32;
                                             operand.disp16 = std::strtoul(token.substr(0, pos).c_str(), nullptr, 16);
                                             operand.imm32 = std::strtoul(token.substr(pos + 1, token.length() - (pos + 1)).c_str(), nullptr, 16);
-                                            operand.flags |= BaseSet_x86::OP_IMM16 | BaseSet_x86::OP_IMM32;
+                                            operand.flags |= BaseSet_x86_64::OP_IMM16 | BaseSet_x86_64::OP_IMM32;
                                             parts.push_back("ptr16_32");
                                             break;
                                         }
@@ -2025,33 +2062,45 @@ namespace Seraph
                                         {
                                         case 2:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm8;
-
                                             operand.imm8 = std::atoi(token.c_str());
+
                                             if (!parts.empty()) if (parts.back() == "-")
                                                 operand.imm8 = UINT8_MAX - operand.imm8 + 1;
 
-                                            operand.flags |= BaseSet_x86::OP_IMM8;
+                                            operand.flags |= BaseSet_x86_64::OP_IMM8;
                                             parts.push_back("imm8");
                                             break;
                                         case 4:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm16;
-
                                             operand.imm16 = std::atoi(token.c_str());
+
                                             if (!parts.empty()) if (parts.back() == "-")
                                                 operand.imm16 = UINT16_MAX - operand.imm16 + 1;
 
-                                            operand.flags |= BaseSet_x86::OP_IMM16;
+                                            operand.flags |= BaseSet_x86_64::OP_IMM16;
                                             parts.push_back("imm16");
                                             break;
                                         case 8:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm32;
-
                                             operand.imm32 = std::atoi(token.c_str());
+
                                             if (!parts.empty()) if (parts.back() == "-")
                                                 operand.imm32 = UINT32_MAX - operand.imm32 + 1;
 
-                                            operand.flags |= BaseSet_x86::OP_IMM32;
+                                            operand.flags |= BaseSet_x86_64::OP_IMM32;
                                             parts.push_back("imm32");
+                                            break;
+                                        case 16:
+                                            if (!mode64) throw std::exception("64-bit values not supported");
+
+                                            operand.opmode = (rm) ? operand.opmode : Symbols::imm64;
+
+                                            operand.imm64 = std::atoi(token.c_str());
+                                            if (!parts.empty()) if (parts.back() == "-")
+                                                operand.imm64 = UINT64_MAX - operand.imm64 + 1;
+
+                                            operand.flags |= BaseSet_x86_64::OP_IMM64;
+                                            parts.push_back("imm64");
                                             break;
                                         }
                                     }
@@ -2092,6 +2141,7 @@ namespace Seraph
                     case Symbols::r8:
                     case Symbols::r16:
                     case Symbols::r32:
+                    case Symbols::r64:
                     case Symbols::sreg:
                     case Symbols::sti:
                     case Symbols::cri:
@@ -2108,6 +2158,9 @@ namespace Seraph
                             break;
                         case Symbols::r32:
                             operand2->opmode = Symbols::rm32;
+                            break;
+                        case Symbols::r64:
+                            operand2->opmode = Symbols::rm64;
                             break;
                         case Symbols::mm:
                             operand2->opmode = Symbols::mm_m64;
@@ -2143,6 +2196,20 @@ namespace Seraph
                                 break;
                             }
                             break;
+                        case Symbols::rm64:
+                            switch (node.bitSize)
+                            {
+                            case 8:
+                                node.opData.operands[i].opmode = Symbols::rm8;
+                                break;
+                            case 16:
+                                node.opData.operands[i].opmode = Symbols::rm16;
+                                break;
+                            case 32:
+                                node.opData.operands[i].opmode = Symbols::rm32;
+                                break;
+                            }
+                            break;
                         }
                     }
                 }
@@ -2158,13 +2225,13 @@ namespace Seraph
 
                 // Look up the corresponding opcode information
                 // for our parsed opcode
-                for (auto lookup = oplookup_x86.begin(); lookup != oplookup_x86.end() && !solved; lookup++)
+                for (auto lookup = oplookup_x86_64.begin(); lookup != oplookup_x86_64.end() && !solved; lookup++)
                 {
                     if (lookup->first == node.opName)
                     {
                         for (const auto& opvariant : lookup->second)
                         {
-                            std::vector<BaseSet_x86::Operand> userOperands(node.opData.operands);
+                            std::vector<BaseSet_x86_64::Operand> userOperands(node.opData.operands);
 
                             reject = false;
 
@@ -2194,6 +2261,7 @@ namespace Seraph
                                             switch (opvariant.symbols[i])
                                             {
                                             case Symbols::rel8:
+                                                op->rel8 = op->imm8;
                                                 forceValidate = true;
                                                 break;
                                             }
@@ -2204,6 +2272,8 @@ namespace Seraph
                                             case Symbols::rel16:
                                             case Symbols::rel32:
                                             case Symbols::imm32:
+                                                op->rel16 = op->imm16;
+                                                op->rel32 = op->imm32;
                                                 forceValidate = true;
                                                 break;
                                             }
@@ -2212,17 +2282,38 @@ namespace Seraph
                                             switch (opvariant.symbols[i])
                                             {
                                             case Symbols::rel32:
+                                                op->rel32 = op->imm32;
                                                 forceValidate = true;
                                                 break;
                                             }
                                             break;
-
+                                        case Symbols::imm64:
+                                            switch (opvariant.symbols[i])
+                                            {
+                                            case Symbols::rm32: // we can use the r/m displacement mode
+                                                if (!node.hasMod && node.operands.size() == 1)
+                                                {
+                                                    op->opmode = Symbols::rm32;
+                                                    forceValidate = true;
+                                                }
+                                                break;
+                                            case Symbols::rel64:
+                                                op->rel64 = op->imm64;
+                                                forceValidate = true;
+                                                break;
+                                            case Symbols::imm32:
+                                                node.opPrefix = "x64";
+                                                forceValidate = true;
+                                                break;
+                                            }
+                                            break;
                                             // Backwards-compatible opmode/rm-opcode comparisons
                                             // so that we can calculate the correct r/m byte
                                             // depending on the opcode, and enable it to pass***
                                         case Symbols::rm8:
                                         case Symbols::rm16:
                                         case Symbols::rm32:
+                                        case Symbols::rm64:
                                             if (node.hasMod && op->regs.empty() && op->pattern.size() == 1)
                                             {
                                                 if (op->pattern.front() == "imm8" && opvariant.symbols[i] == Symbols::moffs8)
@@ -2243,6 +2334,13 @@ namespace Seraph
                                                     forceValidate = true;
                                                     break;
                                                 }
+                                                // 64-bit edit
+                                                else if (op->pattern.front() == "imm64" && (opvariant.symbols[i] == Symbols::moffs32 || opvariant.symbols[i] == Symbols::moffs64))
+                                                {
+                                                    op->opmode = Symbols::moffs64;
+                                                    forceValidate = true;
+                                                    break;
+                                                }
                                             }
 
                                             if (op->opmode == Symbols::rm16)
@@ -2255,7 +2353,7 @@ namespace Seraph
                                                     break;
                                                 }
                                             }
-                                            else if (op->opmode == Symbols::rm32)
+                                            else if (op->opmode == Symbols::rm32 || op->opmode == Symbols::rm64)
                                             {
                                                 switch (opvariant.symbols[i])
                                                 {
@@ -2278,7 +2376,31 @@ namespace Seraph
                                                     break;
                                                 }
                                             }
+                                            
+                                            // To-do: reimplement...
+                                            if (op->opmode == Symbols::rm64)
+                                            {
+                                                switch (opvariant.symbols[i])
+                                                {
+                                                case Symbols::r32:
+                                                case Symbols::r64:
+                                                case Symbols::rm32:
+                                                    forceValidate = true;
+                                                    break;
+                                                }
+                                            }
 
+                                            break;
+                                        // To-do: reimplement...
+                                        case Symbols::r64:
+                                            switch (opvariant.symbols[i])
+                                            {
+                                            case Symbols::r32:
+                                            case Symbols::rm32:
+                                            case Symbols::rm64:
+                                                forceValidate = true;
+                                                break;
+                                            }
                                             break;
                                         case Symbols::xmm:
                                             switch (opvariant.symbols[i])
@@ -2454,49 +2576,6 @@ namespace Seraph
                                         // + room for optimizing
                                         //
 
-
-                                        // Let's differentiate between relative32 values and imm32 values
-                                        // and the various sizes of imm values (by shifting them over)
-                                        switch (opvariant.symbols[i])
-                                        {
-                                        case Symbols::rel8:
-                                            op->opmode = Symbols::rel8;
-                                            op->rel8 = op->imm8;
-                                            op->imm8 = 0;
-                                            break;
-                                        case Symbols::rel16:
-                                            op->opmode = Symbols::rel16;
-                                            op->rel16 = op->imm16;
-                                            op->imm16 = 0;
-                                            break;
-                                        case Symbols::rel32:
-                                            op->opmode = Symbols::rel32;
-                                            op->rel32 = op->imm32;
-                                            op->imm32 = 0;
-                                            break;
-                                        case Symbols::imm32:
-                                            //switch (op->opmode)
-                                            //{
-                                                // To-do:
-                                                // User passed imm8 but this look-up opcode specifies a 32-bit value...
-                                                // We could make it use the next size up, but this should only be if
-                                                // an opcode doesn't exist for that imm size.
-                                            //case Symbols::imm8:
-                                            //    // Modify op flags to new imm size
-                                            //    op->imm32 = op->imm8;
-                                            //    op->opmode = Symbols::imm32;
-                                            //    op->imm8 = 0;
-                                            //    break;
-                                            //case Symbols::imm16:
-                                            //    // Modify op flags to new imm size
-                                            //    op->imm32 = op->imm16;
-                                            //    op->opmode = Symbols::imm32;
-                                            //    op->imm16 = 0;
-                                            //    break;
-                                            //}
-                                            break;
-                                        }
-
                                         //printf("%i (%s) == %i?\n", op->opmode, node.operands[i].c_str(), opvariant.symbols[i]);
 
                                         if (forceValidate)
@@ -2519,13 +2598,21 @@ namespace Seraph
 
                             solved = true;
 
-                            if (node.bitSize == 16)// && node.hasMod)
+                            switch (node.bitSize)
+                            {
+                            case 16:
                                 node.opPrefix = "66";
+                                break;
+                            case 64:
+                                if (findEntry(opvariant.entries, OpEncoding::r))
+                                    node.opPrefix = "x64";
+                                break;
+                            }
 
                             // Add the prefix flag
                             if (!node.opPrefix.empty())
-                                if (prelookup_x86.find(node.opPrefix) != prelookup_x86.end())
-                                    stream.add(prelookup_x86[node.opPrefix]);
+                                if (prelookup_x86_64.find(node.opPrefix) != prelookup_x86_64.end())
+                                    stream.add(prelookup_x86_64[node.opPrefix]);
 
                             const auto noperands = userOperands.size();
                             auto insCode = opvariant.code;
@@ -2618,17 +2705,19 @@ namespace Seraph
                                 // 
 
                                 bool hasSib = false;
-                                bool hasImm8 = false, hasImm16 = false, hasImm32 = false;
-                                bool hasDisp8 = false, hasDisp16 = false, hasDisp32 = false;
+                                bool hasImm8 = false, hasImm16 = false, hasImm32 = false, hasImm64 = false;
+                                bool hasDisp8 = false, hasDisp16 = false, hasDisp32 = false, hasDisp64 = false;
                                 bool useModByte = false;
 
                                 uint8_t imm8value = 0;
                                 uint16_t imm16value = 0;
                                 uint32_t imm32value = 0;
+                                uint64_t imm64value = 0;
 
                                 uint8_t disp8value = 0;
                                 uint16_t disp16value = 0;
                                 uint32_t disp32value = 0;
+                                uint64_t disp64value = 0;
 
                                 uint8_t modbyte = modenc;
                                 uint8_t sibbyte = 0;
@@ -2653,6 +2742,10 @@ namespace Seraph
                                         disp32value = op.imm32;
                                         hasDisp32 = true;
                                         break;
+                                    case Symbols::imm64:
+                                        disp64value = op.imm64;
+                                        hasDisp64 = true;
+                                        break;
                                     case Symbols::rel8:
                                         imm8value = op.rel8 - (offset + stream.size() + 1);
                                         hasImm8 = true;
@@ -2664,6 +2757,10 @@ namespace Seraph
                                     case Symbols::rel32:
                                         imm32value = op.rel32 - (offset + stream.size() + 4);
                                         hasImm32 = true;
+                                        break;
+                                    case Symbols::rel64:
+                                        imm64value = op.rel64 - (offset + stream.size() + 8);
+                                        hasImm64 = true;
                                         break;
                                     case Symbols::ptr16_32:
                                         disp16value = op.disp16;
@@ -2696,6 +2793,10 @@ namespace Seraph
                                         imm32value = op.imm32;
                                         hasImm32 = true;
                                         break;
+                                    case Symbols::moffs64:
+                                        imm64value = op.imm64;
+                                        hasImm64 = true;
+                                        break;
                                     case Symbols::cri:
                                     case Symbols::dri:
                                     case Symbols::sreg:
@@ -2704,6 +2805,7 @@ namespace Seraph
                                     case Symbols::r8:
                                     case Symbols::r16:
                                     case Symbols::r32:
+                                    case Symbols::r64:
                                         useModByte = true;
 
                                         if (!findEntry(opvariant.entries, OpEncoding::r))
@@ -2724,19 +2826,20 @@ namespace Seraph
                                     case Symbols::rm8:
                                     case Symbols::rm16:
                                     case Symbols::rm32:
+                                    case Symbols::rm64:
                                     case Symbols::mm_m32:
                                     case Symbols::mm_m64:
                                     case Symbols::xmm_m32:
                                     case Symbols::xmm_m64:
                                     case Symbols::xmm_m128:
                                         useModByte = true;
-                                        if (op.flags & BaseSet_x86::OP_IMM8)
+                                        if (op.flags & BaseSet_x86_64::OP_IMM8)
                                         {
                                             modenc = 1 << 6;
                                             imm8value = op.imm8;
                                             hasImm8 = true;
                                         }
-                                        else if (op.flags & BaseSet_x86::OP_IMM32)
+                                        else if (op.flags & BaseSet_x86_64::OP_IMM32)
                                         {
                                             if (op.regs.size() == 0)
                                                 modbyte += 5;
@@ -2745,6 +2848,18 @@ namespace Seraph
 
                                             imm32value = op.imm32;
                                             hasImm32 = true;
+                                        }
+                                        else if (op.flags & BaseSet_x86_64::OP_IMM64)
+                                        {
+                                            if (op.regs.size() == 0)
+                                                modbyte += 5;
+                                            else
+                                                modenc = 2 << 6;
+
+                                            imm32value = 0;
+                                            hasImm32 = true;
+                                            disp64value = op.imm64;
+                                            hasDisp64 = true;
                                         }
                                         else if (op.regs.size() == 1 && !node.hasMod)
                                         {
@@ -2759,7 +2874,7 @@ namespace Seraph
                                         switch (op.regs.size())
                                         {
                                         case 1:
-                                            if (op.regs.front() == static_cast<uint8_t>(BaseSet_x86::R32::ESP))
+                                            if (op.regs.front() == static_cast<uint8_t>(BaseSet_x86_64::R32::ESP))
                                             {
                                                 hasSib = true;
                                                 sibbyte += 0x24;
@@ -2803,6 +2918,13 @@ namespace Seraph
                                     stream.add(b);
                                 }
 
+                                if (hasImm64)
+                                {
+                                    std::vector<uint8_t> b = { 0, 0, 0, 0, 0, 0, 0, 0 };
+                                    memcpy(&b[0], &imm64value, 8);
+                                    stream.add(b);
+                                }
+
                                 if (hasDisp8)
                                     stream.add(disp8value);
 
@@ -2817,6 +2939,13 @@ namespace Seraph
                                 {
                                     std::vector<uint8_t> b = { 0, 0, 0, 0 };
                                     memcpy(&b[0], &disp32value, 4);
+                                    stream.add(b);
+                                }
+
+                                if (hasDisp64)
+                                {
+                                    std::vector<uint8_t> b = { 0, 0, 0, 0, 0, 0, 0, 0 };
+                                    memcpy(&b[0], &disp64value, 8);
                                     stream.add(b);
                                 }
                             }
@@ -2850,10 +2979,19 @@ namespace Seraph
     }
 
 
-
-    BaseSet_x64::Opcode Disassembler<TargetArchitecture::x64>::readNext()
+    ByteStream Assembler<TargetArchitecture::x86>::compile(const std::string& source, const uintptr_t offset)
     {
-        BaseSet_x64::Opcode opcode;
+        return compile_x86_64(source, prelookup_x86_64, oplookup_x86_64, offset, false);
+    }
+
+    ByteStream Assembler<TargetArchitecture::x64>::compile(const std::string& source, const uintptr_t offset)
+    {
+        return compile_x86_64(source, prelookup_x86_64, oplookup_x86_64, offset, true);
+    }
+
+    BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x64>::readNext()
+    {
+        BaseSet_x86_64::Opcode opcode;
 
         return opcode;
     }
