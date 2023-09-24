@@ -62,7 +62,7 @@ retn
 	}
 	catch (std::exception e)
 	{
-		printf("Exception: %s\n", e.what());
+		printf("Error: %s\n", e.what());
 	}
 
 
