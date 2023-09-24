@@ -42,21 +42,31 @@ Take the following code:<br>
 int main()
 {
 	Seraph::Assembler<Seraph::TargetArchitecture::x86> assembler;
-	Seraph::ByteStream stream = assembler.compile(R"(
+	Seraph::ByteStream stream;
+
+	try
+	{
+		stream = assembler.compile(R"(
 push ebp
 mov ebp, esp
 mov eax, [ebp+08h]
 add eax, dword ptr[ebp+0Ch]
 pop ebp
 retn
-	)");
+		)", 0);
 	
-	printf("\nOutput: \n\n");
-	while (stream.good())
-		printf("%02X ", stream.next());
-	printf("\n");
+		printf("\nOutput: \n\n");
+		while (stream.good())
+			printf("%02X ", stream.next());
+		printf("\n");
+	}
+	catch (std::exception e)
+	{
+		printf("Exception: %s\n", e.what());
+	}
+
+
 	system("pause");
- 	
 	return 0;
 }
 ```
