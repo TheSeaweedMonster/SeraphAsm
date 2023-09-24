@@ -15,26 +15,18 @@ Release date: N/A<br>
 Percentage of progress/completion: 40%<br>
 
 CURRENTLY SUPPORTS ASSEMBLING FOR X86 AND X64!<br>
-The rest is currently under development. For more information, see Release Notes!<br>
+For more information, see Release Notes!<br>
 
 I am open to contributions (please give credit where due,<br>
 if this has been forked or modified. Thanks!)<br>
 
 # Release Notes
 
-Currently, compilation for x86 assembly is finished, while x64 is under development.<br>
-All opcodes are supported, however testing is needed.<br>
+Currently, compilation for x86 assembly is finished, and x64 is <br>
+under development but mostly supported.<br>
 
 Please report any problems or incorrect outputs<br>
-It is much appreciated so I can fine-tune the compilation output.<br>
-
-The next step will be to optionally compile for individual segments,<br>
-and later to fully compile assembly code into an executable program.<br>
-
-After this, I will try to add support for x64 assembly/opcode compilation.<br>
-
-And finally, I will start writing a complete disassembler<br>
-for both x86 and x64 asm.<br>
+It's highly appreciated and allows me to improve the output.<br>
 
 # Pros/Cons
 
@@ -48,9 +40,7 @@ being a reference file in the project directory.<br>
 However, that means SeraphAsm will generate a bit of code.<br>
 This isnt much of a problem if you aren't overly concerned about project size or compilation speed.<br>
 
-
-
-# Documentation
+# Documentation (x86)
 
 Here we'll go over some examples of this API's usage.<br>
 First, let's cover the assembler.<br>
@@ -117,7 +107,13 @@ extra control.<br>
 
 I will document the rest of the ByteStream class eventually.<br>
 
-Let's take a look at compiling x64 assembly:<br>
+
+# Documentation (x64)
+
+Let's take a look at compiling x64 assembly.<br>
+To do this we need to initialize a 64 bit Assembler.<br>
+Simply pass TargetArchitecture::x64 as an enum in the template, rather than x86.<br>
+Now it will compile 64 bit assembly code:<br>
 
 ```
 	Seraph::Assembler<Seraph::TargetArchitecture::x64> assembler;
@@ -148,8 +144,12 @@ retn
 	}
 ```
 
-All we have to do here is create a 64-bit assembler under the TargetArchitecture::x64 template instead.<br>
 Easy peazy! :-)<br>
+Notice, for relative values (such as `jmp AF001F0000h`), we need to provide an offset for it to jump relative to.<br>
+This is solved with the "offset" parameter of the compile function.<br>
+
+That's all I got for right now :)<br>
+
 
 
 DM for more information: jayyy#5764<br>
