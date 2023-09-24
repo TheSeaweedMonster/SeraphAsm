@@ -19,12 +19,19 @@ if this has been forked or modified. thanks!)<br>
 
 # Release Notes
 
-Currently, compilation for x86 assembly is (technically) done.<br>
-Support for all opcodes is almost complete. I estimate<br>
-that it's 80% done.<br>
+Currently, compilation for x86 assembly is finished.<br>
+All opcodes are supported<br>
 
-Next step will be to write the disassembler for x86.<br>
-From there on, I will transpose both of these to x64.<br>
+Please report any problems or incorrect outputs<br>
+It is much appreciated so I can fine-tune the compilation output.<br>
+
+The next step will be to optionally compile for individual segments,<br>
+and later to fully compile assembly code into an executable program.<br>
+
+After this, I will try to add support for x64 assembly/opcode compilation.<br>
+
+And finally, I will start writing a complete disassembler<br>
+for both x86 and x64 asm.<br>
 
 
 
