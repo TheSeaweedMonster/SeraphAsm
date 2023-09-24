@@ -33,6 +33,17 @@ After this, I will try to add support for x64 assembly/opcode compilation.<br>
 And finally, I will start writing a complete disassembler<br>
 for both x86 and x64 asm.<br>
 
+# Pros/Cons
+
+SeraphAsm uses a hard-coded lookup table for identifying opcodes, which gets initialized<br>
+in the constructor for the "Assembler" class.<br>
+This is faster and a lot less tedious than parsing all of the opcodes/opmode information<br>
+from a separate file. It also means we don't need to format the file or worry about there<br>
+being a reference file in the project directory.<br>
+
+However, this tends to generate a bit of code.<br>
+This isnt much of a problem if the api is used in a smaller application<br>
+or if you arent that concerned about compile time<br>
 
 
 
