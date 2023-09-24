@@ -12,7 +12,7 @@ Features:<br>
 ✔️ Open-sourced<br>
 
 Release date: N/A<br>
-Percentage of progress/completion: 40%<br>
+Percentage of progress/completion: 50%<br>
 
 CURRENTLY SUPPORTS ASSEMBLING FOR X86 AND X64!<br>
 Disassembly not yet supported!
