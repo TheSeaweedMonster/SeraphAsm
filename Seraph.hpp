@@ -126,11 +126,12 @@ namespace Seraph
         T_OP dest() { return (operands.size() < 2) ? T_OP() : operands[1]; };
     };
 
-    struct BaseSet_x86
+    struct BaseSet_x86_64
     {
         enum class R8 : const uint8_t  { NotSet = -1, AH, AL, CH, CL, DH, DL, BH, BL /* SPL, BPL, SIL, DIL */ };
         enum class R16 : const uint8_t { NotSet = -1, AX, CX, DX, BX, SP, BP, SI, DI };
         enum class R32 : const uint8_t { NotSet = -1, EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI };
+        enum class R64 : const uint8_t { NotSet = 255u, RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI };
 
         // Prefix flags for the user
         static const uint16_t PRE_REPNE     = 0x0001;
@@ -152,6 +153,7 @@ namespace Seraph
         static const uint8_t B_REPE         = 0xF3;
         static const uint8_t B_66           = 0x66;
         static const uint8_t B_67           = 0x67;
+        static const uint8_t B_X64          = 0x48;
         static const uint8_t B_SEG_CS       = 0x2E;
         static const uint8_t B_SEG_SS       = 0x36;
         static const uint8_t B_SEG_DS       = 0x3E;
@@ -168,18 +170,21 @@ namespace Seraph
         static const uint32_t OP_IMM8       = 0x00000010;
         static const uint32_t OP_IMM16      = 0x00000020;
         static const uint32_t OP_IMM32      = 0x00000040;
-        static const uint32_t OP_DISP8      = 0x00000080;
-        static const uint32_t OP_DISP16     = 0x00000100;
-        static const uint32_t OP_DISP32     = 0x00000200;
-        static const uint32_t OP_R8         = 0x00000400;
-        static const uint32_t OP_R16        = 0x00000800;
-        static const uint32_t OP_R32        = 0x00001000;
-        static const uint32_t OP_XMM        = 0x00004000;
-        static const uint32_t OP_MM         = 0x00008000;
-        static const uint32_t OP_ST         = 0x00010000;
-        static const uint32_t OP_SREG       = 0x00020000;
-        static const uint32_t OP_DR         = 0x00040000;
-        static const uint32_t OP_CR         = 0x00080000;
+        static const uint32_t OP_IMM64      = 0x00000080;
+        static const uint32_t OP_DISP8      = 0x00000100;
+        static const uint32_t OP_DISP16     = 0x00000200;
+        static const uint32_t OP_DISP32     = 0x00000400;
+        static const uint32_t OP_DISP64     = 0x00000800;
+        static const uint32_t OP_R8         = 0x00001000;
+        static const uint32_t OP_R16        = 0x00002000;
+        static const uint32_t OP_R32        = 0x00004000;
+        static const uint32_t OP_R64        = 0x00008000;
+        static const uint32_t OP_XMM        = 0x00010000;
+        static const uint32_t OP_MM         = 0x00020000;
+        static const uint32_t OP_ST         = 0x00040000;
+        static const uint32_t OP_SREG       = 0x00080000;
+        static const uint32_t OP_DR         = 0x00100000;
+        static const uint32_t OP_CR         = 0x00200000;
 
         enum class Symbols
         {
@@ -208,6 +213,14 @@ namespace Seraph
             ebp,
             esi,
             edi,
+            rax,            // 64-bit registers
+            rcx,
+            rdx,
+            rbx,
+            rsp,
+            rbp,
+            rsi,
+            rdi,
             cs,             // Segment registers
             ds,
             es,
@@ -222,17 +235,21 @@ namespace Seraph
             rel8,           // A relative address in the range from 128 bytes before the end of the instruction to 127 bytes after the end of the instruction
             rel16,          // A 16-bit relative address within the same code segment as the instruction.
             rel32,          // A 32-bit relative address within the same code segment as the instruction.
+            rel64,          // ### x64 mode ###
             ptr16_16,       // A far pointer; The value on the left is a 16-bit selector or value destined for the code segment reg. The value to the right corresponds to the offset within the destination segment
             ptr16_32,       // A far pointer; Same as ptr16_16 but with a 32-bit offset
             r8,             // One of the byte general-purpose registers AL, CL, DL, BL, AH, CH, DH, or BH.
             r16,            // One of the word general-purpose registers AX, CX, DX, BX, SP, BP, SI, or DI.
             r32,            // One of the doubleword general-purpose registers EAX, ECX, EDX, EBX, ESP, EBP, ESI, or EDI.
+            r64,            // ### x64 Mode ###
             imm8,           // An immediate byte value -- a signed number between –128 and +127 inclusive.
             imm16,          // An immediate word value between –32,768 and +32,767 inclusive. 
             imm32,          // An immediate doubleword value between +2,147,483,647 and –2,147,483,648 inclusive.
+            imm64,          // ### x64 Mode ###
             rm8,            // A byte operand that is either the contents of a byte general-purpose register (AL, BL, CL, DL, AH, BH, CH, and DH), or a byte from memory.
             rm16,           // A word general-purpose register or memory operand (AX, BX, CX, DX, SP, BP, SI, and DI).
             rm32,           // A doubleword general-purpose register or memory operand (EAX, EBX, ECX, EDX, ESP, EBP, ESI, and EDI).
+            rm64,            // ### x64 Mode ###
             m,              // A 16- or 32-bit operand in memory
             m8,             // A byte operand in memory, usually expressed as a variable or array name, but pointed to by the DS:(E)SI or ES:(E)DI registers. This nomenclature is used only with the string instructions and the XLAT instruction.
             m16,            // A word operand in memory, usually expressed as a variable or array name, but pointed to by the DS:(E)SI or ES:(E)DI registers. This nomenclature is used only with the string instructions.
@@ -252,6 +269,7 @@ namespace Seraph
             moffs8,         // A simple memory variable (memory offset) of type byte, word, or doubleword used by some variants of the MOV instruction.  The actual address is given by a simple offset relative to the segment base. No ModR/M byte is used.
             moffs16,        // ^ 16 bit
             moffs32,        // ^ 32 bit
+            moffs64,        // ### x64 Mode ###
             sreg,           // A segment register. The segment register bit assignments are ES=0, CS=1, SS=2, DS=3, FS=4, and GS=5
             m32real,        // A single-, double-, and extended-real (respectively*) floating-point operand in memory
             m64real,        // *
@@ -329,13 +347,14 @@ namespace Seraph
         {
             std::vector<uint8_t> code = {};
             std::vector<OpEncoding> entries = {};
-            std::vector<BaseSet_x86::Symbols> symbols = {};
+            std::vector<BaseSet_x86_64::Symbols> symbols = {};
         };
 
         struct Operand
         {
             uint32_t flags = 0;
             Symbols opmode = Symbols::not_set;
+            uint8_t is64bit = 0;
             uint8_t mul = 0;
             std::vector<uint8_t> regs = {};
             std::vector<std::string> pattern = {}; // reserved
@@ -344,27 +363,25 @@ namespace Seraph
                 uint8_t imm8;
                 uint16_t imm16;
                 uint32_t imm32;
+                uint64_t imm64;
             };
             union
             {
                 uint8_t rel8;
                 uint16_t rel16;
                 uint32_t rel32;
+                uint64_t rel64;
             };
             union
             {
                 uint8_t disp8;
                 uint16_t disp16;
                 uint32_t disp32;
+                uint64_t disp64;
             };
         };
 
         typedef GenericOpcode<Operand> Opcode;
-    };
-
-    struct BaseSet_x64 : public BaseSet_x86
-    {
-        enum class R64 : const uint8_t { NotSet = 255u, RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI };
     };
 
     struct BaseSet_ARM
@@ -394,10 +411,10 @@ namespace Seraph
 
         // Used to identify the correct bytecode to use
         // based on the instruction's name, type and format(s)
-        std::unordered_map<std::string, std::vector<BaseSet_x86::OpData>> oplookup_x86;
+        std::unordered_map<std::string, std::vector<BaseSet_x86_64::OpData>> oplookup_x86_64;
 
         // Used to identify the correct prefix bytecode to use
-        std::unordered_map<std::string, uint8_t> prelookup_x86;
+        std::unordered_map<std::string, uint8_t> prelookup_x86_64;
     public:
         Assembler();
 
@@ -442,7 +459,7 @@ namespace Seraph
         Disassembler(const uintptr_t _address, const ByteStream& _stream) : offset(_address), stream(_stream), options(DisassemblyOptions::Default) { void(); };
         Disassembler(const uintptr_t _address, const ByteStream& _stream, const DisassemblyOptions& _options) : offset(_address), stream(_stream), options(_options) { void(); };
 
-        BaseSet_x86::Opcode readNext();
+        BaseSet_x86_64::Opcode readNext();
 	};
 
     template <>
@@ -457,7 +474,7 @@ namespace Seraph
         Disassembler(const ByteStream& _stream) : stream(_stream), options(DisassemblyOptions::Default) {};
         Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options) : stream(_stream), options(_options) { };
 
-        BaseSet_x64::Opcode readNext();
+        BaseSet_x86_64::Opcode readNext();
     };
 
     template <>
