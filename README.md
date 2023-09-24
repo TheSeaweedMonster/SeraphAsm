@@ -37,13 +37,13 @@ for both x86 and x64 asm.<br>
 
 SeraphAsm uses a hard-coded lookup table for identifying opcodes, which gets initialized<br>
 in the constructor for the "Assembler" class.<br>
-This is faster and a lot less tedious than parsing all of the opcodes/opmode information<br>
-from a separate file. It also means we don't need to format the file or worry about there<br>
+
+This is faster and less tedious than parsing all of the opcodes/information<br>
+from a separate file. It also means we don't need a separate format or worry about there<br>
 being a reference file in the project directory.<br>
 
-However, this tends to generate a bit of code.<br>
-This isnt much of a problem if the api is used in a smaller application<br>
-or if you arent that concerned about compile time<br>
+However, that means SeraphAsm will generate a bit of code.<br>
+This isnt much of a problem if you aren't overly concerned about project size or compile time.<br>
 
 
 
