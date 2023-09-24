@@ -264,6 +264,7 @@ namespace Seraph
             st0,            // (or ST) - The top element of the FPU register stack.
             sti,            // The ith element from the top of the FPU register stack. (i = 0 through 7)
             mm,             // An MMX™ technology register. The 64-bit MMX™ technology registers are: MM0 through MM7
+            mm2,            // Indicates the instruction uses xmm register(s) and does not use mod. (0xC0+)
             xmm,            // A SIMD floating-point register. The 128-bit SIMD floating-point registers are: XMM0 through XMM7.
             xmm2,           // Indicates the instruction uses xmm register(s) and does not use mod. (0xC0+)
             mm_m32,         // The low order 32 bits of an MMX™ technology register or a 32-bit memory operand. The 64-bit MMX™ technology registers are: MM0 through MM7
@@ -277,6 +278,8 @@ namespace Seraph
             m512byte        // used with FXSAVE/FXRSTOR
         };
 
+        // To-do: some of these encodings are redundant and indicated by
+        // the format of the instruction
         enum class OpEncoding
         {
             // Placeholder -- No format used.
@@ -324,9 +327,9 @@ namespace Seraph
 
         struct OpData
         {
-            std::vector<uint8_t> code;
-            std::vector<OpEncoding> entries;
-            std::vector<BaseSet_x86::Symbols> symbols;
+            std::vector<uint8_t> code = {};
+            std::vector<OpEncoding> entries = {};
+            std::vector<BaseSet_x86::Symbols> symbols = {};
         };
 
         struct Operand
@@ -334,8 +337,8 @@ namespace Seraph
             uint32_t flags = 0;
             Symbols opmode = Symbols::not_set;
             uint8_t mul = 0;
-            std::vector<uint8_t> regs;
-            std::vector<std::string> pattern; // reserved
+            std::vector<uint8_t> regs = {};
+            std::vector<std::string> pattern = {}; // reserved
             union
             {
                 uint8_t imm8;
