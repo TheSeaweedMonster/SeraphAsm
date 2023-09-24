@@ -15,7 +15,7 @@ Release date: N/A<br>
 Percentage of progress/completion: 40%<br>
 
 CURRENTLY SUPPORTS ASSEMBLING FOR X86!<br>
-The rest is currently under development. For more information, keep reading.<br>
+The rest is currently under development. For more information, see Release Notes!<br>
 
 I am open to contributions (please give credit where due,<br>
 if this has been forked or modified. Thanks!)<br>
