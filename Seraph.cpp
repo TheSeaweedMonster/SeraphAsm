@@ -40,6 +40,10 @@ namespace Seraph
         static const std::vector<std::string> R16 = { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di" };
         static const std::vector<std::string> R32 = { "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi" };
         static const std::vector<std::string> R64 = { "rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi" };
+        static const std::vector<std::string> R8ext = { "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b" };
+        static const std::vector<std::string> R16ext = { "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w" };
+        static const std::vector<std::string> R32ext = { "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d" };
+        static const std::vector<std::string> R64ext = { "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15" };
         static const std::vector<std::string> SREG = { "es", "cx", "ss", "ds", "fs", "gs", "hs", "is" };
         static const std::vector<std::string> STI = { "st0", "st1", "st2", "st3", "st4", "st5", "st6", "st7" };
         static const std::vector<std::string> CRI = { "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7" };
@@ -313,6 +317,7 @@ namespace Seraph
         prelookup_x86_64["66"] = BaseSet_x86_64::B_66;
         prelookup_x86_64["67"] = BaseSet_x86_64::B_67;
         prelookup_x86_64["x64"] = BaseSet_x86_64::B_X64;
+        prelookup_x86_64["x64ext"] = BaseSet_x86_64::B_X64EXT;
         prelookup_x86_64["repne"] = BaseSet_x86_64::B_REPNE;
         prelookup_x86_64["repe"] = BaseSet_x86_64::B_REPE;
         prelookup_x86_64["rep"] = BaseSet_x86_64::B_REPE;
@@ -1872,8 +1877,32 @@ namespace Seraph
                                         operand.regs.push_back(i);
                                         isReserved = true;
                                     }
+                                    else if (token == Mnemonics::R8ext[i])
+                                    {
+                                        if (!mode64) throw std::exception("64-bit operands not supported");
+
+                                        operand.regExt = true;
+
+                                        operand.opmode = (rm) ? Symbols::rm8 : Symbols::r8;
+                                        node.bitSize = (node.bitSize == 0) ? 8 : node.bitSize;
+                                        parts.push_back("r8");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
                                     else if (token == Mnemonics::R16[i])
                                     {
+                                        operand.opmode = (rm) ? Symbols::rm16 : Symbols::r16;
+                                        node.bitSize = (node.bitSize == 0) ? 16 : node.bitSize;
+                                        parts.push_back("r16");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                    else if (token == Mnemonics::R16ext[i])
+                                    {
+                                        if (!mode64) throw std::exception("64-bit operands not supported");
+
+                                        operand.regExt = true;
+
                                         operand.opmode = (rm) ? Symbols::rm16 : Symbols::r16;
                                         node.bitSize = (node.bitSize == 0) ? 16 : node.bitSize;
                                         parts.push_back("r16");
@@ -1888,11 +1917,33 @@ namespace Seraph
                                         operand.regs.push_back(i);
                                         isReserved = true;
                                     }
+                                    else if (token == Mnemonics::R32ext[i])
+                                    {
+                                        if (!mode64) throw std::exception("64-bit operands not supported");
+
+                                        operand.regExt = true;
+
+                                        operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
+                                        node.bitSize = (node.bitSize == 0) ? 32 : node.bitSize;
+                                        parts.push_back("r32");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
                                     else if (token == Mnemonics::R64[i])
                                     {
                                         if (!mode64) throw std::exception("64-bit operands not supported");
 
-                                        operand.is64bit = true;
+                                        operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
+                                        node.bitSize = (node.bitSize == 0) ? 64 : node.bitSize;
+                                        parts.push_back("r32");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
+                                    else if (token == Mnemonics::R64ext[i])
+                                    {
+                                        if (!mode64) throw std::exception("64-bit operands not supported");
+
+                                        operand.regExt = true;
 
                                         operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
                                         node.bitSize = (node.bitSize == 0) ? 64 : node.bitSize;
@@ -2220,8 +2271,7 @@ namespace Seraph
 
             if (node.type == Parser::Node::NodeType::AsmNode)
             {
-                bool reject, solved = false;
-                bool isModOpcode = false;
+                bool hasExtRegs, reject, solved = false;
 
                 // Look up the corresponding opcode information
                 // for our parsed opcode
@@ -2234,6 +2284,7 @@ namespace Seraph
                             std::vector<BaseSet_x86_64::Operand> userOperands(node.opData.operands);
 
                             reject = false;
+                            hasExtRegs = false;
 
                             // Test the operands tied to this opcode, if there are any
                             if (!userOperands.empty())
@@ -2250,6 +2301,9 @@ namespace Seraph
                                         // NOTE: this is a DUPLICATE of the opcode we are using, in this instance.
                                         // Se we can make direct changes to the opcode's type or values
                                         auto op = &userOperands[i];
+
+                                        if (op->regExt)
+                                            hasExtRegs = true;
 
                                         switch (op->opmode)
                                         {
@@ -2606,8 +2660,12 @@ namespace Seraph
                             case 64:
                                 if (findEntry(opvariant.entries, OpEncoding::r))
                                     node.opPrefix = "x64";
+
                                 break;
                             }
+
+                            if (hasExtRegs)
+                                node.opPrefix = "x64ext";
 
                             // Add the prefix flag
                             if (!node.opPrefix.empty())
