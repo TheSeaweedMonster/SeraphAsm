@@ -14,7 +14,7 @@ Features:<br>
 Expected finish date: 10/10/23<br>
 Percentage completion: 50%<br>
 
-Disassembly is not supported yet!
+Disassembly is not supported yet!<br>
 For more information, see Release Notes<br>
 
 I am open to contributions (please give credit where due,<br>
@@ -22,7 +22,7 @@ if this has been forked or modified. Thanks!)<br>
 
 # Release Notes
 
-Currently, compilation for x86 and x64 assembly is finished.
+Currently, compilation for x86 and x64 assembly is finished.<br>
 However x64 may need some further refinement and testing.<br>
 
 Please report any problems or incorrect output.<br>
