@@ -1,6 +1,6 @@
 # SeraphAsm
 
-Functional disassembler and assembler for both x86, x64, and ARM.<br>
+Functional disassembler and assembler for both x86, x64, and possibly ARM/ARM64.<br>
 Language: <b>C++</b><br>
 
 Features:<br>
