@@ -151,6 +151,9 @@ namespace Seraph
         static const uint8_t B_LOCK         = 0xF0;
         static const uint8_t B_REPNE        = 0xF2;
         static const uint8_t B_REPE         = 0xF3;
+        static const uint8_t B_41           = 0x41;
+        static const uint8_t B_44           = 0x44;
+        static const uint8_t B_45           = 0x45;
         static const uint8_t B_66           = 0x66;
         static const uint8_t B_67           = 0x67;
         static const uint8_t B_X64          = 0x48;
@@ -456,10 +459,8 @@ namespace Seraph
     public:
         Disassembler() : offset(0), stream(), options(DisassemblyOptions::Default) { void(); };
         Disassembler(const ByteStream& _stream) : offset(0), stream(_stream), options(DisassemblyOptions::Default) { void(); };
-        Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options) : offset(0), stream(_stream), options(_options) { void(); };
-        Disassembler(const uintptr_t _address, const ByteStream& _stream) : offset(_address), stream(_stream), options(DisassemblyOptions::Default) { void(); };
-        Disassembler(const uintptr_t _address, const ByteStream& _stream, const DisassemblyOptions& _options) : offset(_address), stream(_stream), options(_options) { void(); };
-
+        Disassembler(const ByteStream& _stream, const uintptr_t _address) : offset(_address), stream(_stream), options(DisassemblyOptions::Default) { void(); };
+        
         BaseSet_x86_64::Opcode readNext();
 	};
 
@@ -469,11 +470,12 @@ namespace Seraph
     protected:
         DisassemblyOptions options;
         ByteStream stream;
+        uintptr_t offset;
         int pos = 0;
     public:
-        Disassembler(void) = default;
-        Disassembler(const ByteStream& _stream) : stream(_stream), options(DisassemblyOptions::Default) {};
-        Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options) : stream(_stream), options(_options) { };
+        Disassembler() : offset(0), stream(), options(DisassemblyOptions::Default) { void(); };
+        Disassembler(const ByteStream& _stream) : offset(0), stream(_stream), options(DisassemblyOptions::Default) { void(); };
+        Disassembler(const ByteStream& _stream, const uintptr_t _address) : offset(_address), stream(_stream), options(DisassemblyOptions::Default) { void(); };
 
         BaseSet_x86_64::Opcode readNext();
     };
