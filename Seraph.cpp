@@ -2878,7 +2878,7 @@ namespace Seraph
                                     case Symbols::mm2:
                                     case Symbols::xmm2:
                                         useModByte = true;
-                                        modenc = 3 << 6;
+                                        modenc = 3 << 6; // restricted to one mode (3rd)
                                         modbyte += op.regs.front();
                                         break;
                                     case Symbols::rm8:
@@ -2964,21 +2964,21 @@ namespace Seraph
 
                                 if (hasImm16)
                                 {
-                                    std::vector<uint8_t> b = { 0, 0 };
+                                    std::vector<uint8_t> b(2, 0);
                                     memcpy(&b[0], &imm16value, 2);
                                     stream.add(b);
                                 }
 
                                 if (hasImm32)
                                 {
-                                    std::vector<uint8_t> b = { 0, 0, 0, 0 };
+                                    std::vector<uint8_t> b(4, 0);
                                     memcpy(&b[0], &imm32value, 4);
                                     stream.add(b);
                                 }
 
                                 if (hasImm64)
                                 {
-                                    std::vector<uint8_t> b = { 0, 0, 0, 0, 0, 0, 0, 0 };
+                                    std::vector<uint8_t> b(8, 0);
                                     memcpy(&b[0], &imm64value, 8);
                                     stream.add(b);
                                 }
@@ -2988,21 +2988,21 @@ namespace Seraph
 
                                 if (hasDisp16)
                                 {
-                                    std::vector<uint8_t> b = { 0, 0 };
+                                    std::vector<uint8_t> b(2, 0);
                                     memcpy(&b[0], &disp16value, 2);
                                     stream.add(b);
                                 }
 
                                 if (hasDisp32)
                                 {
-                                    std::vector<uint8_t> b = { 0, 0, 0, 0 };
+                                    std::vector<uint8_t> b(4, 0);
                                     memcpy(&b[0], &disp32value, 4);
                                     stream.add(b);
                                 }
 
                                 if (hasDisp64)
                                 {
-                                    std::vector<uint8_t> b = { 0, 0, 0, 0, 0, 0, 0, 0 };
+                                    std::vector<uint8_t> b(8, 0);
                                     memcpy(&b[0], &disp64value, 8);
                                     stream.add(b);
                                 }
