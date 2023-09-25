@@ -11,11 +11,10 @@ Features:<br>
 ⏳ Memory-editing utilities for both internal and external application<br>
 ✔️ Open-sourced<br>
 
-Release date: N/A<br>
-Percentage of progress/completion: 50%<br>
+Expected finish date: 10/10/23<br>
+Percentage completion: 50%<br>
 
-CURRENTLY SUPPORTS ASSEMBLING FOR X86 AND X64!<br>
-Disassembly not yet supported!
+Disassembly is not supported yet!
 For more information, see Release Notes<br>
 
 I am open to contributions (please give credit where due,<br>
@@ -23,11 +22,11 @@ if this has been forked or modified. Thanks!)<br>
 
 # Release Notes
 
-Currently, compilation for x86 assembly is finished, and x64 is <br>
-under development but mostly supported.<br>
+Currently, compilation for x86 and x64 assembly is finished.
+However x64 may need some further refinement and testing.<br>
 
-Please report any problems or incorrect outputs<br>
-It's highly appreciated and allows me to improve the output.<br>
+Please report any problems or incorrect output.<br>
+It's highly appreciated and it allows me to make improvements.<br>
 
 # Pros/Cons
 
@@ -38,8 +37,8 @@ This is faster and less tedious than parsing all of the opcodes/information<br>
 from a separate file. It also means we don't need a separate format or worry about there<br>
 being a reference file in the project directory.<br>
 
-However, that means SeraphAsm will generate a bit of code.<br>
-This isnt much of a problem if you aren't overly concerned about project size or compilation speed.<br>
+However, that means SeraphAsm will generate quite a bit of code.<br>
+This isnt much of a problem if you aren't concerned about project size or compilation speed.<br>
 
 # Documentation (x86)
 
