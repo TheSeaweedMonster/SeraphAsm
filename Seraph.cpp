@@ -50,14 +50,28 @@ namespace Seraph
         static const std::vector<std::string> DRI = { "dr0", "dr1", "dr2", "dr3", "dr4", "dr5", "dr6", "dr7" };
         static const std::vector<std::string> MM = { "mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7" };
         static const std::vector<std::string> XMM = { "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7" };
+        static const std::vector<std::string> XMMext = { "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15" };
     };
-
 
     BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x86>::readNext()
     {
         BaseSet_x86_64::Opcode opcode;
 
         // Coming soon!
+
+        return opcode;
+    }
+
+    BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x64>::readNext()
+    {
+        BaseSet_x86_64::Opcode opcode;
+
+        return opcode;
+    }
+
+    BaseSet_ARM::Opcode Disassembler<TargetArchitecture::ARM>::readNext()
+    {
+        BaseSet_ARM::Opcode opcode;
 
         return opcode;
     }
@@ -86,6 +100,7 @@ namespace Seraph
             };
 
             std::string opPrefix = "";
+            std::string opPrefix2 = "";
             std::string opName = "";
             std::string label = "";
 
@@ -314,6 +329,9 @@ namespace Seraph
         prelookup_x86_64 = std::unordered_map<std::string, uint8_t>();
 
         prelookup_x86_64["lock"] = BaseSet_x86_64::B_LOCK;
+        prelookup_x86_64["41"] = BaseSet_x86_64::B_41;
+        prelookup_x86_64["44"] = BaseSet_x86_64::B_44;
+        prelookup_x86_64["45"] = BaseSet_x86_64::B_45;
         prelookup_x86_64["66"] = BaseSet_x86_64::B_66;
         prelookup_x86_64["67"] = BaseSet_x86_64::B_67;
         prelookup_x86_64["x64"] = BaseSet_x86_64::B_X64;
@@ -1218,7 +1236,7 @@ namespace Seraph
             { { 0x0F, 0x11 }, { OpEncoding::r }, { Symbols::xmm_m128, Symbols::xmm } }
         };
         oplookup_x86_64["movhlps"] = {
-            { { 0x0F, 0x12 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm2 } }
+            { { 0x0F, 0x12 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm } } // xmm, xmm2
         };
         oplookup_x86_64["movlps"] = {
             { { 0x0F, 0x12 }, { OpEncoding::r }, { Symbols::xmm, Symbols::m64 } },
@@ -1235,7 +1253,7 @@ namespace Seraph
             { { 0x0F, 0x17 }, { OpEncoding::r }, { Symbols::m64, Symbols::xmm } }
         };
         oplookup_x86_64["movlhps"] = {
-            { { 0x0F, 0x16 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm2 } }
+            { { 0x0F, 0x16 }, { OpEncoding::r }, { Symbols::xmm, Symbols::xmm } } // xmm, xmm2
         };
         oplookup_x86_64["prefetcht0"] = {
             { { 0x0F, 0x18 }, { OpEncoding::m0 }, { Symbols::m8 } }
@@ -1994,6 +2012,29 @@ namespace Seraph
                                         operand.regs.push_back(i);
                                         isReserved = true;
                                     }
+                                    else if (token == Mnemonics::XMMext[i])
+                                    {
+                                        if (!mode64) throw std::exception("64-bit operands not supported");
+
+                                        operand.regExt = true;
+
+                                        switch (node.opData.operands.size())
+                                        {
+                                        case 0:
+                                            node.opPrefix2 = "44";
+                                            break;
+                                        case 1:
+                                        default:
+                                            node.opPrefix2 = (node.opPrefix2 == "44") ? "45" : ((node.hasMod) ? "44" : "41");
+
+                                            break;
+                                        }
+
+                                        operand.opmode = (rm) ? Symbols::xmm_m128 : Symbols::xmm;
+                                        parts.push_back("xmm");
+                                        operand.regs.push_back(i);
+                                        isReserved = true;
+                                    }
                                 }
 
                                 if (isReserved)
@@ -2464,7 +2505,7 @@ namespace Seraph
                                                 node.opPrefix = "66";
                                                 forceValidate = true;
                                                 break;
-                                            case Symbols::xmm2:
+                                            case Symbols::xmm2: // I might reimplement this..
                                                 if (!node.hasMod)
                                                 {
                                                     op->opmode = Symbols::xmm2;
@@ -2491,6 +2532,9 @@ namespace Seraph
                                             switch (opvariant.symbols[i])
                                             {
                                             case Symbols::xmm:
+                                            case Symbols::xmm_m32:
+                                            case Symbols::xmm_m64:
+                                            case Symbols::xmm_m128:
                                                 forceValidate = true;
                                                 break;
                                             }
@@ -2659,18 +2703,24 @@ namespace Seraph
                                 break;
                             case 64:
                                 if (findEntry(opvariant.entries, OpEncoding::r))
-                                    node.opPrefix = "x64";
+                                    if (node.opPrefix2.empty()) // currently, opPrefix2 is only used for xmm extensions
+                                        node.opPrefix = "x64"; // use x64 prefix flag if nothing else
 
                                 break;
                             }
 
-                            if (hasExtRegs)
+                            if (hasExtRegs && node.opPrefix2.empty())
                                 node.opPrefix = "x64ext";
 
-                            // Add the prefix flag
+                            // Add the prefix flag(s)
                             if (!node.opPrefix.empty())
                                 if (prelookup_x86_64.find(node.opPrefix) != prelookup_x86_64.end())
                                     stream.add(prelookup_x86_64[node.opPrefix]);
+
+                            if (!node.opPrefix2.empty())
+                                if (prelookup_x86_64.find(node.opPrefix2) != prelookup_x86_64.end())
+                                    stream.add(prelookup_x86_64[node.opPrefix2]);
+
 
                             const auto noperands = userOperands.size();
                             auto insCode = opvariant.code;
@@ -3046,21 +3096,5 @@ namespace Seraph
     {
         return compile_x86_64(source, prelookup_x86_64, oplookup_x86_64, offset, true);
     }
-
-    BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x64>::readNext()
-    {
-        BaseSet_x86_64::Opcode opcode;
-
-        return opcode;
-    }
-
-    BaseSet_ARM::Opcode Disassembler<TargetArchitecture::ARM>::readNext()
-    {
-        BaseSet_ARM::Opcode opcode;
-
-        return opcode;
-    }
-
-
 }
 
