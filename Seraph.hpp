@@ -128,10 +128,10 @@ namespace Seraph
 
     struct BaseSet_x86_64
     {
-        enum class R8 : const uint8_t  { NotSet = -1, AH, AL, CH, CL, DH, DL, BH, BL /* SPL, BPL, SIL, DIL */ };
-        enum class R16 : const uint8_t { NotSet = -1, AX, CX, DX, BX, SP, BP, SI, DI };
-        enum class R32 : const uint8_t { NotSet = -1, EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI };
-        enum class R64 : const uint8_t { NotSet = 255u, RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI };
+        enum class R8 : const int8_t  { NotSet = -1, AH, AL, CH, CL, DH, DL, BH, BL /* SPL, BPL, SIL, DIL */ };
+        enum class R16 : const int8_t { NotSet = -1, AX, CX, DX, BX, SP, BP, SI, DI };
+        enum class R32 : const int8_t { NotSet = -1, EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI };
+        enum class R64 : const int8_t { NotSet = -1, RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI };
 
         // Prefix flags for the user
         static const uint16_t PRE_REPNE     = 0x0001;
