@@ -110,7 +110,15 @@ namespace Seraph
 
             BaseSet_x86_64::Opcode opData;
 
-            size_t streamIndex = 0;
+            size_t streamIndex = INT_MAX;
+
+            // These markers are to determine the relative offset to a label
+            // if the label's memory offset has not yet been determined
+            bool marked = false;
+            size_t markedOffset = 0;
+            size_t markedOperand = 0;
+            std::string markedLabel = "";
+
             int32_t bitSize = 0;
             bool hasMod = false;
             int32_t modIndex = 0xFF;
@@ -1766,6 +1774,17 @@ namespace Seraph
             return labels;
         };
 
+        auto getLabel = [&getLabels](const std::string& label)
+        {
+            Parser::Node* res = nullptr;
+
+            for (auto& node : getLabels())
+                if (node->label == label)
+                    return node;
+
+            return res;
+        };
+
         auto findEntry = [](const std::vector<BaseSet_x86_64::OpEncoding>& entries, const BaseSet_x86_64::OpEncoding& enc)
         {
             if (entries.empty()) return false;
@@ -1776,6 +1795,8 @@ namespace Seraph
 
             return false;
         };
+
+
 
         // Go through the parsed nodes
         for (Parser::Node& node : mainBody.nodes)
@@ -1795,15 +1816,32 @@ namespace Seraph
                     for (size_t opIndex = 0; opIndex < node.operands.size(); opIndex++)
                     {
                         // Parse labels in this operand by replacing it with
-                        // a corresponding address in memory
+                        // the corresponding address in memory.
+                        // If the label's memory address hasn't been determined, we mark this node
                         for (auto labelNode : getLabels())
                         {
                             std::string::size_type n = 0;
                             while ((n = node.operands[opIndex].find(labelNode->label, n)) != std::string::npos)
                             {
-                                char str[10];
-                                sprintf_s(str, "%08Xh", static_cast<uint32_t>(offset + labelNode->streamIndex));
+                                char str[32];
+
+                                //if (labelNode->streamIndex == INT_MAX)
+                                //{
+                                    // MARK THIS OPERAND -- recalculate the relative offset at the very end
+                                    node.marked = true;
+                                    node.markedOperand = opIndex;
+                                    node.markedLabel = labelNode->label;
+                                //}
+
+                                if (!mode64)
+                                    sprintf_s(str, "%08Xh", 0);
+                                //    sprintf_s(str, "%08Xh", static_cast<uint32_t>(offset + labelNode->streamIndex));
+                                else
+                                    sprintf_s(str, "%016llXh", static_cast<uint64_t>(0));
+                                //    sprintf_s(str, "%016llXh", static_cast<uint64_t>(offset + labelNode->streamIndex));
+
                                 node.operands[opIndex].replace(n, labelNode->label.size(), str);
+
                                 n += strlen(str);
                             }
                         }
@@ -1875,7 +1913,7 @@ namespace Seraph
                                 break;
                             case '[':
                                 node.hasMod = true;
-                                node.modIndex = opIndex;
+                                node.modIndex = static_cast<int32_t>(opIndex);
                                 operand.flags |= BaseSet_x86_64::OP_RM;
                                 operand.opmode = Symbols::rm32;
                                 rm = true;
@@ -1892,7 +1930,7 @@ namespace Seraph
                                         operand.opmode = (rm) ? Symbols::rm8 : Symbols::r8;
                                         node.bitSize = (node.bitSize == 0) ? 8 : node.bitSize;
                                         parts.push_back("r8");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::R8ext[i])
@@ -1904,7 +1942,7 @@ namespace Seraph
                                         operand.opmode = (rm) ? Symbols::rm8 : Symbols::r8;
                                         node.bitSize = (node.bitSize == 0) ? 8 : node.bitSize;
                                         parts.push_back("r8");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::R16[i])
@@ -1912,7 +1950,7 @@ namespace Seraph
                                         operand.opmode = (rm) ? Symbols::rm16 : Symbols::r16;
                                         node.bitSize = (node.bitSize == 0) ? 16 : node.bitSize;
                                         parts.push_back("r16");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::R16ext[i])
@@ -1924,7 +1962,7 @@ namespace Seraph
                                         operand.opmode = (rm) ? Symbols::rm16 : Symbols::r16;
                                         node.bitSize = (node.bitSize == 0) ? 16 : node.bitSize;
                                         parts.push_back("r16");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::R32[i])
@@ -1932,7 +1970,7 @@ namespace Seraph
                                         operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
                                         node.bitSize = (node.bitSize == 0) ? 32 : node.bitSize;
                                         parts.push_back("r32");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::R32ext[i])
@@ -1944,7 +1982,7 @@ namespace Seraph
                                         operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
                                         node.bitSize = (node.bitSize == 0) ? 32 : node.bitSize;
                                         parts.push_back("r32");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::R64[i])
@@ -1954,7 +1992,7 @@ namespace Seraph
                                         operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
                                         node.bitSize = (node.bitSize == 0) ? 64 : node.bitSize;
                                         parts.push_back("r32");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::R64ext[i])
@@ -1966,7 +2004,7 @@ namespace Seraph
                                         operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
                                         node.bitSize = (node.bitSize == 0) ? 64 : node.bitSize;
                                         parts.push_back("r32");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::SREG[i])
@@ -1974,42 +2012,42 @@ namespace Seraph
                                         operand.opmode = Symbols::sreg;
                                         node.bitSize = (node.bitSize == 0) ? 16 : node.bitSize;
                                         parts.push_back("sreg");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::STI[i])
                                     {
                                         operand.opmode = Symbols::sti;
                                         parts.push_back("sti");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::CRI[i])
                                     {
                                         operand.opmode = Symbols::cri;
                                         parts.push_back("cri");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::DRI[i])
                                     {
                                         operand.opmode = Symbols::dri;
                                         parts.push_back("dri");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::MM[i])
                                     {
                                         operand.opmode = (rm) ? Symbols::mm_m64 : Symbols::mm;
                                         parts.push_back("mm");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::XMM[i])
                                     {
                                         operand.opmode = (rm) ? Symbols::xmm_m128 : Symbols::xmm;
                                         parts.push_back("xmm");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                     else if (token == Mnemonics::XMMext[i])
@@ -2032,7 +2070,7 @@ namespace Seraph
 
                                         operand.opmode = (rm) ? Symbols::xmm_m128 : Symbols::xmm;
                                         parts.push_back("xmm");
-                                        operand.regs.push_back(i);
+                                        operand.regs.push_back(static_cast<uint8_t>(i));
                                         isReserved = true;
                                     }
                                 }
@@ -2096,7 +2134,7 @@ namespace Seraph
                                         {
                                         case 2:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm8;
-                                            operand.imm8 = std::strtoul(token.c_str(), nullptr, 16);
+                                            operand.imm8 = static_cast<uint8_t>(std::strtoul(token.c_str(), nullptr, 16));
 
                                             if (!parts.empty()) if (parts.back() == "-")
                                                 operand.imm8 = UINT8_MAX - operand.imm8 + 1; // invert sign
@@ -2106,7 +2144,7 @@ namespace Seraph
                                             break;
                                         case 4:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm16;
-                                            operand.imm16 = std::strtoul(token.c_str(), nullptr, 16);
+                                            operand.imm16 = static_cast<uint16_t>(std::strtoul(token.c_str(), nullptr, 16));
 
                                             if (!parts.empty()) if (parts.back() == "-")
                                                 operand.imm16 = UINT16_MAX - operand.imm16 + 1; // invert sign
@@ -2116,7 +2154,7 @@ namespace Seraph
                                             break;
                                         case 8:
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm32;
-                                            operand.imm32 = std::strtoul(token.c_str(), nullptr, 16);
+                                            operand.imm32 = static_cast<uint32_t>(std::strtoul(token.c_str(), nullptr, 16));
 
                                             if (!parts.empty()) if (parts.back() == "-")
                                                 operand.imm32 = UINT32_MAX - operand.imm32 + 1; // invert sign
@@ -2128,7 +2166,7 @@ namespace Seraph
                                             if (!mode64) throw std::exception("64-bit values not supported");
 
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm64;
-                                            operand.imm64 = std::strtoull(token.c_str(), nullptr, 16);
+                                            operand.imm64 = static_cast<uint64_t>(std::strtoull(token.c_str(), nullptr, 16));
 
                                             if (!parts.empty()) if (parts.back() == "-")
                                                 operand.imm64 = UINT64_MAX - operand.imm64 + 1; // invert sign
@@ -2140,7 +2178,7 @@ namespace Seraph
                                         {
                                             const auto pos = token.find(":");
                                             operand.opmode = Symbols::ptr16_32;
-                                            operand.disp16 = std::strtoul(token.substr(0, pos).c_str(), nullptr, 16);
+                                            operand.disp16 = static_cast<uint16_t>(std::strtoul(token.substr(0, pos).c_str(), nullptr, 16));
                                             operand.imm32 = std::strtoul(token.substr(pos + 1, token.length() - (pos + 1)).c_str(), nullptr, 16);
                                             operand.flags |= BaseSet_x86_64::OP_IMM16 | BaseSet_x86_64::OP_IMM32;
                                             parts.push_back("ptr16_32");
@@ -2378,6 +2416,7 @@ namespace Seraph
                                             {
                                             case Symbols::rel32:
                                                 op->rel32 = op->imm32;
+                                                op->opmode = Symbols::rel32;
                                                 forceValidate = true;
                                                 break;
                                             }
@@ -2392,8 +2431,17 @@ namespace Seraph
                                                     forceValidate = true;
                                                 }
                                                 break;
+                                            case Symbols::rel32:
+                                                if (op->imm64 < UINT32_MAX)
+                                                {
+                                                    op->rel32 = op->imm64;
+                                                    op->opmode = Symbols::rel32;
+                                                    forceValidate = true;
+                                                }
+                                                break;
                                             case Symbols::rel64:
                                                 op->rel64 = op->imm64;
+                                                op->opmode = Symbols::rel64;
                                                 forceValidate = true;
                                                 break;
                                             case Symbols::imm32:
@@ -2836,6 +2884,9 @@ namespace Seraph
                                 {
                                     const auto op = userOperands[i];
 
+                                    if (node.marked && node.markedOperand == i)
+                                        node.markedOffset = stream.size() + useModByte + hasSib + hasImm8 + (hasImm16 ? 16 : 0) + (hasImm32 ? 32 : 0) + (hasImm64 ? 64 : 0) + hasDisp8 + (hasDisp16 ? 16 : 0) + (hasDisp32 ? 32 : 0) + (hasDisp64 ? 64 : 0);
+                                    
                                     switch (op.opmode)
                                     {
                                     case Symbols::imm8:
@@ -2855,19 +2906,19 @@ namespace Seraph
                                         hasDisp64 = true;
                                         break;
                                     case Symbols::rel8:
-                                        imm8value = op.rel8 - (offset + stream.size() + 1);
+                                        imm8value = static_cast<uint8_t>(op.rel8 - (offset + stream.size() + 1));
                                         hasImm8 = true;
                                         break;
                                     case Symbols::rel16:
-                                        imm16value = op.rel16 - (offset + stream.size() + 2);
+                                        imm16value = static_cast<uint16_t>(op.rel16 - (offset + stream.size() + 2));
                                         hasImm16 = true;
                                         break;
                                     case Symbols::rel32:
-                                        imm32value = op.rel32 - (offset + stream.size() + 4);
+                                        imm32value = static_cast<uint32_t>(op.rel32 - (offset + stream.size() + 4));
                                         hasImm32 = true;
                                         break;
                                     case Symbols::rel64:
-                                        imm64value = op.rel64 - (offset + stream.size() + 8);
+                                        imm64value = static_cast<uint64_t>(op.rel64 - (offset + stream.size() + 8));
                                         hasImm64 = true;
                                         break;
                                     case Symbols::ptr16_32:
@@ -3079,6 +3130,24 @@ namespace Seraph
 
                     errMsg << "'";
                     throw std::exception(errMsg.str().c_str());
+                }
+            }
+        }
+
+        for (Parser::Node& node : mainBody.nodes)
+        {
+            if (node.marked)
+            {
+                auto labelNode = getLabel(node.markedLabel);
+                if (labelNode)
+                {
+                    // printf("Marked code offset: %016llX. Needs to jump to: %016llX (label `%s`).\n", offset + node.markedOffset, offset + labelNode->streamIndex, labelNode->label.c_str());
+
+                    const auto offsetOverwrite = offset + node.markedOffset;
+                    const auto offsetJumpTo = offset + labelNode->streamIndex;
+                    const auto relative = offsetJumpTo - (offsetOverwrite + 4);
+
+                    *reinterpret_cast<uint32_t*>(&stream.content[node.markedOffset]) = relative;
                 }
             }
         }
