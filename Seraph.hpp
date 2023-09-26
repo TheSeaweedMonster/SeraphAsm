@@ -120,7 +120,7 @@ namespace Seraph
         std::vector<uint8_t> bytes = {};
         std::vector<T_OP> operands = {};
 
-        OpInfo_x86* extendedInfo;
+        OpInfo_x86* extendedInfo = nullptr;
 
         T_OP src() { return operands.empty() ? T_OP() : operands.front(); };
         T_OP dest() { return (operands.size() < 2) ? T_OP() : operands[1]; };
@@ -128,11 +128,6 @@ namespace Seraph
 
     struct BaseSet_x86_64
     {
-        enum class R8 : const int8_t  { NotSet = -1, AH, AL, CH, CL, DH, DL, BH, BL /* SPL, BPL, SIL, DIL */ };
-        enum class R16 : const int8_t { NotSet = -1, AX, CX, DX, BX, SP, BP, SI, DI };
-        enum class R32 : const int8_t { NotSet = -1, EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI };
-        enum class R64 : const int8_t { NotSet = -1, RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI };
-
         // Prefix flags for the user
         static const uint16_t PRE_REPNE     = 0x0001;
         static const uint16_t PRE_REPE      = 0x0002;
@@ -364,21 +359,21 @@ namespace Seraph
             std::vector<std::string> pattern = {}; // reserved
             union
             {
-                uint8_t imm8;
+                uint8_t imm8 = 0;
                 uint16_t imm16;
                 uint32_t imm32;
                 uint64_t imm64;
             };
             union
             {
-                uint8_t rel8;
+                uint8_t rel8 = 0;
                 uint16_t rel16;
                 uint32_t rel32;
                 uint64_t rel64;
             };
             union
             {
-                uint8_t disp8;
+                uint8_t disp8 = 0;
                 uint16_t disp16;
                 uint32_t disp32;
                 uint64_t disp64;
