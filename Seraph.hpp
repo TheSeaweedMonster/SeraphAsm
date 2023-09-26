@@ -129,37 +129,16 @@ namespace Seraph
     struct BaseSet_x86_64
     {
         // Prefix flags for the user
-        static const uint16_t PRE_REPNE     = 0x0001;
-        static const uint16_t PRE_REPE      = 0x0002;
-        static const uint16_t PRE_66        = 0x0004;
-        static const uint16_t PRE_67        = 0x0008;
-        static const uint16_t PRE_LOCK      = 0x0010;
-
-        static const uint16_t PRE_SEG_CS    = 0x0020;
-        static const uint16_t PRE_SEG_SS    = 0x0040;
-        static const uint16_t PRE_SEG_DS    = 0x0080;
-        static const uint16_t PRE_SEG_ES    = 0x0100;
-        static const uint16_t PRE_SEG_FS    = 0x0200;
-        static const uint16_t PRE_SEG_GS    = 0x0400;
+        static const uint16_t PRE_REPE      = 0x0001;
+        static const uint16_t PRE_REPNE     = 0x0002;
+        static const uint16_t PRE_LOCK      = 0x0004;
+        static const uint16_t PRE_SEG_CS    = 0x0008;
+        static const uint16_t PRE_SEG_SS    = 0x0010;
+        static const uint16_t PRE_SEG_DS    = 0x0020;
+        static const uint16_t PRE_SEG_ES    = 0x0040;
+        static const uint16_t PRE_SEG_FS    = 0x0080;
+        static const uint16_t PRE_SEG_GS    = 0x0100;
         
-        // Prefix bytes (used internally)
-        static const uint8_t B_LOCK         = 0xF0;
-        static const uint8_t B_REPNE        = 0xF2;
-        static const uint8_t B_REPE         = 0xF3;
-        static const uint8_t B_41           = 0x41;
-        static const uint8_t B_44           = 0x44;
-        static const uint8_t B_45           = 0x45;
-        static const uint8_t B_66           = 0x66;
-        static const uint8_t B_67           = 0x67;
-        static const uint8_t B_X64          = 0x48;
-        static const uint8_t B_X64EXT       = 0x44;
-        static const uint8_t B_SEG_CS       = 0x2E;
-        static const uint8_t B_SEG_SS       = 0x36;
-        static const uint8_t B_SEG_DS       = 0x3E;
-        static const uint8_t B_SEG_ES       = 0x26;
-        static const uint8_t B_SEG_FS       = 0x64;
-        static const uint8_t B_SEG_GS       = 0x65;
-
         // Basic filters
         static const uint32_t OP_NONE       = 0x00000000;
         static const uint32_t OP_SRC_ONLY   = 0x00000001;
@@ -257,14 +236,9 @@ namespace Seraph
             m128,           // A memory double quadword operand in memory. This nomenclature is used only with the Streaming SIMD Extensions
             m16_16,         // A far pointer; Left: pointer's segment selector. Right: 16-bit offset from segment
             m16_32,         // A far pointer; Left: pointer's segment selector. Right: 32-bit offset from segment
-            // The m16&16 and m32&32 operands are used by the BOUND
-            // instruction to provide an operand containing an upper and lower bounds for array indices.
-            // The m16 & 32 operand is used by LIDT and LGDT to provide a word with which to load
-            // the limit field, and a doubleword with which to load the base field of the corresponding
-            // GDTR and IDTR registers.
-            m16and16,       // A memory operand consisting of data item pairs whosesizes are indicated on the left and the right side of the ampersand. All memory addressing modes are allowed.
-            m16and32,       // ^ 16 and 32
-            m32and32,       // ^ 32 and 32
+            m16and16,       // The m16&16 and m32&32 operands are used by the BOUND instruction to provide an operand w/ an upper and lower bounds for array indices.
+            m16and32,       // The m16&32 operand is used by LIDT and LGDT to provide a word with which to load the limit field, and a dword with which to load the base field of the corresponding GDTR and IDTR registers.
+            m32and32,       // ^
             moffs8,         // A simple memory variable (memory offset) of type byte, word, or doubleword used by some variants of the MOV instruction.  The actual address is given by a simple offset relative to the segment base. No ModR/M byte is used.
             moffs16,        // ^ 16 bit
             moffs32,        // ^ 32 bit
