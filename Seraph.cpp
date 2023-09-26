@@ -334,19 +334,36 @@ namespace Seraph
         using OpData = BaseSet_x86_64::OpData;
         using Symbols = BaseSet_x86_64::Symbols;
 
+        const uint8_t B_LOCK = 0xF0;
+        const uint8_t B_REPNE = 0xF2;
+        const uint8_t B_REPE = 0xF3;
+        const uint8_t B_41 = 0x41;
+        const uint8_t B_44 = 0x44;
+        const uint8_t B_45 = 0x45;
+        const uint8_t B_66 = 0x66;
+        const uint8_t B_67 = 0x67;
+        const uint8_t B_X64 = 0x48;
+        const uint8_t B_X64EXT = 0x44;
+        const uint8_t B_SEG_CS = 0x2E;
+        const uint8_t B_SEG_SS = 0x36;
+        const uint8_t B_SEG_DS = 0x3E;
+        const uint8_t B_SEG_ES = 0x26;
+        const uint8_t B_SEG_FS = 0x64;
+        const uint8_t B_SEG_GS = 0x65;
+
         prelookup_x86_64 = std::unordered_map<std::string, uint8_t>();
 
-        prelookup_x86_64["lock"] = BaseSet_x86_64::B_LOCK;
-        prelookup_x86_64["41"] = BaseSet_x86_64::B_41;
-        prelookup_x86_64["44"] = BaseSet_x86_64::B_44;
-        prelookup_x86_64["45"] = BaseSet_x86_64::B_45;
-        prelookup_x86_64["66"] = BaseSet_x86_64::B_66;
-        prelookup_x86_64["67"] = BaseSet_x86_64::B_67;
-        prelookup_x86_64["x64"] = BaseSet_x86_64::B_X64;
-        prelookup_x86_64["x64ext"] = BaseSet_x86_64::B_X64EXT;
-        prelookup_x86_64["repne"] = BaseSet_x86_64::B_REPNE;
-        prelookup_x86_64["repe"] = BaseSet_x86_64::B_REPE;
-        prelookup_x86_64["rep"] = BaseSet_x86_64::B_REPE;
+        prelookup_x86_64["lock"] = B_LOCK;
+        prelookup_x86_64["41"] = B_41;
+        prelookup_x86_64["44"] = B_44;
+        prelookup_x86_64["45"] = B_45;
+        prelookup_x86_64["66"] = B_66;
+        prelookup_x86_64["67"] = B_67;
+        prelookup_x86_64["x64"] = B_X64;
+        prelookup_x86_64["x64ext"] = B_X64EXT;
+        prelookup_x86_64["repne"] = B_REPNE;
+        prelookup_x86_64["repe"] = B_REPE;
+        prelookup_x86_64["rep"] = B_REPE;
 
         oplookup_x86_64 = std::unordered_map<std::string, std::vector<BaseSet_x86_64::OpData>>();
 
