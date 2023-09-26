@@ -88,7 +88,7 @@ namespace Seraph
             enum class NodeType {
                 Label,
                 AsmNode
-            } type;
+            } type = NodeType::Label;
 
             enum class Specifier {
                 None,
@@ -2084,7 +2084,7 @@ namespace Seraph
 
                                 bool isSegment = (token.find(":") != std::string::npos);
 
-                                if (token.length() <= ((mode64) ? 17 : 9) || isSegment)
+                                if (token.length() <= ((mode64) ? 17u : 9u) || isSegment)
                                 {
                                     if (token.back() == 'h' || isSegment)
                                     {
@@ -2434,7 +2434,7 @@ namespace Seraph
                                             case Symbols::rel32:
                                                 if (op->imm64 < UINT32_MAX)
                                                 {
-                                                    op->rel32 = op->imm64;
+                                                    op->rel32 = static_cast<uint32_t>(op->imm64);
                                                     op->opmode = Symbols::rel32;
                                                     forceValidate = true;
                                                 }
@@ -3033,7 +3033,7 @@ namespace Seraph
                                         switch (op.regs.size())
                                         {
                                         case 1:
-                                            if (op.regs.front() == static_cast<uint8_t>(BaseSet_x86_64::R32::ESP))
+                                            if (op.regs.front() == 4) // SP/ESP
                                             {
                                                 hasSib = true;
                                                 sibbyte += 0x24;
@@ -3147,7 +3147,7 @@ namespace Seraph
                     const auto offsetJumpTo = offset + labelNode->streamIndex;
                     const auto relative = offsetJumpTo - (offsetOverwrite + 4);
 
-                    *reinterpret_cast<uint32_t*>(&stream.content[node.markedOffset]) = relative;
+                    *reinterpret_cast<uint32_t*>(&stream.content[node.markedOffset]) = static_cast<uint32_t>(relative);
                 }
             }
         }
