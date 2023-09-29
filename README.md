@@ -25,6 +25,10 @@ if this has been forked or modified. Thanks!)<br>
 Currently, compilation for x86 and x64 assembly is finished.<br>
 However x64 may need some further refinement and testing.<br>
 
+SeraphOld.cpp has everything functional for x86.<br>
+Seraph.cpp is where I've rewritten some of the core in leu of x64, but it needs more testing.<br>
+Use the one that's more suitable for you, for the time being<br>
+
 Please report any problems or incorrect output.<br>
 It's highly appreciated and it allows me to make improvements.<br>
 
