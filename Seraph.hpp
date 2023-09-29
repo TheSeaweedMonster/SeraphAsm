@@ -316,21 +316,30 @@ namespace Seraph
             m7
         };
 
+        static const uint32_t OPS_NONE = 0;
+        static const uint32_t OPS_DEFAULT_64_BITS = 0x00000001;
+        static const uint32_t OPS_REMOVED_X64 = 0x00000002;
+
         struct OpData
         {
             std::vector<uint8_t> code = {};
             std::vector<OpEncoding> entries = {};
             std::vector<BaseSet_x86_64::Symbols> symbols = {};
+            uint32_t settings = 0;
         };
 
         struct Operand
         {
             uint32_t flags = 0;
             Symbols opmode = Symbols::not_set;
+            uint8_t bitSize = 0;
+            uint8_t immSize = 0;
             uint8_t regExt = 0;
             uint8_t mul = 0;
+
             std::vector<uint8_t> regs = {};
             std::vector<std::string> pattern = {}; // reserved
+
             union
             {
                 uint8_t imm8 = 0;
