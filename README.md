@@ -12,7 +12,7 @@ Features:<br>
 ✔️ Open-sourced<br>
 
 Expected finish date: 10/10/23<br>
-Percentage completion: 50%<br>
+Percentage completion: 55%<br>
 
 Disassembly is not supported yet!<br>
 For more information, see Release Notes<br>
@@ -22,15 +22,11 @@ if this has been forked or modified. Thanks!)<br>
 
 # Release Notes
 
-Currently, compilation for x86 and x64 assembly is finished.<br>
-However x64 may need some further refinement and testing.<br>
+Compilation for x86 and x64 assembly is finished!<br>
+x64 may need some further testing (mainly for rex-encoding).<br>
 
-SeraphOld.cpp has everything functional for x86.<br>
-Seraph.cpp is where I've rewritten some of the core in leu of x64, but it needs more testing.<br>
-Use the one that's more suitable for you, for the time being<br>
-
-Please report any problems or incorrect output.<br>
-It's highly appreciated and it allows me to make improvements.<br>
+Please report any incorrect output or other problems so I can make improvements.<br>
+Input is highly appreciated, and also reasonable, non-negative criticism :).<br>
 
 # Pros/Cons
 
