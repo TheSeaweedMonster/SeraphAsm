@@ -11,7 +11,8 @@ namespace Seraph
 {
     enum class TargetArchitecture  { ARM, x86, x64 };
 
-    class ByteStream
+    // Generic wrapper for an std::vector<uint8_t>
+    class ByteStream : public std::vector<uint8_t>
     {
         size_t pos = 0;
     public:
@@ -19,78 +20,128 @@ namespace Seraph
         ByteStream(const std::vector<uint8_t>& s) { *this = s; }
         ByteStream(const ByteStream& s){ *this = s; }
 
-        std::vector<uint8_t> content = {};
-        
         inline ByteStream& operator<<(const uint8_t b)
         {
-            content.push_back(b);
+            push_back(b);
             return *this;
         }
         
-        inline ByteStream& operator=(const ByteStream& o)
+        inline ByteStream& operator=(ByteStream& o)
         {
-            content.resize(o.content.size());
-            memcpy(&content[0], &o.content[0], o.content.size());
+            resize(o.size());
+            memcpy(const_cast<uint8_t*>(&data()[0]), &o.data()[0], o.size());
             return *this;
         }
         
         inline ByteStream& operator=(const std::vector<uint8_t>& o)
         {
-            content.resize(o.size());
+            resize(o.size());
             if (!o.empty())
-                memcpy(&content[0], &o[0], o.size());
+                memcpy(const_cast<uint8_t*>(&data()[0]), &o[0], o.size());
             return *this;
         }
         
-        inline bool operator==(const ByteStream& o)
+        inline bool operator==(ByteStream& o)
         {
-            if (o.content.size() != content.size()) return false;
+            if (o.size() != size()) return false;
 
-            for (size_t i = 0; i < o.content.size(); i++)
-                if (content[i] != o.content[i])
+            for (size_t i = 0; i < o.size(); i++)
+                if (data()[i] != o.data()[i])
                     return false;
 
             return true;
         }
         
-        inline bool operator!=(const ByteStream& o){ return !(*this == o); }
-        inline uint8_t operator++(const int){ return next(); }
-
-        const void set(const size_t i, const uint8_t b)
+        inline bool operator!=(const ByteStream& o)
         {
-            if (content.size() > i)
-                content[i] = b;
+            return !(*this == o);
         }
 
-        const void add(const uint8_t b) { *this << b; }
+        inline uint8_t operator++(const int)
+        {
+            return next();
+        }
+
+        /// <summary>
+        /// Sets the byte value at the ith index of the stream to b
+        /// </summary>
+        /// <param name="i">index</param>
+        /// <param name="b">new value</param>
+        /// <returns>void</returns>
+        const void set(const size_t i, const uint8_t b)
+        {
+            if (size() > i)
+                *const_cast<uint8_t*>(&data()[i]) = b;
+        }
+
+        const void add(const uint8_t b)
+        {
+            *this << b;
+        }
+
         const void add(const std::vector<uint8_t>& b)
         {
             for (size_t i = 0; i < b.size(); i++)
                 *this << b[i];
         }
 
+        /// <summary>
+        /// Removes the last element in the stream
+        /// </summary>
+        /// <param name="count">number of times to remove the last element</param>
         void pop(const size_t count = 1)
         {
             for (size_t i = 0; i < count; i++)
-                content.pop_back();
+                pop_back();
         }
         
-        const uint8_t next(){ return (content.size() > pos) ? content[pos++] : 0; }
+        /// <summary>
+        /// Returns the byte at the current index in the stream, and increases the current position
+        /// </summary>
+        /// <returns></returns>
+        const uint8_t next()
+        {
+            return (size() > pos) ? data()[pos++] : 0;
+        }
+
+        // Returns the byte at the previous index in the stream
         const uint8_t prev()
         {
-            if (content.empty()) return 0;
-            return (content.size() > pos && pos > 0) ? content[pos - 1] : content[0];
+            if (empty()) return 0;
+            return (size() > pos && pos > 0) ? data()[pos - 1] : data()[0];
         }
         
-        const uint8_t current(){ return (content.size() > pos) ? content[pos] : 0; }
-        const uint8_t* pcurrent(){ return reinterpret_cast<uint8_t*>(content.data() + pos); }
-        const size_t getpos(){ return pos; }
-        const bool good(){ return (content.size() > pos); }
-        void setpos(const size_t i){ pos = i; }
-        const void skip(const size_t count){ pos += count; }
-        const void clear() { setpos(0); content.clear(); }
-        const uint8_t* data() { return content.data(); }
-        const size_t size() { return content.size(); }
+        // Miscellaneous / Self-explanatory
+        // 
+        const uint8_t current()
+        {
+            return (size() > pos) ? data()[pos] : 0;
+        }
+
+        const uint8_t* pcurrent()
+        {
+            return reinterpret_cast<uint8_t*>(const_cast<uint8_t*>(data()) + pos);
+        }
+
+        const size_t getpos()
+        {
+            return pos;
+        }
+
+        const bool good()
+        {
+            return (size() > pos);
+        }
+
+        void setpos(const size_t i)
+        {
+            pos = i;
+        }
+
+        const void skip(const size_t count)
+        {
+            pos += count;
+        }
     };
 
     struct OpInfo_x86
