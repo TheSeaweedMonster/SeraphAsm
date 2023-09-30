@@ -287,6 +287,22 @@ namespace Seraph
                             break;
                         case '\n':
                         case '\r': // asm node is finished.
+                            // First append opName in case of single opcodes
+                            if (currentNode.opName.empty() && !label.empty())
+                            {
+                                currentNode.type = Node::NodeType::AsmNode;
+                                currentNode.opName = label;
+                                body.nodes.push_back(currentNode);
+                                currentNode = Node();
+
+                                label = "";
+
+                                isNewLine = true;
+                                isOperand = false;
+                                break;
+                            }
+
+                            // Otherwise let's append this as an operand
                             if (isOperand && !label.empty())
                             {
                                 if (currentNode.type == Node::NodeType::AsmNode)
@@ -298,6 +314,7 @@ namespace Seraph
 
                             if (!currentNode.opName.empty() || !currentNode.label.empty())
                             {
+                                // append this node to the body's nodes
                                 body.nodes.push_back(currentNode);
                                 currentNode = Node();
                                 label = "";
@@ -2408,12 +2425,20 @@ namespace Seraph
                                             }
                                             break;
                                         case Symbols::r16:
-                                            if (opvariant.symbols[i] == Symbols::rm16)
+                                            switch (opvariant.symbols[i])
                                             {
+                                            case Symbols::m16_16:
+                                                forceValidate = true;
+                                                op->opmode = Symbols::m16_16;
+                                                op->flags = BaseSet_x86_64::OP_R16;
+                                                node.addPrefix(0x66);
+                                                break;
+                                            case Symbols::rm16:
                                                 node.hasMod = true;
                                                 op->opmode = Symbols::rm16;
                                                 op->flags = BaseSet_x86_64::OP_R16;
                                                 forceValidate = true;
+                                                break;
                                             }
                                             break;
                                         case Symbols::r32:
@@ -2559,6 +2584,10 @@ namespace Seraph
                                             {
                                             // Example: ret 4 (imm8) should work. ('ret' expects imm16)
                                             case Symbols::imm16:
+                                                op->opmode = Symbols::imm16;
+                                                op->flags = BaseSet_x86_64::OP_IMM16;
+                                                op->immSize = 16;
+                                                op->imm16 = static_cast<uint16_t>(op->imm8);
                                                 forceValidate = true;
                                                 break;
                                             case Symbols::rel8:
@@ -2764,142 +2793,107 @@ namespace Seraph
 
                             solved = true;
 
-                            uint8_t usingrex = 0;
-                            uint8_t rexenc = 0;
-
-                            /*
-                            2550F37002E - 41 03 09              - add ecx,[r9]
-                            2550F37002E - 41 03 89 0000010F     - add ecx,[r9+0F010000]
-                            2550F37002E - 03 0C 25 0000010F     - add ecx,[0F010000] { 251723776 }
-                            2550F37002E - 4C 03 04 25 0000010F  - add r8,[0F010000] { 251723776 }
-                            2550F37002E - 49 83 C1 0F           - add r9,0F { 15 }
-                            2550F37002E - 49 81 C0 0000010F     - add r8,0F010000 { 251723776 }
-                            2550F37002E - 4D 03 81 0000010F     - add r8,[r9+0F010000]
-                            2550F37002E - 4D 03 01              - add r8,[r9]
-                            2550F37002E - 4D 01 C9              - add r9,r9
-                            2550F37002E - 44 03 04 25 0000010F  - add r8d,[0F010000] { 251723776 }
-                            2550F37002E - 41 83 C1 0F           - add r9d,0F { 15 }
-                            2550F37002E - 41 81 C0 0000010F     - add r8d,0F010000 { 251723776 }
-                            2550F37002E - 41 01 C9              - add r9d,ecx
-                            2550F37002E - 45 03 81 0000010F     - add r8d,[r9+0F010000]
-                            2550F37002E - 44 01 C9              - add ecx,r9d
-                            2550F37002E - 48 01 C9              - add rcx,rcx
-                            2550F37002E - 49 01 C9              - add r9,rcx
-                            2550F37002E - 4C 01 C9              - add rcx,r9
-
-
-                            The rex prefix seems to correlate to the size and type of both operands.
-
-                            Let's try to configure it.
-
-                            If an extended register is used in the second operand at all, we add a bit (1)
-                            If an extended register is used in ONLY the first operand, we add a bit (4)
-                            If an extended register is used in both the first and second operand, we add a bit (
-                            */
-
-                            /*
-                            2B40AD60013 - 4C B8 F87D4018F67F0000 - mov rax,SeraphAsm.exe+157DF8 { ("hello, world!") }
-                            2B40AD60013 - 49 B8 F87D4018F67F0000 - mov r8,SeraphAsm.exe+157DF8 { ("hello, world!") }
-
-                            2B40AD60011 - 45 50                 - push r8
-
-                            */
-                            
-                            // Rex encoding is absolutely dreadful.
-                            // 
-                            for (size_t opIndex = 0; opIndex < node.opData.operands.size(); opIndex++)
+                            if (mode64)
                             {
-                                auto op = node.opData.operands[opIndex];
+                                uint8_t usingrex = 0;
+                                uint8_t rexenc = 0;
 
-                                if (op.regExt || op.flags & BaseSet_x86_64::OP_IMM64)
+                                // Rex encoding is absolutely dreadful...
+                                // 
+                                for (size_t opIndex = 0; opIndex < node.opData.operands.size(); opIndex++)
                                 {
-                                    usingrex = 1;
-                                    rexenc |= 1 << 6;
-                                }
+                                    auto op = node.opData.operands[opIndex];
 
-                                switch (opIndex)
-                                {
-                                case 0:
-                                    switch (op.bitSize)
+                                    if (op.regExt || op.flags & BaseSet_x86_64::OP_IMM64)
                                     {
-                                    case 16:
-                                        break;
-                                    case 32:
-                                        if (op.regExt)
-                                            rexenc |= 1 << 0;
-                                        break;
-                                    case 64:
-                                    case 128:
-                                        if (!op.regExt && opvariant.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS)
-                                            break;
-
-                                        if (node.opData.operands.size() == 1)
-                                            rexenc += 1 << 0;
-                                        else
-                                            rexenc |= 1 << ((op.regExt) ? 0 : ((node.hasMod) ? 3 : 2)); // node.hasMod?
-
                                         usingrex = 1;
                                         rexenc |= 1 << 6;
-                                        
-                                        break;
                                     }
-                                    break;
-                                case 1:
-                                    switch (op.bitSize)
+
+                                    switch (opIndex)
                                     {
-                                    case 16:
-                                        break;
-                                    case 32:
-                                        rexenc |= 1 << ((op.regExt) ? 2 : 1);
-                                        break;
-                                    case 64:
-                                    case 128:
-                                        if (!op.regExt && opvariant.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS)
+                                    case 0:
+                                        switch (op.bitSize)
+                                        {
+                                        case 16:
                                             break;
-
-                                        if (op.flags & BaseSet_x86_64::OP_IMM64)
-                                        {
-                                            rexenc |= 1 << 3;
+                                        case 32:
+                                            if (op.regExt)
+                                                rexenc |= 1 << 0;
                                             break;
-                                        }
+                                        case 64:
+                                        case 128:
+                                            if (!op.regExt && opvariant.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS)
+                                                break;
 
-                                        if (rexenc & (1 << 2)) // && !node.hasMod
-                                        {
-                                            rexenc &= ~(1 << 2);
-                                            rexenc |= 1 << 3;
-                                        }
-                                        else if (op.regExt)
-                                            rexenc |= 1 << 2;
+                                            if (node.opData.operands.size() == 1)
+                                                rexenc += 1 << 0;
+                                            else
+                                                rexenc |= 1 << ((op.regExt) ? 0 : ((node.hasMod) ? 3 : 2)); // node.hasMod?
 
-                                        if (op.regExt && node.opData.operands.front().regExt)
-                                        {
-                                            rexenc |= 1 << 2;
-                                            rexenc |= 1 << 3;
-                                        }
-
-                                        // we need to check if operands are default 32 bit or 64 bit
-                                        if (node.opData.operands.size() > 1)
-                                        {
                                             usingrex = 1;
                                             rexenc |= 1 << 6;
-                                        }
 
+                                            break;
+                                        }
+                                        break;
+                                    case 1:
+                                        switch (op.bitSize)
+                                        {
+                                        case 16:
+                                            break;
+                                        case 32:
+                                            rexenc |= 1 << ((op.regExt) ? 2 : 1);
+                                            break;
+                                        case 64:
+                                        case 128:
+                                            if (!op.regExt && opvariant.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS)
+                                                break;
+
+                                            if (op.flags & BaseSet_x86_64::OP_IMM64)
+                                            {
+                                                rexenc |= 1 << 3;
+                                                break;
+                                            }
+
+                                            if (rexenc & (1 << 2)) // && !node.hasMod
+                                            {
+                                                rexenc &= ~(1 << 2);
+                                                rexenc |= 1 << 3;
+                                            }
+                                            else if (op.regExt)
+                                                rexenc |= 1 << 2;
+
+                                            if (op.regExt && node.opData.operands.front().regExt)
+                                            {
+                                                rexenc |= 1 << 2;
+                                                rexenc |= 1 << 3;
+                                            }
+
+                                            // we need to check if operands are default 32 bit or 64 bit
+                                            if (node.opData.operands.size() > 1)
+                                            {
+                                                usingrex = 1;
+                                                rexenc |= 1 << 6;
+                                            }
+
+                                            break;
+                                        }
                                         break;
                                     }
-                                    break;
+
+                                    switch (op.immSize)
+                                    {
+                                    case 64:
+                                        rexenc |= 1 << 3;
+                                        break;
+                                    }
+
                                 }
 
-                                switch (op.immSize)
-                                {
-                                case 64:
-                                    rexenc |= 1 << 3;
-                                    break;
-                                }
-
+                                if (usingrex)
+                                    node.prefixes.push_back(rexenc);
                             }
-
-                            if (usingrex)
-                                node.prefixes.push_back(rexenc);
 
                             // Add prefix flags
                             for (const uint8_t pre : node.prefixes)
@@ -3010,6 +3004,7 @@ namespace Seraph
                                 uint32_t disp32value = 0;
                                 uint64_t disp64value = 0;
 
+                                uint8_t sibenc = 0;
                                 uint8_t modbyte = modenc;
                                 uint8_t sibbyte = 0;
 
@@ -3121,74 +3116,149 @@ namespace Seraph
                                     case Symbols::rm16:
                                     case Symbols::rm32:
                                     case Symbols::rm64:
+                                    case Symbols::m16_16:
+                                    case Symbols::m16_32:
                                     case Symbols::mm_m32:
                                     case Symbols::mm_m64:
                                     case Symbols::xmm_m32:
                                     case Symbols::xmm_m64:
                                     case Symbols::xmm_m128:
                                         useModByte = true;
-                                        if (op.flags & BaseSet_x86_64::OP_IMM8)
-                                        {
-                                            modenc = 1 << 6;
-                                            imm8value = op.imm8;
-                                            hasImm8 = true;
-                                        }
-                                        else if (op.flags & BaseSet_x86_64::OP_IMM32)
-                                        {
-                                            if (op.regs.size() == 0)
-                                                modbyte += 5;
-                                            else
-                                                modenc = 2 << 6;
 
-                                            imm32value = op.imm32;
-                                            hasImm32 = true;
-                                        }
-                                        else if (op.flags & BaseSet_x86_64::OP_IMM64)
-                                        {
-                                            if (op.regs.size() == 0)
-                                                modbyte += 5;
-                                            else
-                                                modenc = 2 << 6;
-
-                                            imm32value = 0;
-                                            hasImm32 = true;
-                                            disp64value = op.imm64;
-                                            hasDisp64 = true;
-                                        }
-                                        else if (op.regs.size() == 1 && !(op.flags & BaseSet_x86_64::OP_RM)/*!node.hasMod*/)
+                                        // Just a single register-only operand
+                                        if (op.regs.size() == 1 && !(op.flags & BaseSet_x86_64::OP_RM)/*!node.hasMod*/)
                                         {
                                             modenc = 3 << 6;
                                             modbyte += op.regs.front();
                                             break;
                                         }
+                                        
+                                        // No regs, just a 32-bit memory offset
+                                        if (op.regs.size() == 0 && op.flags & BaseSet_x86_64::OP_IMM32)
+                                        {
+                                            modbyte += 5;
+                                            imm32value = op.imm32;
+                                            hasImm32 = true;
+                                            break;
+                                        }
 
+                                        // Multiplier? Ok, introduce SIB
                                         if (op.mul)
-                                            sibbyte += (1 + (op.mul >> 2)) << 6;
+                                            sibbyte |= (1 + (op.mul >> 2)) << 6;
 
                                         switch (op.regs.size())
                                         {
+                                        case 0:
+                                            modbyte += 5;
+                                            modenc = 2 << 6;
+                                            imm32value = (op.flags & BaseSet_x86_64::OP_IMM8) ? op.imm8 : op.imm32;
+                                            hasImm32 = true;
                                         case 1:
+
+                                            // If a multiplier is present, use displacement mode w/ reg
+                                            if (op.mul)
+                                            {
+                                                hasSib = true;
+                                                modbyte += 4;
+                                                sibbyte += 5;
+                                                sibbyte += op.regs.front() << 3;
+
+                                                if (op.flags & BaseSet_x86_64::OP_IMM8)
+                                                {
+                                                    imm32value = op.imm8;
+                                                    hasImm32 = true;
+                                                }
+                                                else if (op.flags & BaseSet_x86_64::OP_IMM32)
+                                                {
+                                                    imm32value = op.imm32;
+                                                    hasImm32 = true;
+                                                }
+                                                else if (op.flags & BaseSet_x86_64::OP_IMM64)
+                                                {
+                                                    imm32value = 0;
+                                                    hasImm32 = true;
+                                                    disp64value = op.imm64;
+                                                    hasDisp64 = true;
+                                                }
+
+                                                break;
+                                            }
+                                            
+                                            // No multiplier?
+                                            // 
                                             if (op.regs.front() == 4) // SP/ESP
                                             {
+                                                modbyte += op.regs.front();
                                                 hasSib = true;
                                                 sibbyte |= 1 << 5; // set index flag
                                                 sibbyte += 4;
                                             }
+                                            else
+                                            {
+                                                // Use mod byte for registers
+                                                modbyte += op.regs.front();
+                                            }
 
-                                            modbyte += op.regs.front();
+                                            // Append standard IMM values 
+                                            if (op.flags & BaseSet_x86_64::OP_IMM8)
+                                            {
+                                                modenc = 1 << 6;
+                                                imm8value = op.imm8;
+                                                hasImm8 = true;
+                                            }
+                                            else if (op.flags & BaseSet_x86_64::OP_IMM32)
+                                            {
+                                                modenc = 2 << 6;
+                                                imm32value = op.imm32;
+                                                hasImm32 = true;
+                                            }
+                                            else if (op.flags & BaseSet_x86_64::OP_IMM64)
+                                            {
+                                                modenc = 2 << 6;
+                                                imm32value = 0;
+                                                hasImm32 = true;
+                                                disp64value = op.imm64;
+                                                hasDisp64 = true;
+                                            }
+                                            
                                             break;
                                         case 2:
+                                        default:
                                             hasSib = true;
                                             modbyte += 4;
                                             sibbyte += op.regs.front();
                                             sibbyte += op.regs.back() << 3;
+
+                                            if (op.flags & BaseSet_x86_64::OP_IMM8)
+                                            {
+                                                modenc = 1 << 6;
+                                                imm8value = op.imm8;
+                                                hasImm8 = true;
+                                            }
+                                            else if (op.flags & BaseSet_x86_64::OP_IMM32)
+                                            {
+                                                modenc = 2 << 6;
+                                                imm32value = op.imm32;
+                                                hasImm32 = true;
+                                            }
+                                            else if (op.flags & BaseSet_x86_64::OP_IMM64)
+                                            {
+                                                modenc = 2 << 6;
+                                                imm32value = 0;
+                                                hasImm32 = true;
+                                                disp64value = op.imm64;
+                                                hasDisp64 = true;
+                                            }
+
                                             break;
                                         }
+
                                         break;
                                     }
                                 }
 
-                                modbyte += modenc;
+                                sibbyte |= sibenc;
+                                modbyte |= modenc;
 
                                 if (useModByte)
                                     stream.add(modbyte);
