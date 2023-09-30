@@ -3351,7 +3351,7 @@ namespace Seraph
                     const auto offsetJumpTo = offset + labelNode->streamIndex;
                     const auto relative = offsetJumpTo - (offsetOverwrite + 4);
 
-                    *reinterpret_cast<uint32_t*>(&stream.content[node.markedOffset]) = static_cast<uint32_t>(relative);
+                    *reinterpret_cast<uint32_t*>(&stream.data()[node.markedOffset]) = static_cast<uint32_t>(relative);
                 }
             }
         }
