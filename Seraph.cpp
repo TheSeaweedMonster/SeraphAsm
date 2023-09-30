@@ -3004,7 +3004,6 @@ namespace Seraph
                                 uint32_t disp32value = 0;
                                 uint64_t disp64value = 0;
 
-                                uint8_t sibenc = 0;
                                 uint8_t modbyte = modenc;
                                 uint8_t sibbyte = 0;
 
@@ -3257,7 +3256,6 @@ namespace Seraph
                                     }
                                 }
 
-                                sibbyte |= sibenc;
                                 modbyte |= modenc;
 
                                 if (useModByte)
