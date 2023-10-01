@@ -2002,7 +2002,7 @@ namespace Seraph
                                     }
                                     else if (token == Mnemonics::R8ext[i])
                                     {
-                                        if (!mode64) throw std::exception("64-bit operands not supported");
+                                        if (!mode64) throw SeraphException("64-bit operands not supported");
 
                                         operand.regExt = true;
 
@@ -2022,7 +2022,7 @@ namespace Seraph
                                     }
                                     else if (token == Mnemonics::R16ext[i])
                                     {
-                                        if (!mode64) throw std::exception("64-bit operands not supported");
+                                        if (!mode64) throw SeraphException("64-bit operands not supported");
 
                                         operand.regExt = true;
 
@@ -2042,7 +2042,7 @@ namespace Seraph
                                     }
                                     else if (token == Mnemonics::R32ext[i])
                                     {
-                                        if (!mode64) throw std::exception("64-bit operands not supported");
+                                        if (!mode64) throw SeraphException("64-bit operands not supported");
 
                                         operand.regExt = true;
 
@@ -2054,7 +2054,7 @@ namespace Seraph
                                     }
                                     else if (token == Mnemonics::R64[i])
                                     {
-                                        if (!mode64) throw std::exception("64-bit operands not supported");
+                                        if (!mode64) throw SeraphException("64-bit operands not supported");
 
                                         operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
                                         operand.bitSize = 64;
@@ -2064,7 +2064,7 @@ namespace Seraph
                                     }
                                     else if (token == Mnemonics::R64ext[i])
                                     {
-                                        if (!mode64) throw std::exception("64-bit operands not supported");
+                                        if (!mode64) throw SeraphException("64-bit operands not supported");
 
                                         operand.regExt = true;
 
@@ -2092,7 +2092,7 @@ namespace Seraph
                                     }
                                     else if (token == Mnemonics::STIext[i])
                                     {
-                                        if (!mode64) throw std::exception("64-bit operands not supported");
+                                        if (!mode64) throw SeraphException("64-bit operands not supported");
 
                                         operand.regExt = true;
 
@@ -2112,7 +2112,7 @@ namespace Seraph
                                     }
                                     else if (token == Mnemonics::CRIext[i])
                                     {
-                                        if (!mode64) throw std::exception("64-bit operands not supported");
+                                        if (!mode64) throw SeraphException("64-bit operands not supported");
 
                                         operand.regExt = true;
 
@@ -2132,7 +2132,7 @@ namespace Seraph
                                     }
                                     else if (token == Mnemonics::DRIext[i])
                                     {
-                                        if (!mode64) throw std::exception("64-bit operands not supported");
+                                        if (!mode64) throw SeraphException("64-bit operands not supported");
 
                                         operand.regExt = true;
 
@@ -2154,7 +2154,7 @@ namespace Seraph
                                     }
                                     else if (token == Mnemonics::MMext[i])
                                     {
-                                        if (!mode64) throw std::exception("64-bit operands not supported");
+                                        if (!mode64) throw SeraphException("64-bit operands not supported");
 
                                         operand.regExt = true;
 
@@ -2177,7 +2177,7 @@ namespace Seraph
                                     }
                                     else if (token == Mnemonics::XMMext[i])
                                     {
-                                        if (!mode64) throw std::exception("64-bit operands not supported");
+                                        if (!mode64) throw SeraphException("64-bit operands not supported");
 
                                         node.mmx = true;
 
@@ -2284,7 +2284,7 @@ namespace Seraph
                                             parts.push_back("imm32");
                                             break;
                                         case 16:
-                                            if (!mode64) throw std::exception("64-bit values not supported");
+                                            if (!mode64) throw SeraphException("64-bit values not supported");
 
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm64;
                                             operand.imm64 = static_cast<uint64_t>(std::strtoull(token.c_str(), nullptr, 16));
@@ -2347,7 +2347,7 @@ namespace Seraph
                                             parts.push_back("imm32");
                                             break;
                                         case 16:
-                                            if (!mode64) throw std::exception("64-bit values not supported");
+                                            if (!mode64) throw SeraphException("64-bit values not supported");
 
                                             operand.opmode = (rm) ? operand.opmode : Symbols::imm64;
 
@@ -2364,10 +2364,7 @@ namespace Seraph
                                 }
                                 else
                                 {
-                                    std::stringstream errMsg;
-                                    errMsg << "Could not identify label '" << token << "'";
-                                    
-                                    throw std::exception(errMsg.str().c_str());
+                                    throw SeraphException("Could not identify label '%s'", token.c_str());
                                 }
 
                                 break;
@@ -3367,9 +3364,10 @@ namespace Seraph
                 if (!solved)
                 {
                     std::stringstream errMsg;
-                    errMsg << "Could not understand pattern '" << node.opName;
+                    errMsg << node.opName;
 
                     int n = 0;
+
                     for (auto op : node.opData.operands)
                     {
                         if (n++ > 0) errMsg << ",";
@@ -3378,8 +3376,7 @@ namespace Seraph
                             errMsg << s;
                     }
 
-                    errMsg << "'";
-                    throw std::exception(errMsg.str().c_str());
+                    throw SeraphException("Could not understand pattern '%s'", errMsg.str().c_str());
                 }
             }
         }
