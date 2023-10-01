@@ -387,6 +387,8 @@ namespace Seraph
             uint8_t immSize = 0;
             uint8_t regExt = 0;
             uint8_t mul = 0;
+            uint8_t segment = 0;
+            uint8_t hasMod = 0;
 
             std::vector<uint8_t> regs = {};
             std::vector<std::string> pattern = {}; // reserved
