@@ -124,11 +124,13 @@ Now it will compile 64 bit assembly code:<br>
 		stream = assembler.compile(R"(
 push rbp
 mov rbp, rsp
+testLabel:
 mov rax, [rbp+08h]
 add rax, [rbp+0Ch]
 mov rax, AC000F0000h
 jmp qword ptr[rax]
 jmp AF001F0000h
+jz testLabel
 pop rbp
 retn
 		)", 0xAF000F0000);
