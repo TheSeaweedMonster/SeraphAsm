@@ -148,12 +148,13 @@ retn
 ```
 
 Easy peazy! :-)<br>
-Notice, for relative values (such as `jmp AF001F0000h`), we need to provide an offset for it to jump relative to.<br>
+Notice, for all relative values (such as `jmp AF001F0000h`), we need to provide an offset to jump relative to.<br>
 This is solved with the "offset" parameter of the compile function.<br>
-Note that this parameter is dependant on whether you compile your program in x86 or x64.<br>
 
-That's all I got for right now :)<br>
+The size of this parameter depends on whether you compile your program as x86 or x64.<br>
 
+Well, that's all I've got for now :)<br>
+Enjoy.<br>
 
 
 DM for more information: jayyy#5764<br>
