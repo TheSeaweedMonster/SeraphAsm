@@ -460,8 +460,10 @@ namespace Seraph
         // can be used for memory edits
         //ByteStream compile(const std::vector<Instruction>& source, const AssemblyOptions& options = Default);
 
+        /// <summary>
         // Parses and converts assembly code string directly to
         // a stream of bytes
+        /// </summary>
         ByteStream compile(const std::string& source, const uintptr_t offset = 0);
 	};
 
