@@ -109,6 +109,7 @@ namespace Seraph
             std::string opName = "";
             std::string label = "";
 
+            uint8_t segment = 0;
             Specifier sizeIndicator = Specifier::None;
 
             std::vector<std::string> operands = {};
@@ -126,7 +127,7 @@ namespace Seraph
 
             int32_t bitSize = 0;
             bool mmx = false;
-            bool hasMod = false;
+            uint8_t hasMod = 0;
             int32_t modIndex = 0xFF;
 
             void addPrefix(const uint8_t prefix)
@@ -323,9 +324,19 @@ namespace Seraph
                             isNewLine = true;
                             isOperand = false;
                             break;
-                        case ':': // initializing a label
+                        case ':': // initializing a label, or segment/ptr offset
                             if (isOperand)
-                                label += c;
+                            {
+                                if (prelookup_x86_64.find(label) != prelookup_x86_64.end())
+                                {
+                                    currentNode.segment = prelookup_x86_64[label];
+                                    currentNode.addPrefix(currentNode.segment);
+                                }
+                                else
+                                {
+                                    label += c;
+                                }
+                            }
                             else if (!label.empty())
                             {
                                 // if we want to expand the scope
@@ -336,9 +347,9 @@ namespace Seraph
                                 body.nodes.push_back(currentNode);
                                 //body.label = label;
                                 currentNode = Node();
-                                label = "";
                             }
 
+                            label = "";
                             break;
                         case '[':
                         case ']':
@@ -386,6 +397,12 @@ namespace Seraph
 
         prelookup_x86_64 = std::unordered_map<std::string, uint8_t>();
 
+        prelookup_x86_64["cs"] = B_SEG_CS;
+        prelookup_x86_64["ss"] = B_SEG_SS;
+        prelookup_x86_64["ds"] = B_SEG_DS;
+        prelookup_x86_64["es"] = B_SEG_ES;
+        prelookup_x86_64["fs"] = B_SEG_FS;
+        prelookup_x86_64["gs"] = B_SEG_GS;
         prelookup_x86_64["lock"] = 0xF0;
         prelookup_x86_64["repnz"] = 0xF2;
         prelookup_x86_64["repne"] = 0xF2;
@@ -1868,6 +1885,7 @@ namespace Seraph
                         for (auto labelNode : getLabels())
                         {
                             std::string::size_type n = 0;
+
                             while ((n = node.operands[opIndex].find(labelNode->label, n)) != std::string::npos)
                             {
                                 char str[32];
@@ -1960,7 +1978,8 @@ namespace Seraph
                                 rm = false;
                                 break;
                             case '[':
-                                node.hasMod = true;
+                                operand.hasMod = true;
+                                node.hasMod++;
                                 node.modIndex = static_cast<int32_t>(opIndex);
                                 operand.flags |= BaseSet_x86_64::OP_RM;
                                 operand.opmode = Symbols::rm32;
@@ -2177,10 +2196,10 @@ namespace Seraph
                                 if (isReserved)
                                     continue;
 
-                                bool isNumber = true;
-                                bool isNumberHex = false;
                                 size_t sizeNumber = 0; // calculate size
 
+                                bool isNumber = true;
+                                bool isNumberHex = false;
                                 bool isSegment = (token.find(":") != std::string::npos);
 
                                 if (token.length() <= ((mode64) ? 17u : 9u) || isSegment)
@@ -2416,9 +2435,9 @@ namespace Seraph
                                             // REG OPERAND <===> RM OPERAND
                                             //
                                         case Symbols::r8:
-                                            if (opvariant.symbols[i] == Symbols::rm8)
+                                            if (opvariant.symbols[i] == Symbols::rm8 && !node.hasMod)
                                             {
-                                                node.hasMod = true;
+                                                node.hasMod++;
                                                 op->opmode = Symbols::rm8;
                                                 op->flags = BaseSet_x86_64::OP_R8;
                                                 forceValidate = true;
@@ -2434,17 +2453,20 @@ namespace Seraph
                                                 node.addPrefix(0x66);
                                                 break;
                                             case Symbols::rm16:
-                                                node.hasMod = true;
-                                                op->opmode = Symbols::rm16;
-                                                op->flags = BaseSet_x86_64::OP_R16;
-                                                forceValidate = true;
+                                                if (!node.hasMod)
+                                                {
+                                                    node.hasMod++;
+                                                    op->opmode = Symbols::rm16;
+                                                    op->flags = BaseSet_x86_64::OP_R16;
+                                                    forceValidate = true;
+                                                }
                                                 break;
                                             }
                                             break;
                                         case Symbols::r32:
-                                            if (opvariant.symbols[i] == Symbols::rm32)
+                                            if (opvariant.symbols[i] == Symbols::rm32 && !node.hasMod)
                                             {
-                                                node.hasMod = true;
+                                                node.hasMod++;
                                                 op->opmode = Symbols::rm32;
                                                 op->flags = BaseSet_x86_64::OP_R32;
                                                 forceValidate = true;
@@ -2455,7 +2477,7 @@ namespace Seraph
                                             {
                                             case Symbols::mm_m32:
                                             case Symbols::mm_m64:
-                                                node.hasMod = true;
+                                                node.hasMod++;
                                                 op->opmode = Symbols::mm_m32;
                                                 op->flags = BaseSet_x86_64::OP_MM;
                                                 forceValidate = true;
@@ -2483,7 +2505,7 @@ namespace Seraph
                                             case Symbols::xmm_m32:
                                             case Symbols::xmm_m64:
                                             case Symbols::xmm_m128:
-                                                node.hasMod = true;
+                                                node.hasMod++;
                                                 op->opmode = Symbols::xmm_m32;
                                                 op->flags = BaseSet_x86_64::OP_XMM;
                                                 forceValidate = true;
@@ -2498,7 +2520,7 @@ namespace Seraph
 
                                             if (opvariant.symbols[i] == Symbols::r8)
                                             {
-                                                node.hasMod = true;
+                                                node.hasMod++;
                                                 op->opmode = Symbols::rm8;
                                                 op->flags = BaseSet_x86_64::OP_R8;
                                                 forceValidate = true;
@@ -2509,7 +2531,7 @@ namespace Seraph
 
                                             if (opvariant.symbols[i] == Symbols::r16)
                                             {
-                                                node.hasMod = true;
+                                                node.hasMod++;
                                                 op->opmode = Symbols::rm16;
                                                 op->flags = BaseSet_x86_64::OP_R16;
                                                 forceValidate = true;
@@ -2521,7 +2543,7 @@ namespace Seraph
                                             switch (opvariant.symbols[i])
                                             {
                                             case Symbols::r32:
-                                                node.hasMod = true;
+                                                node.hasMod++;
                                                 op->opmode = Symbols::rm32;
                                                 op->flags = BaseSet_x86_64::OP_R32;
                                                 forceValidate = true;
@@ -2549,7 +2571,7 @@ namespace Seraph
                                             switch (opvariant.symbols[i])
                                             {
                                             case Symbols::mm:
-                                                node.hasMod = true;
+                                                node.hasMod++;
                                                 op->opmode = Symbols::mm_m32;
                                                 op->flags = BaseSet_x86_64::OP_MM;
                                                 forceValidate = true;
@@ -2565,7 +2587,7 @@ namespace Seraph
                                             switch (opvariant.symbols[i])
                                             {
                                             case Symbols::xmm:
-                                                node.hasMod = true;
+                                                node.hasMod++;
                                                 op->opmode = Symbols::xmm_m32;
                                                 op->flags = BaseSet_x86_64::OP_XMM;
                                                 forceValidate = true;
@@ -2598,6 +2620,13 @@ namespace Seraph
                                                 op->rel16 = op->imm16;
                                                 forceValidate = true;
                                                 break;
+                                            case Symbols::rm32:
+                                                if (op->hasMod && node.hasMod == 1)
+                                                {
+                                                    op->opmode = Symbols::rm32;
+                                                    forceValidate = true;
+                                                }
+                                                break;
                                             }
                                             break;
                                         case Symbols::imm16: // To-do: optimize by enabling shorter (rel8) jump when necessary
@@ -2610,6 +2639,13 @@ namespace Seraph
                                                 op->rel32 = op->imm32;
                                                 forceValidate = true;
                                                 break;
+                                            case Symbols::rm32:
+                                                if (op->hasMod && node.hasMod == 1)
+                                                {
+                                                    op->opmode = Symbols::rm32;
+                                                    forceValidate = true;
+                                                }
+                                                break;
                                             }
                                             break;
                                         case Symbols::imm32:
@@ -2619,6 +2655,13 @@ namespace Seraph
                                                 op->rel32 = op->imm32;
                                                 op->opmode = Symbols::rel32;
                                                 forceValidate = true;
+                                                break;
+                                            case Symbols::rm32:
+                                                if (op->hasMod && node.hasMod == 1)
+                                                {
+                                                    op->opmode = Symbols::rm32;
+                                                    forceValidate = true;
+                                                }
                                                 break;
                                             }
                                             break;
@@ -2789,6 +2832,9 @@ namespace Seraph
                             //for (auto x : node.opData.operands)
                             //    for (auto s : x.pattern)
                             //        printf("%s ", s.c_str());
+                            //printf("\nMatched to variant: ");
+                            //for (auto x : opvariant.symbols)
+                            //    printf("(%i) ", x);
                             //printf("\n");
 
                             solved = true;
@@ -3152,8 +3198,8 @@ namespace Seraph
                                             modenc = 2 << 6;
                                             imm32value = (op.flags & BaseSet_x86_64::OP_IMM8) ? op.imm8 : op.imm32;
                                             hasImm32 = true;
+                                            break;
                                         case 1:
-
                                             // If a multiplier is present, use displacement mode w/ reg
                                             if (op.mul)
                                             {
