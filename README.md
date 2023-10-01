@@ -58,10 +58,11 @@ int main()
 	try
 	{
 		stream = assembler.compile(R"(
+main: // automatic labeling system! also, comments are allowed
 push ebp
 mov ebp, esp
-mov eax, [ebp+08h]
-add eax, dword ptr[ebp+0Ch]
+mov eax, [ebp+08h] // eax = first arg
+add eax, dword ptr[ebp+0Ch] // eax += second arg
 pop ebp
 retn
 		)", 0);
