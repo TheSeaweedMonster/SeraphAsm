@@ -11,7 +11,33 @@ namespace Seraph
 {
     enum class TargetArchitecture  { ARM, x86, x64 };
 
+    // Formatted exception for compilation/parser errors
+    //
+    class SeraphException : public std::exception
+    {
+    protected:
+        std::string message;
+    public:
+        inline SeraphException(const char* fmt, ...)
+        {
+            va_list vaArgList;
+            char vfmt[256];
+
+            __crt_va_start(vaArgList, fmt);
+            vsnprintf_s(vfmt, 256, fmt, vaArgList);
+            __crt_va_end(vaArgList);
+
+            message = std::string(vfmt);
+        }
+
+        inline char* what()
+        {
+            return const_cast<char*>(message.c_str());
+        }
+    };
+
     // Generic wrapper for an std::vector<uint8_t>
+    //
     class ByteStream : public std::vector<uint8_t>
     {
         size_t pos = 0;
@@ -462,7 +488,8 @@ namespace Seraph
 
         /// <summary>
         // Parses and converts assembly code string directly to
-        // a stream of bytes
+        // a stream of bytes.
+        // Throws a SeraphException if there are errors.
         /// </summary>
         ByteStream compile(const std::string& source, const uintptr_t offset = 0);
 	};
