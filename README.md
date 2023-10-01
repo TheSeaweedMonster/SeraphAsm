@@ -72,7 +72,7 @@ retn
 			printf("%02X ", stream.next());
 		printf("\n");
 	}
-	catch (std::exception e)
+	catch (Seraph::SeraphException e)
 	{
 		printf("Error: %s\n", e.what());
 	}
@@ -141,7 +141,7 @@ retn
 			printf("%02X ", stream.next());
 		printf("\n\n");
 	}
-	catch (std::exception e)
+	catch (Seraph::SeraphException e)
 	{
 		printf("Exception: %s\n", e.what());
 	}
