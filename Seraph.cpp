@@ -2372,7 +2372,9 @@ namespace Seraph
                             }
                         };
 
-                        //printf("(%s) (%i) operand pattern: ", node.opName.c_str(), operand.opmode);
+                        // For debugging..
+                        // 
+                        //printf("(%s) (%i) operand pattern (mod: %i. node has mod: %i): ", node.opName.c_str(), operand.opmode, operand.hasMod, node.hasMod);
                         //for (auto s : parts)
                         //    printf("%s ", s.c_str());
                         //printf("\n");
@@ -2398,10 +2400,12 @@ namespace Seraph
                     {
                         for (const auto& opvariant : lookup->second)
                         {
+                            // Copy the opcodes to a new table for making adjustments,
+                            // while figuring out what variant of the opcode to use..
+                            // To-do: Probably inefficient, rewrite soon ***
                             std::vector<BaseSet_x86_64::Operand> userOperands(node.opData.operands);
-
+                            
                             reject = false;
-                            hasExtRegs = false;
 
                             // Test the operands tied to this opcode, if there are any
                             if (!userOperands.empty())
@@ -2412,15 +2416,43 @@ namespace Seraph
                                 {
                                     for (size_t i = 0; i < opvariant.symbols.size() && !reject; i++)
                                     {
+                                        // Reset the "hasMod" property of this node,
+                                        // which remains the constant while checking
+                                        // each opcode variant
+                                        for (auto& op : node.opData.operands)
+                                        {
+                                            node.hasMod = op.hasMod;
+                                            if (node.hasMod) break;
+                                        }
+
+                                        // Reset the opcode to what we originally had
+                                        // To-do: ***
+                                        /*for (size_t j = 0; j < node.opData.operands.size(); j++)
+                                        {
+                                            auto op = node.opData.operands[j];
+                                            BaseSet_x86_64::Operand newOp;
+                                            newOp.bitSize = op.bitSize;
+                                            newOp.immSize = op.immSize;
+                                            newOp.hasMod = op.hasMod;
+                                            newOp.disp64 = op.disp64;
+                                            newOp.imm64 = op.imm64;
+                                            newOp.rel64 = op.rel64;
+                                            newOp.flags = op.flags;
+                                            newOp.mul = op.mul;
+                                            newOp.opmode = op.opmode;
+                                            newOp.pattern = op.pattern;
+                                            newOp.regs = op.regs;
+                                            newOp.regExt = op.regExt;
+                                            newOp.segment = op.segment;
+                                            userOperands[j] = newOp;
+                                        }*/
+
                                         bool regspec = false;
                                         bool forceValidate = false;
 
                                         // NOTE: this is a DUPLICATE of the opcode we are using, in this instance.
                                         // Se we can make direct changes to the opcode's type or values
                                         auto op = &userOperands[i];
-
-                                        if (op->regExt)
-                                            hasExtRegs = true;
 
                                         // Do a check for opcodes that require an rm8/16/32.
                                         // A single register will be accepted, since it is the
@@ -2803,7 +2835,6 @@ namespace Seraph
                                         // This also leaves us with a very minimalistic lookup table
                                         // + room for optimizing
                                         //
-
                                         //printf("%i (%s) == %i?\n", op->opmode, node.operands[i].c_str(), opvariant.symbols[i]);
 
                                         if (forceValidate)
@@ -2825,7 +2856,9 @@ namespace Seraph
                                 }
                             }
 
-                            //printf("Matched operand (%s) ", node.opName.c_str());
+                            // For debugging..
+                            // 
+                            //printf("Matched operand (%s) (hasMod: %i) ", node.opName.c_str(), node.hasMod);
                             //for (auto x : node.opData.operands)
                             //    for (auto s : x.pattern)
                             //        printf("%s ", s.c_str());
@@ -2843,9 +2876,9 @@ namespace Seraph
 
                                 // Rex encoding is absolutely dreadful...
                                 // 
-                                for (size_t opIndex = 0; opIndex < node.opData.operands.size(); opIndex++)
+                                for (size_t opIndex = 0; opIndex < userOperands.size(); opIndex++)
                                 {
-                                    auto op = node.opData.operands[opIndex];
+                                    auto op = userOperands[opIndex];
 
                                     if (op.regExt || op.flags & BaseSet_x86_64::OP_IMM64)
                                     {
@@ -2869,8 +2902,13 @@ namespace Seraph
                                             if (!op.regExt && opvariant.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS)
                                                 break;
 
-                                            if (node.opData.operands.size() == 1)
-                                                rexenc += 1 << 0;
+                                            if (userOperands.size() == 1)
+                                            {
+                                                //if (!op.regExt && !node.hasMod)
+                                                //    rexenc |= 1 << 3;
+                                                //else
+                                                    rexenc |= 1 << 0;
+                                            }
                                             else
                                                 rexenc |= 1 << ((op.regExt) ? 0 : ((node.hasMod) ? 3 : 2)); // node.hasMod?
 
@@ -2907,14 +2945,14 @@ namespace Seraph
                                             else if (op.regExt)
                                                 rexenc |= 1 << 2;
 
-                                            if (op.regExt && node.opData.operands.front().regExt)
+                                            if (op.regExt && userOperands.front().regExt)
                                             {
                                                 rexenc |= 1 << 2;
                                                 rexenc |= 1 << 3;
                                             }
 
                                             // we need to check if operands are default 32 bit or 64 bit
-                                            if (node.opData.operands.size() > 1)
+                                            if (userOperands.size() > 1)
                                             {
                                                 usingrex = 1;
                                                 rexenc |= 1 << 6;
@@ -2927,6 +2965,10 @@ namespace Seraph
 
                                     switch (op.immSize)
                                     {
+                                    case 32:
+                                        if (!node.hasMod)
+                                            rexenc += 4;
+                                        break;
                                     case 64:
                                         rexenc |= 1 << 3;
                                         break;
