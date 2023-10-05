@@ -29,13 +29,13 @@ namespace Seraph
 
 			while (*reinterpret_cast<uint64_t*>(reinterpret_cast<uintptr_t>(data) + segmentsStart) != 0x000000747865742E)
 			{
-				if (segmentsStart >= 0x3F0)
+				if (segmentsStart >= 1000)
 					break;
 				else
 					segmentsStart += 4;
 			}
 
-			for (auto at = reinterpret_cast<SegmentData*>(reinterpret_cast<uintptr_t>(data) + segmentsStart); at->offset && at->size && segmentsStart < 0x3F0; at++, segmentsStart += sizeof(SegmentData))
+			for (auto at = reinterpret_cast<SegmentData*>(reinterpret_cast<uintptr_t>(data) + segmentsStart); at->offset && at->size && segmentsStart < 1000; at++, segmentsStart += sizeof(SegmentData))
 			{
 				Seraph::MemUtil::ProcessSection res;
 				res.name = at->name;
@@ -52,12 +52,8 @@ namespace Seraph
 		ProcessSection getSection(const HANDLE hProcess, const uintptr_t baseModule, const char* const name)
 		{
 			for (const auto& section : getSections(hProcess, baseModule))
-			{
 				if (section.name == name)
-				{
 					return section;
-				}
-			}
 
 			return { "???", 0, 0};
 		}
