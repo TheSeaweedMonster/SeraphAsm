@@ -33,9 +33,9 @@ Input is highly appreciated, and also reasonable, non-negative criticism :).<br>
 SeraphAsm uses a hard-coded lookup table for identifying opcodes, which gets initialized<br>
 in the constructor for the "Assembler" class.<br>
 
-This is faster and less tedious than parsing all of the opcodes/information<br>
-from a separate file. It also means we don't need a separate format or worry about there<br>
-being a reference file in the project directory.<br>
+This is surely faster than parsing all of the opcodes/information<br>
+from a separate file. It also means we don't need to deal with<br>
+a reference file in the project directory.<br>
 
 However, that means SeraphAsm will generate quite a bit of code.<br>
 This isnt much of a problem if you aren't concerned about project size or compilation speed.<br>
