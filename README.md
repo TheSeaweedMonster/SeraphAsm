@@ -208,4 +208,16 @@ int main()
 }
 ```
 
+If you notice, you can't simply copy a function into another process<br>
+and expect it to run the same. This is mainly because the location of<br>
+other functions are not the same, and pointers to functions (like DLL<br>
+functions) are non-existent, because those are stored elsewhere than <br>
+the function.<br>
+
+Well, to overcome this is simple.<br>
+With Utility::injectFunction, we can pass a reference to any DLL<br>
+functions and call them from the function within the other process.<br>
+We can also pass the memory address of other functions we inject,<br>
+and call them like normal.<br>
+We just have to rebuild their decltype, as demonstrated.<br>
 
