@@ -31,7 +31,7 @@ Input is highly appreciated, and also reasonable, non-negative criticism :).<br>
 # Pros/Cons
 
 SeraphAsm uses a hard-coded lookup table for identifying opcodes, which gets initialized<br>
-in the constructor for the "Assembler" class.<br>
+once in every new instance of an "Assembler" class.<br>
 
 This is surely faster than parsing all of the opcodes/information<br>
 from a separate file. It also means we don't need to deal with<br>
