@@ -221,3 +221,15 @@ We can also pass the memory address of other functions we inject,<br>
 and call them like normal.<br>
 We just have to rebuild their decltype, as demonstrated.<br>
 
+Similarly, strings also rely on a pointer that points to a location in<br>
+our process, that is not the same in other processes.<br>
+If you injected a function that uses any strings into another process, it<br>
+will fail.<br>
+
+Thankfully, I've added a special mechanism to allocate strings and use them,<br>
+also shown in the example above.<br>
+
+They are added to the secret stack space that each injected function has.<br>
+It's very easy to define and use strings, just use MAKE_STRING or MAKE_WSTRING.<br>
+
+That is all! =-)<br>
