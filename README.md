@@ -58,7 +58,8 @@ int main()
 	try
 	{
 		stream = assembler.compile(R"(
-main: // automatic labeling system! also, comments are allowed
+// single-line comments are allowed, but not multi-line (yet)
+main: // automatic labeling system
 push ebp
 mov ebp, esp
 mov eax, [ebp+08h] // eax = first arg
