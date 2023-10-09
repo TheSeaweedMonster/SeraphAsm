@@ -176,7 +176,7 @@ into another process:<br>
 #pragma FUNCTION_WRAP_BEGIN
 // This function will open a message box saying "lol!!"
 // via the injected process
-int functionToInject()
+DWORD __stdcall functionToInject(LPVOID param)
 {
     GET_FUNCTION_STACK(stack);
     MAKE_STRING("lol!!", str1);
