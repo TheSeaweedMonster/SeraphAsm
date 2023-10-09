@@ -159,3 +159,53 @@ Enjoy.<br>
 
 DM for more information: jayyy#5764<br>
 
+
+
+# Utility API
+
+The upcoming utility api is designed for various sorts of debugging,<br>
+exploitation (by educational means, of course), and runtime analysis<br>
+of (other) processes.<br>
+
+In the following example, we can inject a function's ASM right<br>
+into another process:<br>
+
+```
+#include "Seraph/Utility/InjectFunction.hpp"
+
+#pragma FUNCTION_WRAP_BEGIN
+// This function will open a message box saying "lol!!"
+// via the injected process
+int functionToInject()
+{
+    GET_FUNCTION_STACK(stack);
+    MAKE_STRING("lol!!", str1);
+        
+    const auto myMessageBoxA = reinterpret_cast<decltype(&MessageBoxA)>(stack[0]);
+    
+
+    myMessageBoxA(0, str1, str1, 0)
+    return 0;
+
+    MARK_END_FUNCTION
+}
+#pragma FUNCTION_WRAP_END
+
+int main()
+{
+    const auto pid = 0; // Do something here, dance, idk!!
+    const auto hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
+    const auto page = VirtualAllocEx(hProcess, nullptr, 1024, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    
+    // Inject our function, with a reference to the MessageBoxA function.
+    // This means MessageBoxA will be at stack[0]
+    Seraph::Utility::injectFunction(hProcess, page, functionToInject, { MessageBoxA });
+    
+    // Run the function!
+    CreateRemoteThread(hProcess, 0, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(page), 0, 0, nullptr);
+    
+    // . . .
+}
+```
+
+
