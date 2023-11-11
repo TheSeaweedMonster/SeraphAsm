@@ -1,11 +1,12 @@
 #include <Windows.h>
 #include "Sections.hpp"
+#include "MemUtil.hpp"
 
 namespace Seraph
 {
 	namespace MemUtil
 	{
-		std::vector<ProcessSection> getSections(const HANDLE hProcess, const uintptr_t pModule)
+		std::vector<ProcessSection> getSections()
 		{
 			std::vector<ProcessSection> results = {};
 
@@ -14,7 +15,7 @@ namespace Seraph
 
 			size_t nbytes;
 
-			ReadProcessMemory(hProcess, reinterpret_cast<void*>(pModule), data, 1000, &nbytes);
+			ReadProcessMemory(hProcess, hBaseModule, data, 1000, &nbytes);
 
 			// Size: 0x28 bytes (for x86 and x64 applications)
 			struct SegmentData
@@ -35,6 +36,8 @@ namespace Seraph
 					segmentsStart += 4;
 			}
 
+			const auto pModule = reinterpret_cast<uintptr_t>(hBaseModule);
+
 			for (auto at = reinterpret_cast<SegmentData*>(reinterpret_cast<uintptr_t>(data) + segmentsStart); at->offset && at->size && segmentsStart < 1000; at++, segmentsStart += sizeof(SegmentData))
 			{
 				Seraph::MemUtil::ProcessSection res;
@@ -49,13 +52,13 @@ namespace Seraph
 			return results;
 		}
 
-		ProcessSection getSection(const HANDLE hProcess, const uintptr_t baseModule, const char* const name)
+		ProcessSection getSection(const char* const name)
 		{
-			for (const auto& section : getSections(hProcess, baseModule))
+			for (const auto& section : getSections())
 				if (section.name == name)
 					return section;
 
-			return { "???", 0, 0};
+			return { "???", 0, 0 };
 		}
 	}
 }
