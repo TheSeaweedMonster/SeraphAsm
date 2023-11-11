@@ -15,20 +15,23 @@ namespace Seraph
 		{
 			ScanResults newResults = {};
 
+			uint32_t protectFlag = MemUtil::READABLE_MEMORY;
+
 			switch (bounds.second)
 			{
-			case Regions::Code.second:
-			{
-				const auto code = MemUtil::getSection(".text");
-				bounds = { code.start, code.end };
-				break;
-			}
 			case Regions::Data.second:
 			{
 				const auto data = MemUtil::getSection(".data");
 				bounds = { data.start, data.end };
 				break;
 			}
+			case Regions::Code.second:
+				//{
+				//	const auto code = MemUtil::getSection(".text");
+				//	bounds = { code.start, code.end };
+				//	break;
+				//}
+				protectFlag = MemUtil::EXECUTABLE_MEMORY; // Scan all executable memory in the process
 			case Regions::VirtualMemory.second:
 			{
 				SYSTEM_INFO info = { 0 };
@@ -47,7 +50,7 @@ namespace Seraph
 
 				const auto remainingBytes = memRegion.RegionSize - (start - memRegion.BaseAddress);
 
-				if ((memRegion.State & MEM_COMMIT) && (memRegion.Protect & MemUtil::READABLE_MEMORY))
+				if ((memRegion.State & MEM_COMMIT) && (memRegion.Protect & protectFlag))
 				{
 					size_t nothing, i = 0;
 					uint8_t* buffer = new uint8_t[remainingBytes];
