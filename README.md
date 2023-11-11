@@ -11,10 +11,9 @@ Features:<br>
 ✔️ Memory-editing utilities for both internal and external application<br>
 ✔️ Open-sourced<br>
 
-Expected finish date: 10/10/23<br>
-Percentage completion: 70%<br>
+Percentage completion: 65%<br>
 
-Disassembly is not supported yet!<br>
+Disassembly is not yet supported<br>
 For more information, see Release Notes<br>
 
 I am open to contributions (please give credit where due,<br>
