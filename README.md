@@ -233,4 +233,29 @@ also shown in the example above.<br>
 They are added to the secret stack space that each injected function has.<br>
 It's very easy to define and use strings, just use MAKE_STRING or MAKE_WSTRING.<br>
 
-That is all! =-)<br>
+-- EDIT: MAKE_STRING/MAKE_WSTRING are presently being worked on...
+
+
+# MemView:
+
+MemView is an api that essentially creates Cheat Engine in the form of a console :)<br>
+It's designed to be extremely portable and lightweight.<br>
+
+To start using it, simply initialize an instance and call the start() method:<br>
+```
+    MemView memView;
+    memView.start();
+```
+
+
+
+# MemScan:
+
+Creating a MemScan instance allows you to scan values in the memory of another process.<br>
+For example to scan float values throughout a processes memory, <br>
+initialize a MemScan instance and call the start method with the desired type and value to scan:<br>
+```
+    MemScan scan1(Regions::VirtualMemory, sizeof(float_t));
+    scan1.start<float_t>(196.1999969482422f);
+    printf("Scan finished. Results: %i\n", scan1.results().size());
+```
