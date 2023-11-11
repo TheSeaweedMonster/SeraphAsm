@@ -978,9 +978,9 @@ namespace Seraph
             { { 0xEA }, { OpEncoding::cd }, { Symbols::ptr16_16 } },
             { { 0xEA }, { OpEncoding::cp }, { Symbols::ptr16_32 } },
             { { 0xFF }, { OpEncoding::m4 }, { Symbols::rm16 } },
-            { { 0xFF }, { OpEncoding::m4 }, { Symbols::rm32 } },
+            { { 0xFF }, { OpEncoding::m4 }, { Symbols::rm32 }, BaseSet_x86_64::OPS_DEFAULT_64_BITS },
             { { 0xFF }, { OpEncoding::m5 }, { Symbols::m16_16 } },
-            { { 0xFF }, { OpEncoding::m5 }, { Symbols::m16_32 } },
+            { { 0xFF }, { OpEncoding::m5 }, { Symbols::m16_32 }, BaseSet_x86_64::OPS_DEFAULT_64_BITS },
         };
         oplookup_x86_64["jo"] = {
             { { 0x70 }, { OpEncoding::cb }, { Symbols::rel8 } },
@@ -1184,6 +1184,7 @@ namespace Seraph
         oplookup_x86_64["ret"] = {
             { { 0xC2 }, { OpEncoding::iw }, { Symbols::imm16 } },
             { { 0xCA }, { OpEncoding::iw }, { Symbols::imm16 } },
+            { { 0xC3 }, { }, { } },
             { { 0xCB }, { }, { } }
         };
         oplookup_x86_64["retn"] = { { { 0xC3 }, { } } };
@@ -2432,28 +2433,6 @@ namespace Seraph
                                             if (node.hasMod) break;
                                         }
 
-                                        // Reset the opcode to what we originally had
-                                        // To-do: ***
-                                        /*for (size_t j = 0; j < node.opData.operands.size(); j++)
-                                        {
-                                            auto op = node.opData.operands[j];
-                                            BaseSet_x86_64::Operand newOp;
-                                            newOp.bitSize = op.bitSize;
-                                            newOp.immSize = op.immSize;
-                                            newOp.hasMod = op.hasMod;
-                                            newOp.disp64 = op.disp64;
-                                            newOp.imm64 = op.imm64;
-                                            newOp.rel64 = op.rel64;
-                                            newOp.flags = op.flags;
-                                            newOp.mul = op.mul;
-                                            newOp.opmode = op.opmode;
-                                            newOp.pattern = op.pattern;
-                                            newOp.regs = op.regs;
-                                            newOp.regExt = op.regExt;
-                                            newOp.segment = op.segment;
-                                            userOperands[j] = newOp;
-                                        }*/
-
                                         bool regspec = false;
                                         bool forceValidate = false;
 
@@ -2464,7 +2443,6 @@ namespace Seraph
                                         // Do a check for opcodes that require an rm8/16/32.
                                         // A single register will be accepted, since it is the
                                         // 3rd mode of rm
-
                                         switch (op->opmode)
                                         {
                                             //
@@ -2579,10 +2557,13 @@ namespace Seraph
                                             switch (opvariant.symbols[i])
                                             {
                                             case Symbols::r32:
-                                                node.hasMod++;
-                                                op->opmode = Symbols::rm32;
-                                                op->flags = BaseSet_x86_64::OP_R32;
-                                                forceValidate = true;
+                                                if (!op->hasMod)
+                                                {
+                                                    node.hasMod++;
+                                                    op->opmode = Symbols::rm32;
+                                                    op->flags = BaseSet_x86_64::OP_R32;
+                                                    forceValidate = true;
+                                                }
                                                 break;
                                             case Symbols::m:
                                             case Symbols::mm:
@@ -2836,26 +2817,21 @@ namespace Seraph
                                         // 4. Our parser reads "r32+mm+imm8". An exception happens where we have two register-only operands. After this is allowed to pass, we have to change the second register-only operand to a "mm_m64" in order to translate to the correct bytecode.
                                         // 5. According to my research, "mm" can also translate to an r/m with a 32-bit register.
                                         //
-                                        // It may seem like this is all very confusing (and trust me it is), but
-                                        // all of this enables my parser to work along with the format provided
-                                        // by intel resources (and reference manuals) for x86 (and x64)
-                                        // This also leaves us with a very minimalistic lookup table
-                                        // + room for optimizing
+                                        // It may seem like this is all confusing (and it is), but this enables my parser
+                                        // to work along with the format provided by intel reference manuals for x86_64
+                                        // This also leaves us with a very minimalistic lookup table / room for optimizing
                                         //
                                         //printf("%i (%s) == %i?\n", op->opmode, node.operands[i].c_str(), opvariant.symbols[i]);
 
                                         if (forceValidate)
                                             continue;
-
                                         else if (regspec)
                                             // We won't be using this opmode. It only
                                             // enabled us to look up the correct opcode information
                                             op->opmode = Symbols::not_set;
                                         else if (!forceValidate)
-                                        {
                                             // Reject this opcode comparison if the (other) opmodes do not match
                                             reject = (op->opmode != opvariant.symbols[i]);
-                                        }
                                     }
 
                                     if (reject)
@@ -2873,121 +2849,51 @@ namespace Seraph
                             //for (auto x : opvariant.symbols)
                             //    printf("(%i) ", x);
                             //printf("\n");
-
+                            
                             solved = true;
+
+                            size_t streamStartIndex = stream.size();
+                            uint8_t usingrex = 0;
+                            uint8_t rexenc = 0;
+                            uint8_t hasextreg = 0;
+                            uint8_t has64data = 0;
 
                             if (mode64)
                             {
-                                uint8_t usingrex = 0;
-                                uint8_t rexenc = 0;
+                                // Note:
+                                // Registers used in mod r/m are automatically 64-bit, based on the instruction
+                                // We only need to worry about:
+                                // -> 64-bit registers being used in the first operand,
+                                // -> any of the NEW registers being used in _both_ operands
+                                // -> 64-bit immediate/displacement values
+                                // Example:
+                                // lea ebp,[rsp+00000100] --> 8D AC 24 00 01 00 00
+                                // lea rbp,[rsp+00000100] --> 48 8D AC 24 00 01 00 00
+                                // lea r8,[rsp+00000100] --> 4C 8D AC 24 00 01 00 00
+                                // lea rbp,[r8+00000100] --> 49 8D AC 24 00 01 00 00
+                                // lea r8,[r9+00000100] --> 4D 8D AC 24 00 01 00 00
+                                // lea ebp,[r9+00000100] --> 41 8D AC 24 00 01 00 00
+                                // mov rax,00007F1212121200 --> 48 B8 00 12 12 12 12 7F 00 00
 
-                                // Rex encoding is absolutely dreadful...
-                                // 
                                 for (size_t opIndex = 0; opIndex < userOperands.size(); opIndex++)
                                 {
                                     auto op = userOperands[opIndex];
 
-                                    if (op.regExt || op.flags & BaseSet_x86_64::OP_IMM64)
+                                    if (op.bitSize >= 64)
+                                        has64data++;
+
+                                    if (op.regExt)
+                                        hasextreg++;
+                                }
+                                
+                                if (!(opvariant.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS))
+                                {
+                                    if (has64data || hasextreg)
                                     {
                                         usingrex = 1;
-                                        rexenc |= 1 << 6;
+                                        rexenc |= 1 << 6; // 01000000
                                     }
-
-                                    switch (opIndex)
-                                    {
-                                    case 0:
-                                        switch (op.bitSize)
-                                        {
-                                        case 16:
-                                            break;
-                                        case 32:
-                                            if (op.regExt)
-                                                rexenc |= 1 << 0;
-                                            break;
-                                        case 64:
-                                        case 128:
-                                            if (!op.regExt && opvariant.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS)
-                                                break;
-
-                                            if (userOperands.size() == 1)
-                                            {
-                                                //if (!op.regExt && !node.hasMod)
-                                                //    rexenc |= 1 << 3;
-                                                //else
-                                                    rexenc |= 1 << 0;
-                                            }
-                                            else
-                                                rexenc |= 1 << ((op.regExt) ? 0 : ((node.hasMod) ? 3 : 2)); // node.hasMod?
-
-                                            usingrex = 1;
-                                            rexenc |= 1 << 6;
-
-                                            break;
-                                        }
-                                        break;
-                                    case 1:
-                                        switch (op.bitSize)
-                                        {
-                                        case 16:
-                                            break;
-                                        case 32:
-                                            if (op.regExt)
-                                                rexenc |= 1 << ((op.regExt) ? 2 : 1);
-                                            break;
-                                        case 64:
-                                        case 128:
-                                            if (!op.regExt && opvariant.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS)
-                                                break;
-
-                                            if (op.flags & BaseSet_x86_64::OP_IMM64)
-                                            {
-                                                rexenc |= 1 << 3;
-                                                break;
-                                            }
-
-                                            if (rexenc & (1 << 2)) // && !node.hasMod
-                                            {
-                                                rexenc &= ~(1 << 2);
-                                                rexenc |= 1 << 3;
-                                            }
-                                            else if (op.regExt)
-                                                rexenc |= 1 << 2;
-
-                                            if (op.regExt && userOperands.front().regExt)
-                                            {
-                                                rexenc |= 1 << 2;
-                                                rexenc |= 1 << 3;
-                                            }
-
-                                            // we need to check if operands are default 32 bit or 64 bit
-                                            if (userOperands.size() > 1)
-                                            {
-                                                usingrex = 1;
-                                                rexenc |= 1 << 6;
-                                            }
-
-                                            break;
-                                        }
-                                        break;
-                                    }
-
-                                    switch (op.immSize)
-                                    {
-                                    case 8:
-                                    case 16:
-                                    case 32:
-                                        if (!node.hasMod)
-                                            rexenc += 4;
-                                        break;
-                                    case 64:
-                                        rexenc |= 1 << 3;
-                                        break;
-                                    }
-
                                 }
-
-                                if (usingrex)
-                                    node.prefixes.push_back(rexenc);
                             }
 
                             // Add prefix flags
@@ -3003,7 +2909,7 @@ namespace Seraph
                             for (const auto entry : opvariant.entries)
                             {
                                 // If the opcode format is "+rd", then the final opcode byte
-                                // is used to denote the (8-32 bit) register
+                                // is used to denote the (8-32-64 bit) register
                                 switch (entry)
                                 {
                                 case OpEncoding::m0:
@@ -3040,6 +2946,9 @@ namespace Seraph
                                         for (size_t i = 0; i < opvariant.code.size() - 1; i++)
                                             stream.add(opvariant.code[i]);
 
+                                    if (userOperands.front().regExt)
+                                        rexenc |= 1;
+
                                     stream.add(opvariant.code.back() + userOperands.front().regs.front());
 
                                     // Remove the placeholder for this register -- it's a part of
@@ -3067,6 +2976,7 @@ namespace Seraph
                                 // append code for this instruction
                                 for (const auto b : opvariant.code)
                                     stream.add(b);
+
 
                             // Continue -- generate the rest of the code for this instruction
                             // 
@@ -3126,6 +3036,7 @@ namespace Seraph
                                         hasDisp32 = true;
                                         break;
                                     case Symbols::imm64:
+                                        rexenc |= 1 << 3;
                                         disp64value = op.imm64;
                                         hasDisp64 = true;
                                         break;
@@ -3177,6 +3088,7 @@ namespace Seraph
                                         hasImm32 = true;
                                         break;
                                     case Symbols::moffs64:
+                                        rexenc |= 1 << 3;
                                         imm64value = op.imm64;
                                         hasImm64 = true;
                                         break;
@@ -3190,6 +3102,12 @@ namespace Seraph
                                     case Symbols::r32:
                                     case Symbols::r64:
                                         useModByte = true;
+
+                                        if (op.bitSize >= 64)
+                                            rexenc |= 1 << 3;
+
+                                        if (op.regExt)
+                                            rexenc |= 1 << 2;
 
                                         if (!findEntry(opvariant.entries, OpEncoding::r))
                                         {
@@ -3222,13 +3140,19 @@ namespace Seraph
                                         // Just a single register-only operand
                                         if (op.regs.size() == 1 && !(op.flags & BaseSet_x86_64::OP_RM)/*!node.hasMod*/)
                                         {
+                                            if (op.bitSize >= 64)
+                                                rexenc |= 1 << 3;
+
+                                            if (op.regExt)
+                                                rexenc |= 1;
+
                                             modenc = 3 << 6;
                                             modbyte += op.regs.front();
                                             break;
                                         }
                                         
-                                        // No regs, just a 32-bit memory offset
-                                        if (op.regs.size() == 0 && op.flags & BaseSet_x86_64::OP_IMM32)
+                                        // No regs, or segments, just a 32-bit memory offset
+                                        if (op.regs.size() == 0 && op.flags & BaseSet_x86_64::OP_IMM32 && !node.segment)
                                         {
                                             modbyte += 5;
                                             imm32value = op.imm32;
@@ -3243,10 +3167,22 @@ namespace Seraph
                                         switch (op.regs.size())
                                         {
                                         case 0:
-                                            modbyte += 5;
-                                            //modenc = 2 << 6;
-                                            imm32value = (op.flags & BaseSet_x86_64::OP_IMM8) ? op.imm8 : op.imm32;
-                                            hasImm32 = true;
+                                            //if (node.segment)
+                                            //{
+                                                hasSib = true;
+                                                modbyte += 4;
+                                                sibbyte |= 1 << 5;
+                                                sibbyte += 5;
+                                                imm32value = (op.flags & BaseSet_x86_64::OP_IMM8) ? op.imm8 : op.imm32;
+                                                hasImm32 = true;
+                                            //}
+                                            //else
+                                            //{
+                                            //    modbyte += 5;
+                                            //    //modenc = 2 << 6;
+                                            //    imm32value = (op.flags & BaseSet_x86_64::OP_IMM8) ? op.imm8 : op.imm32;
+                                            //    hasImm32 = true;
+                                            //}
                                             break;
                                         case 1:
                                             // If a multiplier is present, use displacement mode w/ reg
@@ -3314,7 +3250,7 @@ namespace Seraph
                                                 disp64value = op.imm64;
                                                 hasDisp64 = true;
                                             }
-                                            
+
                                             break;
                                         case 2:
                                         default:
@@ -3347,11 +3283,17 @@ namespace Seraph
                                             break;
                                         }
 
+                                        if (useModByte && op.regExt)
+                                            rexenc |= 1;
+
                                         break;
                                     }
                                 }
 
                                 modbyte |= modenc;
+
+                                if (usingrex) // append our finished rex encoding at the beginning
+                                    stream.insert(stream.begin() + streamStartIndex, rexenc);
 
                                 if (useModByte)
                                     stream.add(modbyte);
