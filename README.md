@@ -8,7 +8,7 @@ Features:<br>
 ✔️ Text-to-assembly to write instructions and/or function routines<br>
 ⏳ Analysis of function routines<br>
 ⏳ Disassembly; text translation as well as text/AST decompilation of instructions (incomplete)<br>
-⏳ Memory-editing utilities for both internal and external application<br>
+✔️ Memory-editing utilities for both internal and external application<br>
 ✔️ Open-sourced<br>
 
 Expected finish date: 10/10/23<br>
