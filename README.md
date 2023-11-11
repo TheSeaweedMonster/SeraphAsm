@@ -12,7 +12,7 @@ Features:<br>
 ✔️ Open-sourced<br>
 
 Expected finish date: 10/10/23<br>
-Percentage completion: 55%<br>
+Percentage completion: 70%<br>
 
 Disassembly is not supported yet!<br>
 For more information, see Release Notes<br>
