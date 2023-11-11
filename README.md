@@ -166,7 +166,7 @@ DM for more information: jayyy#5764<br>
 
 The upcoming utility api is designed for various sorts of debugging,<br>
 exploitation (by educational means, of course), and runtime analysis<br>
-of (other) processes.<br>
+of other processes.<br>
 
 In the following example, we can inject a function's ASM right<br>
 into another process:<br>
@@ -176,7 +176,7 @@ into another process:<br>
 
 #pragma FUNCTION_WRAP_BEGIN
 // This function will open a message box saying "lol!!"
-// via the injected process
+// from in the injected process
 DWORD __stdcall functionToInject(LPVOID param)
 {
     GET_FUNCTION_STACK(stack);
@@ -194,7 +194,7 @@ DWORD __stdcall functionToInject(LPVOID param)
 
 int main()
 {
-    const auto pid = 0; // Do something here, dance, idk!!
+    const auto pid = 0; // Do something here, dance, idc!!
     const auto hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
     const auto page = VirtualAllocEx(hProcess, nullptr, 1024, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     
