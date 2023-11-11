@@ -256,6 +256,12 @@ For example to scan float values throughout a processes memory, <br>
 initialize a MemScan instance and call the start method with the desired type and value to scan:<br>
 ```
     MemScan scan1(Regions::VirtualMemory, sizeof(float_t));
-    scan1.start<float_t>(196.1999969482422f);
+    scan1.start<float_t>(200.0f);
     printf("Scan finished. Results: %i\n", scan1.results().size());
 ```
+
+You can set up the scanner to only scan on individual sections of a process.<br>
+For example, using Regions::VirtualMemory will scan through all of the processes virtual memory.<br>
+Using Regions::Code will only scan code sections of the process (pages with the PAGE_EXECUTE flag)<br>
+Using Regions::Data will only scan the data section(s) of a process (PAGE_READWRITE)<br>
+
