@@ -19,6 +19,7 @@ namespace Seraph
 
 		extern PROCESSENTRY32 findProcess(const std::vector<std::wstring>& processNames);
 		extern bool openProcessByEntry(const PROCESSENTRY32& processName);
+		extern bool isOpen();
 
 		extern std::vector<std::pair<std::wstring, HMODULE>> getModules();
 		extern HMODULE getModule(const std::wstring& wstrModContain);
