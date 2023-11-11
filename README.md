@@ -236,7 +236,7 @@ It's very easy to define and use strings, just use MAKE_STRING or MAKE_WSTRING.<
 -- EDIT: MAKE_STRING/MAKE_WSTRING are presently being worked on...
 
 
-# MemView:
+# MemView.hpp --> MemView instance: ***
 
 MemView is an api that essentially creates Cheat Engine in the form of a console :)<br>
 It's designed to be extremely portable and lightweight.<br>
@@ -249,7 +249,7 @@ To start using it, simply initialize an instance and call the start() method:<br
 
 
 
-# MemScan:
+# MemScan.hpp --> MemScan instance: ***
 
 Creating a MemScan instance allows you to scan values in the memory of another process.<br>
 For example to scan float values throughout a processes memory, <br>
@@ -265,3 +265,35 @@ For example, using Regions::VirtualMemory will scan through all of the processes
 Using Regions::Code will only scan code sections of the process (pages with the PAGE_EXECUTE flag)<br>
 Using Regions::Data will only scan the data section(s) of a process (PAGE_READWRITE)<br>
 
+
+# *** PLEASE READ:
+
+Before using extension apis of the main utility api like MemScan/MemView/...<br>
+please be sure that you included MemUtil.hpp, and have <b>already opened the target process.</b>
+
+To do this, use MemUtil::findProcess and MemUtil::openProcessByEntry:<br>
+
+```
+    PROCESSENTRY32 entry;
+
+    while (!entry.th32ProcessID)
+    {
+        entry = findProcess({ L"Notepad.exe" });
+        if (entry.th32ProcessID) break;
+
+        printf("Waiting for process...\n");
+        Sleep(250);
+        system("CLS");
+    }
+
+    if (!openProcessByEntry(entry))
+    {
+        printf("Failed to open process...\n");
+        return;
+    }
+
+    printf("Process opened! Process ID: %04X\n"", entry.th32ProcessID);
+
+    // By now, MemUtil has the process handle information saved,
+    // which all API's will use
+```
