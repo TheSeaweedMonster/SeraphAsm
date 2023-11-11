@@ -14,7 +14,7 @@ namespace Seraph
 			std::uintptr_t end;
 		};
 
-		std::vector<ProcessSection> getSections(const HANDLE hProcess, const  uintptr_t baseModule);
-		ProcessSection getSection(const HANDLE hProcess, const uintptr_t baseModule, const char* const name);
+		std::vector<ProcessSection> getSections();
+		ProcessSection getSection(const char* const name);
 	}
 }
