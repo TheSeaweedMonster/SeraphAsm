@@ -5,10 +5,10 @@ namespace Seraph
 {
 	namespace MemUtil
 	{
-		uintptr_t injectFunction(const HANDLE attachedHandle, uintptr_t location, void* function, size_t functionSize, std::vector<std::any>data)
+		std::pair<uintptr_t, uintptr_t> injectFunction(const HANDLE attachedHandle, uintptr_t location, void* function, size_t functionSize, const std::vector<std::any>& data)
 		{
 			if (location == 0)
-				return 0;
+				return { 0, 0 };
 
 			size_t userStackSize = 0;
 
@@ -45,8 +45,8 @@ namespace Seraph
 				}
 			}
 
-			std::vector<std::pair<int32_t, const char*>>strings = {};
-			std::vector<std::pair<int32_t, const wchar_t*>>wideStrings = {};
+			std::vector<std::pair<std::pair<int32_t, int32_t>, const char*>>strings = {};
+			std::vector<std::pair<std::pair<int32_t, int32_t>, const wchar_t*>>wstrings = {};
 
 			for (int32_t i = 0; i < functionSize - sizeof(void*); i++)
 			{
@@ -57,14 +57,36 @@ namespace Seraph
 					// which will point to the string in THIS EXE.
 					//
 					// -6 because of the second jmp (EB 04)
-					const auto stringPointer = *reinterpret_cast<uint32_t*>((reinterpret_cast<uintptr_t>(function) + i) - (2 + sizeof(void*)));
-					const auto str = reinterpret_cast<const char*>(stringPointer);
+					auto stringPointer = reinterpret_cast<uintptr_t>(function) + i;
 
-					//printf("Found string marker at %p. String: `%s`\n", reinterpret_cast<uintptr_t>(function) + i, str);
+					//if (*reinterpret_cast<uint16_t*>(stringPointer - 2) == 0x04EB)
+					stringPointer -= 2;
 
-					strings.push_back({ i - (2 + sizeof(void*)), str });
+					char* str = nullptr;
+
+					if (*reinterpret_cast<uint16_t*>(stringPointer - 5) == 0x8948 && *reinterpret_cast<uint8_t*>(stringPointer - 2) == 0x24)
+					{
+						const auto relStart = stringPointer - 5;
+						stringPointer = relStart + *reinterpret_cast<uint32_t*>(stringPointer - 9);
+						str = reinterpret_cast<char*>(stringPointer);
+						strings.push_back({ { 0, relStart }, str });
+					}
+					else if (*reinterpret_cast<uint16_t*>(stringPointer - 8) == 0x8948 && *reinterpret_cast<uint8_t*>(stringPointer - 5) == 0x24)
+					{
+						const auto relStart = stringPointer - 8;
+						stringPointer = relStart + *reinterpret_cast<uint32_t*>(stringPointer - 12);
+						str = reinterpret_cast<char*>(stringPointer);
+						strings.push_back({ { 0, relStart }, str });
+					}
+					else
+					{
+						str = *reinterpret_cast<char**>(stringPointer - sizeof(void*));
+						strings.push_back({ { stringPointer - sizeof(void*), 0 }, str });
+					}
+
+					printf("Found string marker at %p. String: `%s`\n", reinterpret_cast<uintptr_t>(function) + i, str);
+
 					userStackSize += (lstrlenA(str) + sizeof(void*) + (lstrlenA(str) % sizeof(void*)));
-
 					i += 4;
 
 					continue;
@@ -74,12 +96,22 @@ namespace Seraph
 				if (*reinterpret_cast<uint32_t*>(reinterpret_cast<uintptr_t>(function) + i) == 0x90F402EB)
 				{
 					// -6 because of the second jmp (EB 04)
-					const auto stringPointer = *reinterpret_cast<uint32_t*>((reinterpret_cast<uintptr_t>(function) + i) - (2 + sizeof(void*)));
+					auto stringPointer = reinterpret_cast<uintptr_t>(function) + i;
+
+					//if (*reinterpret_cast<uint16_t*>(stringPointer - 2) == 0x04EB)
+					stringPointer -= 2;
+
+					if (*reinterpret_cast<uint16_t*>(stringPointer - 5) == 0x8948 && *reinterpret_cast<uint8_t*>(stringPointer - 2) == 0x24)
+						stringPointer = (stringPointer - 5) + *reinterpret_cast<uint32_t*>(stringPointer - 9);
+					else if (*reinterpret_cast<uint16_t*>(stringPointer - 8) == 0x8948 && *reinterpret_cast<uint8_t*>(stringPointer - 5) == 0x24)
+						stringPointer = (stringPointer - 8) + *reinterpret_cast<uint32_t*>(stringPointer - 12);
+
+					//const auto stringPointer = *reinterpret_cast<uintptr_t*>((reinterpret_cast<uintptr_t>(function) + i) - (2 + sizeof(void*)));
 					const auto wstr = reinterpret_cast<const wchar_t*>(stringPointer);
 
 					//wprintf(L"Found string marker at %p. String: `%s`\n", reinterpret_cast<uintptr_t>(function) + i, wstr);
 
-					wideStrings.push_back({ i - (2 + sizeof(void*)), wstr });
+					//wstrings.push_back({ i - (2 + sizeof(void*)), wstr });
 					userStackSize += ((lstrlenW(wstr) * 2) + sizeof(void*) + ((lstrlenW(wstr) * 2) % sizeof(void*)));
 
 					i += 4;
@@ -123,7 +155,17 @@ namespace Seraph
 			// which is appended to the "user" stack
 			for (const auto& injectableString : strings)
 			{
-				*reinterpret_cast<uint32_t*>(&functionBytes[injectableString.first]) = stackAt;
+				if (injectableString.first.first)
+					// Direct pointer to string (32-bit)
+					*reinterpret_cast<uintptr_t*>(&functionBytes[injectableString.first.first]) = stackAt;
+				else
+				{
+					// Relative offset? (64-bit)
+					const auto newPos = (injectableString.first.second - reinterpret_cast<uintptr_t>(function));
+					const auto newRel = stackAt - newPos;
+					*reinterpret_cast<uintptr_t*>(&functionBytes[newPos - 4]) = newRel; // Overwrite the rel32 value in the (lea) instruction
+				}
+
 
 				const auto paddedLength = (lstrlenA(injectableString.second) + sizeof(void*) + (lstrlenA(injectableString.second) % sizeof(void*)));
 
@@ -140,9 +182,9 @@ namespace Seraph
 				stackAt += paddedLength;
 			}
 
-			for (const auto& injectableWideString : wideStrings)
+			for (const auto& injectableWideString : wstrings)
 			{
-				*reinterpret_cast<uint32_t*>(&functionBytes[injectableWideString.first]) = stackAt;
+				*reinterpret_cast<uintptr_t*>(&functionBytes[injectableWideString.first.first]) = stackAt;
 
 				const auto paddedLength = ((lstrlenW(injectableWideString.second) * sizeof(wchar_t)) + sizeof(void*) + ((lstrlenW(injectableWideString.second) * sizeof(wchar_t)) % sizeof(void*)));
 
@@ -169,10 +211,10 @@ namespace Seraph
 			//printf("Injected function %p to %p. Stack end: %p\n", function, location, stackAt);
 			//system("pause");
 
-			return location;
+			return { location, stackStart };
 		}
 
-		uintptr_t injectFunction(const HANDLE attachedHandle, uintptr_t location, void* function, std::vector<std::any>data)
+		std::pair<uintptr_t, uintptr_t> injectFunction(const HANDLE attachedHandle, uintptr_t location, void* function, const std::vector<std::any>& data)
 		{
 			return injectFunction(attachedHandle, location, function, FIND_END_MARKER, data);
 		}
