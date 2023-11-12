@@ -43,29 +43,28 @@ namespace Seraph
 
 		PROCESSENTRY32 findProcess(const std::vector<std::wstring>& processNames)
 		{
-			pEntry = { 0 };
-			pEntry.dwSize = sizeof(PROCESSENTRY32);
+			PROCESSENTRY32 entry = { 0 };
+			entry.dwSize = sizeof(PROCESSENTRY32);
 
 			HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
-			if (Process32First(snapshot, &pEntry) == TRUE)
+			if (Process32First(snapshot, &entry) == TRUE)
 			{
-				while (Process32Next(snapshot, &pEntry) == TRUE)
+				while (Process32Next(snapshot, &entry) == TRUE)
 				{
 					for (size_t i = 0; i < processNames.size(); i++)
 					{
-						if (lstrcmpiW(pEntry.szExeFile, processNames[i].c_str()) == 0)
+						if (lstrcmpiW(entry.szExeFile, processNames[i].c_str()) == 0)
 						{
 							CloseHandle(snapshot);
-							return pEntry;
+							return entry;
 						}
 					}
 				}
 			}
 
 			CloseHandle(snapshot);
-			pEntry = { 0 };
-			return pEntry;
+			return entry;
 		}
 
 		bool openProcessByEntry(const PROCESSENTRY32& processEntry)
