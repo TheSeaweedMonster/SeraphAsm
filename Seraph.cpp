@@ -3910,6 +3910,8 @@ namespace Seraph
                                             case Symbols::mm:
                                             case Symbols::m8:
                                             case Symbols::m32:
+                                            case Symbols::m32int:
+                                            case Symbols::m32real:
                                             case Symbols::m64:
                                             case Symbols::m128:
                                             case Symbols::m16_16:
