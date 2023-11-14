@@ -59,29 +59,6 @@ namespace Seraph
         static const std::vector<std::string> YMMext = { "ymm8", "ymm9", "ymm10", "ymm11", "ymm12", "ymm13", "ymm14", "ymm15" };
     };
 
-    BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x86>::readNext()
-    {
-        BaseSet_x86_64::Opcode opcode;
-
-        // Coming soon!
-
-        return opcode;
-    }
-
-    BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x64>::readNext()
-    {
-        BaseSet_x86_64::Opcode opcode;
-
-        return opcode;
-    }
-
-    BaseSet_ARM::Opcode Disassembler<TargetArchitecture::ARM>::readNext()
-    {
-        BaseSet_ARM::Opcode opcode;
-
-        return opcode;
-    }
-
     class Parser
     {
     protected:
@@ -331,6 +308,7 @@ namespace Seraph
                                 {
                                     currentNode.segment = prelookup_x86_64[label];
                                     currentNode.addPrefix(currentNode.segment);
+                                    label = "";
                                 }
                                 else
                                 {
@@ -347,9 +325,9 @@ namespace Seraph
                                 body.nodes.push_back(currentNode);
                                 //body.label = label;
                                 currentNode = Node();
+                                label = "";
                             }
 
-                            label = "";
                             break;
                         case '[':
                         case ']':
@@ -381,34 +359,436 @@ namespace Seraph
 
     };
 
-    void initTables(std::unordered_map<std::string, uint8_t>& prelookup_x86_64, std::unordered_map<std::string, std::vector<BaseSet_x86_64::OpData>>&oplookup_x86_64)
+    static void initTable1(std::unordered_map<std::string, uint8_t>& prelookup_x86_64)
     {
-        using OpEncoding = BaseSet_x86_64::OpEncoding;
-        using OpData = BaseSet_x86_64::OpData;
-        using Symbols = BaseSet_x86_64::Symbols;
-
-        // to be continued
-        const uint8_t B_SEG_CS = 0x2E;
-        const uint8_t B_SEG_SS = 0x36;
-        const uint8_t B_SEG_DS = 0x3E;
-        const uint8_t B_SEG_ES = 0x26;
-        const uint8_t B_SEG_FS = 0x64;
-        const uint8_t B_SEG_GS = 0x65;
-
         prelookup_x86_64 = std::unordered_map<std::string, uint8_t>();
 
-        prelookup_x86_64["cs"] = B_SEG_CS;
-        prelookup_x86_64["ss"] = B_SEG_SS;
-        prelookup_x86_64["ds"] = B_SEG_DS;
-        prelookup_x86_64["es"] = B_SEG_ES;
-        prelookup_x86_64["fs"] = B_SEG_FS;
-        prelookup_x86_64["gs"] = B_SEG_GS;
+        prelookup_x86_64["cs"] = 0x2E;
+        prelookup_x86_64["ss"] = 0x36;
+        prelookup_x86_64["ds"] = 0x3E;
+        prelookup_x86_64["es"] = 0x26;
+        prelookup_x86_64["fs"] = 0x64;
+        prelookup_x86_64["gs"] = 0x65;
         prelookup_x86_64["lock"] = 0xF0;
         prelookup_x86_64["repnz"] = 0xF2;
         prelookup_x86_64["repne"] = 0xF2;
         prelookup_x86_64["repz"] = 0xF3;
         prelookup_x86_64["repe"] = 0xF3;
         prelookup_x86_64["rep"] = 0xF3;
+    }
+    
+    static void initTable2(std::vector<std::vector<BaseSet_x86_64::OpRef>>& oplookup_x86_64)
+    {
+        using OpEncoding = BaseSet_x86_64::OpEncoding;
+        using OpRef = BaseSet_x86_64::OpRef;
+        using Symbols = BaseSet_x86_64::Symbols;
+
+        oplookup_x86_64 = {
+            /* 00 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "add", "Add r8 to rm8"}},
+            /* 01 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "add", "Add r16 to rm16"},
+            /* 01 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "add", "Add r32 to rm32"}},
+            /* 02 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "add", "Add rm8 to r8"}},
+            /* 03 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "add", "Add rm16 to r16"},
+            /* 03 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "add", "Add rm32 to r32"}},
+            /* 04 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "add", "Add imm8 to AL"}},
+            /* 05 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "add", "Add imm16 to AX"},
+            /* 05 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "add", "Add imm32 to EAX"}},
+            /* 06 */ {{{{}, {}, {Symbols::es}}, "push", "Push ES"}},
+            /* 07 */ {{{{}, {}, {Symbols::es}}, "pop", "Pop top of stack into ES; increment stack pointer"}},
+            /* 08 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "or", "rm8 OR r8"}},
+            /* 09 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "or", "rm16 OR r16"},
+            /* 09 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "or", "rm32 OR r32"}},
+            /* 0A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "or", "r8 OR rm8"}},
+            /* 0B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "or", "r16 OR rm16"},
+            /* 0B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "or", "r32 OR rm32"}},
+            /* 0C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "or", "AL OR imm8"}},
+            /* 0D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "or", "AX OR imm16"},
+            /* 0D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "or", "EAX OR imm32"}},
+            /* 0E */ {{{{}, {}, {Symbols::cs}}, "push", "Push CS"}},
+            /* 0F */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "", "*SIMD Extended Instructions*"},
+                {}
+            },
+            /* 10 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "adc", "Add with carry byte register to rm8"}},
+            /* 11 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "adc", "Add with carry r16 to rm16"},
+            /* 11 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "adc", "Add with CF r32 to rm32"}},
+            /* 12 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "adc", "Add with carry rm8 to byte register"}},
+            /* 13 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "adc", "Add with carry rm16 to r16"},
+            /* 13 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "adc", "Add with CF rm32 to r32"}},
+            /* 14 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "adc", "Add with carry imm8 to AL"}},
+            /* 15 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "adc", "Add with carry imm16 to AX"},
+            /* 15 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "adc", "Add with carry imm32 to EAX"}},
+            /* 16 */ {{{{}, {}, {Symbols::ss}}, "push", "Push SS"}},
+            /* 17 */ {{{{}, {}, {Symbols::ss}}, "pop", "Pop top of stack into SS; increment stack pointer"}},
+            /* 18 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "sbb", "Subtract with borrow r8 from rm8"}},
+            /* 19 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "sbb", "Subtract with borrow r16 from rm16"},
+            /* 19 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "sbb", "Subtract with borrow r32 from rm32"}},
+            /* 1A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "sbb", "Subtract with borrow rm8 from r8"}},
+            /* 1B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "sbb", "Subtract with borrow rm16 from r16"},
+            /* 1B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "sbb", "Subtract with borrow rm32 from r32"}},
+            /* 1C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "sbb", "Subtract with borrow imm8 from AL"}},
+            /* 1D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "sbb", "Subtract with borrow imm16 from AX"},
+            /* 1D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "sbb", "Subtract with borrow imm32 from EAX"}},
+            /* 1E */ {{{{}, {}, {Symbols::ds}}, "push", "Push DS"}},
+            /* 1F */ {{{{}, {}, {Symbols::ds}}, "pop", "Pop top of stack into DS; increment stack pointer"}},
+            /* 20 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "and", "rm8 AND r8"}},
+            /* 21 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "and", "rm16 AND r16"},
+            /* 21 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "and", "rm32 AND r32"}},
+            /* 22 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "and", "r8 AND rm8"}},
+            /* 23 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "and", "r16 AND rm16"},
+            /* 23 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "and", "r32 AND rm32"}},
+            /* 24 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "and", "AL AND imm8"}},
+            /* 25 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "and", "AX AND imm16"},
+            /* 25 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "and", "EAX AND imm32"}},
+            /* 26 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unregistered opcode"}},
+            /* 27 */ {{{{}, {}, {}}, "daa", "Decimal adjust AL after addition"}},
+            /* 28 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "sub", "Subtract r8 from rm8"}},
+            /* 29 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "sub", "Subtract r16 from rm16"},
+            /* 29 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "sub", "Subtract r32 from rm32"}},
+            /* 2A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "sub", "Subtract rm8 from r8"}},
+            /* 2B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "sub", "Subtract rm16 from r16"},
+            /* 2B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "sub", "Subtract rm32 from r32"}},
+            /* 2C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "sub", "Subtract imm8 from AL"}},
+            /* 2D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "sub", "Subtract imm16 from AX"},
+            /* 2D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "sub", "Subtract imm32 from EAX"}},
+            /* 2E */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unregistered opcode"}},
+            /* 2F */ {{{{}, {}, {}}, "das", "Decimal adjust AL after subtraction"}},
+            /* 30 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "xor", "rm8 XOR r8"}},
+            /* 31 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "xor", "rm16 XOR r16"},
+            /* 31 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "xor", "rm32 XOR r32"}},
+            /* 32 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "xor", "r8 XOR rm8"}},
+            /* 33 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "xor", "r16 XOR rm16"},
+            /* 33 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "xor", "r32 XOR rm32"}},
+            /* 34 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "xor", "AL XOR imm8"}},
+            /* 35 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "xor", "AX XOR imm16"},
+            /* 35 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "xor", "EAX XOR imm32"}},
+            /* 36 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unregistered opcode"}},
+            /* 37 */ {{{{}, {}, {}}, "aaa", "ASCII adjust AL after addition"}},
+            /* 38 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "cmp", "Compare r8 with rm8"}},
+            /* 39 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "cmp", "Compare r16 with rm16"},
+            /* 39 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "cmp", "Compare r32 with rm32"}},
+            /* 3A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "cmp", "Compare rm8 with r8"}},
+            /* 3B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmp", "Compare rm16 with r16"},
+            /* 3B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmp", "Compare rm32 with r32"}},
+            /* 3C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "cmp", "Compare imm8 with AL"}},
+            /* 3D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "cmp", "Compare imm16 with AX"},
+            /* 3D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "cmp", "Compare imm32 with EAX"}},
+            /* 3E */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unregistered opcode"}},
+            /* 3F */ {{{{}, {}, {}}, "aas", "ASCII adjust AL after subtraction"}},
+            /* 40 */ {{{{}, {}, {Symbols::eax}}, "inc", "Increment doubleword register by 1"}},
+            /* 41 */ {{{{}, {}, {Symbols::ecx}}, "inc", "Increment doubleword register by 1"}},
+            /* 42 */ {{{{}, {}, {Symbols::edx}}, "inc", "Increment doubleword register by 1"}},
+            /* 43 */ {{{{}, {}, {Symbols::ebx}}, "inc", "Increment doubleword register by 1"}},
+            /* 44 */ {{{{}, {}, {Symbols::esp}}, "inc", "Increment doubleword register by 1"}},
+            /* 45 */ {{{{}, {}, {Symbols::ebp}}, "inc", "Increment doubleword register by 1"}},
+            /* 46 */ {{{{}, {}, {Symbols::esi}}, "inc", "Increment doubleword register by 1"}},
+            /* 47 */ {{{{}, {}, {Symbols::edi}}, "inc", "Increment doubleword register by 1"}},
+            /* 48 */ {{{{}, {}, {Symbols::eax}}, "dec", "Decrement doubleword register by 1"}},
+            /* 49 */ {{{{}, {}, {Symbols::ecx}}, "dec", "Decrement doubleword register by 1"}},
+            /* 4A */ {{{{}, {}, {Symbols::edx}}, "dec", "Decrement doubleword register by 1"}},
+            /* 4B */ {{{{}, {}, {Symbols::ebx}}, "dec", "Decrement doubleword register by 1"}},
+            /* 4C */ {{{{}, {}, {Symbols::esp}}, "dec", "Decrement doubleword register by 1"}},
+            /* 4D */ {{{{}, {}, {Symbols::ebp}}, "dec", "Decrement doubleword register by 1"}},
+            /* 4E */ {{{{}, {}, {Symbols::esi}}, "dec", "Decrement doubleword register by 1"}},
+            /* 4F */ {{{{}, {}, {Symbols::edi}}, "dec", "Decrement doubleword register by 1"}},
+            /* 50 */ {{{{}, {}, {Symbols::eax}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
+            /* 51 */ {{{{}, {}, {Symbols::ecx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
+            /* 52 */ {{{{}, {}, {Symbols::edx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
+            /* 53 */ {{{{}, {}, {Symbols::ebx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
+            /* 54 */ {{{{}, {}, {Symbols::esp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
+            /* 55 */ {{{{}, {}, {Symbols::ebp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
+            /* 56 */ {{{{}, {}, {Symbols::esi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
+            /* 57 */ {{{{}, {}, {Symbols::edi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
+            /* 58 */ {{{{}, {}, {Symbols::eax}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
+            /* 59 */ {{{{}, {}, {Symbols::ecx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
+            /* 5A */ {{{{}, {}, {Symbols::edx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
+            /* 5B */ {{{{}, {}, {Symbols::ebx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
+            /* 5C */ {{{{}, {}, {Symbols::esp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
+            /* 5D */ {{{{}, {}, {Symbols::ebp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
+            /* 5E */ {{{{}, {}, {Symbols::esi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
+            /* 5F */ {{{{}, {}, {Symbols::edi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
+            /* 60 */ {{{{}, {}, {}}, "pushad", "Push all doubleword registers"}},
+            /* 61 */ {{{{}, {}, {}}, "popad", "Pop all doubleword registers"}},
+            /* 62 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::m16and16}, BaseSet_x86_64::OPS_16MODE}, "bound", "Check if r16 (array index) is within bounds specified by m16&16"},
+            /* 62 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::m32and32}}, "bound", "Check if r32 (array index) is within bounds specified by m32&32"}},
+            /* 63 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}}, "arpl", "Adjust RPL of rm16 to not less than RPL of r16"}},
+            /* 64 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unrecognized opcode"}},
+            /* 65 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unrecognized opcode"}},
+            /* 66 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unrecognized opcode"}},
+            /* 67 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unrecognized opcode"}},
+            /* 68 */ {{{{}, {}, {Symbols::imm32}}, "push", "Push imm32 value onto the stack"}},
+            /* 69 */ {{{{}, {OpEncoding::r, OpEncoding::iw}, {Symbols::r16, Symbols::rm16, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "imul", "word register < rm16 * immediate word"},
+            /* 69 */  {{{}, {OpEncoding::r, OpEncoding::id}, {Symbols::r32, Symbols::rm32, Symbols::imm32}}, "imul", "doubleword register < rm32 * immediate doubleword"},
+            /* 69 */  {{{}, {OpEncoding::r, OpEncoding::iw}, {Symbols::r16, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "imul", "word register < rm16 * immediate word"},
+            /* 69 */  {{{}, {OpEncoding::r, OpEncoding::id}, {Symbols::r32, Symbols::imm32}}, "imul", "doubleword register < rm32 * immediate doubleword"}},
+            /* 6A */ {{{{}, {}, {Symbols::imm8}}, "push", "Push imm8 value onto the stack"}},
+            /* 6B */ {{{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r16, Symbols::rm16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "imul", "word register < rm16 * sign-extended immediate byte"},
+            /* 6B */  {{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r32, Symbols::rm32, Symbols::imm8}}, "imul", "doubleword register < rm32 * sign-extended immediate byte"},
+            /* 6B */  {{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "imul", "word register < rm16 * sign-extended immediate byte"},
+            /* 6B */  {{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r32, Symbols::imm8}}, "imul", "doubleword register < rm32 * sign-extended immediate byte"}},
+            /* 6C */ {{{{}, {}, {}}, "insb", "Input byte from I/O port specified in DX into memory location specified with ES:(E)DI"} },
+            /* 6D */ {{{{}, {}, {}}, "insd", "Input doubleword from I/O port specified in DX into memory location specified in ES:(E)DI"} },
+            /* 6E */ {{{{}, {}, {}}, "outsb", "Output byte from memory location specified in DS:(E)SI to I/O port specified in DX"} },
+            /* 6F */ {{{{}, {}, {}}, "outsd", "Output doubleword from memory location specified in DS:(E)SI to I/O port specified in DX"} },
+            /* 70 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jo", "Jump short if overflow (OF=1)"} },
+            /* 71 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jno", "Jump short if not overflow (OF=0)"} },
+            /* 72 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jb", "Jump short if below/carry (CF=1)"} },
+            /* 73 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jnb", "Jump short if not below/carry (if above or equal) (CF=0)"} },
+            /* 74 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "je", "Jump short if equal/zero (ZF=1)"} },
+            /* 75 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jne", "Jump short if not equal/zero (ZF=0)"} },
+            /* 76 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jna", "Jump short if below or equal (if not above) (CF=1 or ZF=1)"} },
+            /* 77 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "ja", "Jump short if above (CF=0 and ZF=0)"} },
+            /* 78 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "js", "Jump short if sign (SF=1)"} },
+            /* 79 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jns", "Jump short if not sign (SF=0)"} },
+            /* 7A */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jp", "Jump short if parity (PF=1)"} },
+            /* 7B */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jpo", "Jump short if parity odd (PF=0)"} },
+            /* 7C */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jl", "Jump short if less (not greater or equal) (SF<>OF)"} },
+            /* 7D */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jnl", "Jump short if not less (if greater or equal) (SF=OF)"} },
+            /* 7E */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jng", "Jump short if not greater (if less or equal) (ZF=1 or SF<>OF)"} },
+            /* 7F */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jg", "Jump short if greater (ZF=0 and SF=OF)"} },
+            /* 80 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "add", "Add imm8 to rm8"},
+            /* 80 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "or", "rm8 OR imm8"},
+            /* 80 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "adc", "Add with carry imm8 to rm8"},
+            /* 80 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sbb", "Subtract with borrow imm8 from rm8"},
+            /* 80 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "and", "rm8 AND imm8"},
+            /* 80 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sub", "Subtract imm8 from rm8"},
+            /* 80 */  {{{}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "xor", "rm8 XOR imm8"},
+            /* 80 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "cmp", "Compare imm8 with rm8"}},
+            /* 81 */ {{{{}, {OpEncoding::m0, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "add", "Add imm32 to rm32"},
+            /* 81 */  {{{}, {OpEncoding::m1, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "or", "rm32 OR imm32"},
+            /* 81 */  {{{}, {OpEncoding::m2, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "adc", "Add with carry imm32 to rm32"},
+            /* 81 */  {{{}, {OpEncoding::m3, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "sbb", "Subtract with borrow imm32 from rm32"},
+            /* 81 */  {{{}, {OpEncoding::m4, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "and", "rm32 AND imm32"}, // ***
+            /* 81 */  {{{}, {OpEncoding::m5, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "sub", "Subtract imm32 from rm32"},
+            /* 81 */  {{{}, {OpEncoding::m6, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "xor", "rm32 XOR imm32"},
+            /* 81 */  {{{}, {OpEncoding::m7, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "cmp", "Compare imm32 with rm32"}},
+            /* 82 */ {{{{}, {}, {}}, "???", "Unregistered opcode"}},
+            /* 83 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "add", "Add sign-extended imm8 to rm32"},
+            /* 83 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "or", "rm32 OR imm8 (sign-extended)"},
+            /* 83 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "adc", "Add with CF sign-extended imm8 into rm32"},
+            /* 83 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sbb", "Subtract with borrow sign-extended imm8 from rm32"},
+            /* 83 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "and", "rm32 AND imm8 (sign-extended)"},
+            /* 83 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sub", "Subtract sign-extended imm8 from rm32"},
+            /* 83 */  {{{}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "xor", "rm32 XOR imm8 (sign-extended)"},
+            /* 83 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "cmp", "Compare imm8 with rm32"} },
+            /* 84 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "test", "AND r8 with rm8; set SF, ZF, PF according to result"}},
+            /* 85 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "test", "AND r16 with rm16; set SF, ZF, PF according to result"},
+            /* 85 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "test", "AND r32 with rm32; set SF, ZF, PF according to result"}},
+            /* 86 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "xchg", "Exchange r8 (byte register) with byte from rm8"},
+            /* 86 */  {{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "xchg", "Exchange byte from rm8 with r8 (byte register)"}},
+            /* 87 */ {{{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "xchg", "Exchange r32 with doubleword from rm32"},
+            /* 87 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "xchg", "Exchange doubleword from rm32 with r32"}},
+            /* 88 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "mov", "Move r8 to rm8"}},
+            /* 89 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "mov", "Move r16 to rm16"},
+            /* 89 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "mov", "Move r32 to rm32"}},
+            /* 8A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "mov", "Move rm8 to r8"}},
+            /* 8B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "mov", "Move rm16 to r16"},
+            /* 8B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "mov", "Move rm32 to r32"}},
+            /* 8C */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::sreg}}, "mov", "Move segment register to rm16"}},
+            /* 8D */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "lea", "Store effective address for m in register r16"},
+            /* 8D */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "lea", "Store effective address for m in register r32"}},
+            /* 8E */ {{{{}, {OpEncoding::r}, {Symbols::sreg, Symbols::rm16}}, "mov", "Move rm16 to segment register"}},
+            /* 8F */ {{{{}, {OpEncoding::m0}, {Symbols::m16}, BaseSet_x86_64::OPS_16MODE}, "pop", "Pop top of stack into m16; increment stack pointer"},
+            /* 8F */  {{{}, {OpEncoding::m0}, {Symbols::m32}}, "pop", "Pop top of stack into m32; increment stack pointer"}},
+            /* 90 */ {{{{}, {}, {}}, "nop", "No operation"}},
+            /* 91 */ {{{{}, {}, {Symbols::eax, Symbols::ecx}}, "xchg", "Exchange r32 with EAX"}},
+            /* 92 */ {{{{}, {}, {Symbols::eax, Symbols::edx}}, "xchg", "Exchange r32 with EAX"}},
+            /* 93 */ {{{{}, {}, {Symbols::eax, Symbols::ebx}}, "xchg", "Exchange r32 with EAX"}},
+            /* 94 */ {{{{}, {}, {Symbols::eax, Symbols::esp}}, "xchg", "Exchange r32 with EAX"}},
+            /* 95 */ {{{{}, {}, {Symbols::eax, Symbols::ebp}}, "xchg", "Exchange r32 with EAX"}},
+            /* 96 */ {{{{}, {}, {Symbols::eax, Symbols::esi}}, "xchg", "Exchange r32 with EAX"}},
+            /* 97 */ {{{{}, {}, {Symbols::eax, Symbols::edi}}, "xchg", "Exchange r32 with EAX"}},
+            /* 98 */ {{{{}, {}, {}}, "cwde", "EAX <- sign-extend of AX"}},
+            /* 99 */ {{{{}, {}, {}}, "cdq", "EDX:EAX <- sign-extend of EAX"}},
+            /* 9A */ {{{{}, {OpEncoding::cd}, {Symbols::ptr16_16}}, "call", "Call far, absolute, address given in operand"},
+            /* 9A */  {{{}, {OpEncoding::cp}, {Symbols::ptr16_32}}, "call", "Call far, absolute, address given in operand"}},
+            /* 9B */ {{{{0xD9}, {OpEncoding::m6}, {Symbols::m14_28byte}}, "fstenv", "Store FPU environment to m14byte or m28byte after checking for pending unmasked floating-point exceptions. Then mask all floating-point exceptions."},
+            /* 9B */  {{{0xD9}, {OpEncoding::m7}, {Symbols::m2byte}}, "fstcw", "Store FPU control word to m2byte after checking for pending unmasked floating-point exceptions"},
+            /* 9B */  {{{0xDB, 0xE2}, {}, {}}, "fclex", "Clear floating-point exception flags after checking forpending unmasked floating-point exceptions."},
+            /* 9B */  {{{0xDB, 0xE3}, {}, {}}, "finit", "Initialize FPU after checking for pending unmasked floating-point exceptions."},
+            /* 9B */  {{{0xDD}, {OpEncoding::m6}, {Symbols::m94_108byte}}, "fsave", "Store FPU state to m94byte or m108byte after checking for pending unmasked floating-point exceptions. Then re- initialize the FPU."},
+            /* 9B */  {{{0xDD}, {OpEncoding::m7}, {Symbols::m2byte}}, "fstsw", "Store FPU status word at m2byte after checking for pending unmasked floating-point exceptions."},
+            /* 9B */  {{{0xDF, 0xE0}, {}, {Symbols::ax}}, "fstsw", "Store FPU status word in AX register after checking for pending unmasked floating-point exceptions."},
+            /* 9B */  {{{}, {}, {}}, "fwait", "Check pending unmasked floating-point exceptions"}},
+            /* 9C */ {{{{}, {}, {}}, "pushfd", "Push EFLAGS"}},
+            /* 9D */ {{{{}, {}, {}}, "popfd", "Pop top of stack into EFLAGS"}},
+            /* 9E */ {{{{}, {}, {}}, "sahf", "Loads SF, ZF, AF, PF, and CF from AH into EFLAGS register"}},
+            /* 9F */ {{{{}, {}, {}}, "lahf", "Load: AH = EFLAGS(SF:ZF:0:AF:0:PF:1:CF)"}},
+            /* A0 */ {{{{}, {}, {Symbols::al, Symbols::moffs8}}, "mov", "Move byte at (seg:offset) to AL"}},
+            /* A1 */ {{{{}, {}, {Symbols::ax, Symbols::moffs16}}, "mov", "Move word at (seg:offset) to AX"},
+            /* A1 */  {{{}, {}, {Symbols::eax, Symbols::moffs32}}, "mov", "Move doubleword at (seg:offset) to EAX"}},
+            /* A2 */ {{{{}, {}, {Symbols::moffs8, Symbols::al}}, "mov", "Move AL to (seg:offset)"}},
+            /* A3 */ {{{{}, {}, {Symbols::moffs16, Symbols::ax}}, "mov", "Move AX to (seg:offset)"},
+            /* A3 */  {{{}, {}, {Symbols::moffs32, Symbols::eax}}, "mov", "Move EAX to (seg:offset)"}},
+            /* A4 */ {{{{}, {}, {}}, "movsb", "Move byte at address DS:(E)SI to address ES:(E)DI"}},
+            /* A5 */ {{{{}, {}, {}}, "movsd", "Move doubleword at address DS:(E)SI to address ES:(E)DI"}},
+            /* A6 */ {{{{}, {}, {}}, "cmpsb", "Compares byte at address DS:(E)SI with byte at address ES:(E)DI and sets the status flags accordingly"}},
+            /* A7 */ {{{{}, {}, {}}, "cmpsd", "Compares doubleword at address DS:(E)SI with doubleword at address ES:(E)DI and sets the status flags accordingly"}},
+            /* A8 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "test", "AND imm8 with AL; set SF, ZF, PF according to result"}},
+            /* A9 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}}, "test", "AND imm16 with AX; set SF, ZF, PF according to result"},
+            /* A9 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "test", "AND imm32 with EAX; set SF, ZF, PF according to result"}},
+            /* AA */ {{{{}, {}, {}}, "stosb", "Store AL at address ES:(E)DI"}},
+            /* AB */ {{{{}, {}, {}}, "stosd", "Store EAX at address ES:(E)DI"}},
+            /* AC */ {{{{}, {}, {}}, "lodsb", "Load byte at address DS:(E)SI into AL"}},
+            /* AD */ {{{{}, {}, {}}, "lodsd", "Load doubleword at address DS:(E)SI into EAX"}},
+            /* AE */ {{{{}, {}, {}}, "scasb", "Compare AL with byte at ES:(E)DI and set status flags"}},
+            /* AF */ {{{{}, {}, {}}, "scasd", "Compare EAX with doubleword at ES:(E)DI and set status flags"}},
+            /* B0 */ {{{{}, {}, {Symbols::al, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
+            /* B1 */ {{{{}, {}, {Symbols::bl, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
+            /* B2 */ {{{{}, {}, {Symbols::cl, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
+            /* B3 */ {{{{}, {}, {Symbols::dl, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
+            /* B4 */ {{{{}, {}, {Symbols::ah, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
+            /* B5 */ {{{{}, {}, {Symbols::bh, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
+            /* B6 */ {{{{}, {}, {Symbols::ch, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
+            /* B7 */ {{{{}, {}, {Symbols::dh, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
+            /* B8 */ {{{{}, {}, {Symbols::eax, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
+            /* B9 */ {{{{}, {}, {Symbols::ecx, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
+            /* BA */ {{{{}, {}, {Symbols::edx, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
+            /* BB */ {{{{}, {}, {Symbols::ebx, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
+            /* BC */ {{{{}, {}, {Symbols::esp, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
+            /* BD */ {{{{}, {}, {Symbols::ebp, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
+            /* BE */ {{{{}, {}, {Symbols::esi, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
+            /* BF */ {{{{}, {}, {Symbols::edi, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
+            /* C0 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rol", "Rotate eight bits rm8 left imm8 times"},
+            /* C0 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "ror", "Rotate eight bits rm16 right imm8 times"},
+            /* C0 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rcl", "Rotate nine bits (CF, rm8) left imm8 times"},
+            /* C0 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rcr", "Rotate nine bits (CF, rm8) right imm8 times"},
+            /* C0 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sal", "Multiply rm8 by 2, imm8 times"},
+            /* C0 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "shr", "Unsigned divide rm8 by 2, imm8 times"},
+            /* C0 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sar", "Signed divide* rm8 by 2, imm8 times"}},
+            /* C1 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm16, Symbols::imm8}}, "rol", "Rotate 16 bits rm16 left imm8 times"},
+            /* C1 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "ror", "Rotate 32 bits rm32 right imm8 times"},
+            /* C1 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "rcl", "Rotate 17 bits (CF, rm16) left imm8 times"},
+            /* C1 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "rcr", "Rotate 33 bits (CF, rm32) right imm8 times"},
+            /* C1 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sal", "Multiply rm32 by 2, imm8 times"},
+            /* C1 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "shr", "Unsigned divide rm32 by 2, imm8 times"},
+            /* C1 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sar", "Signed divide* rm32 by 2, imm8 times"}},
+            /* C2 */ {{{{}, {OpEncoding::iw}, {Symbols::imm16}}, "ret", "Near return to calling procedure and pop imm16 bytes from stack"}},
+            /* C3 */ {{{{}, {}, {}}, "retn", "Near return to calling procedure"}},
+            /* C4 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::m16_16}}, "les", "Load ES: r16 with far pointer from memory"},
+            /* C4 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::m16_32}}, "les", "Load ES: r32 with far pointer from memory"}},
+            /* C5 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::m16_16}}, "lds", "Load DS: r16 with far pointer from memory"},
+            /* C5 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::m16_32}}, "lds", "Load DS: r32 with far pointer from memory"}},
+            /* C6 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::imm8}}, "mov", "Move imm8 to rm8"}},
+            /* C7 */ {{{{}, {OpEncoding::m0}, {Symbols::rm16, Symbols::imm16}}, "mov", "Move imm16 to rm16"},
+            /* C7 */  {{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::imm32}}, "mov", "Move imm32 to rm32"}},
+            /* C8 */ {{{{}, {OpEncoding::iw, OpEncoding::ib}, {Symbols::imm16, Symbols::imm8}}, "enter", "Create a nested (if imm8 > 0) stack frame for a procedure"}},
+            /* C9 */ {{{{}, {}, {}}, "leave", "Set ESP to EBP, then pop EBP"}},
+            /* CA */ {{{{}, {OpEncoding::iw}, {Symbols::imm16}}, "ret", "Far return to calling procedure and pop imm16 bytes from stack"}},
+            /* CB */ {{{{}, {}, {}}, "ret", "Far return to calling procedure"}},
+            /* CC */ {{{{}, {}, {}}, "int 3", "Interrupt 3—trap to debugger"}},
+            /* CD */ {{{{}, {OpEncoding::ib}, {Symbols::imm8}}, "int", "Interrupt vector number specified by immediate byte"}},
+            /* CE */ {{{{}, {}, {}}, "into", "Interrupt 4—if overflow flag is 1"}},
+            /* CF */ {{{{}, {}, {}}, "iretd", "Interrupt return (32-bit operand size)"}},
+            /* D0 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::one}}, "rol", "Rotate eight bits rm8 left once"},
+            /* D0 */  {{{}, {OpEncoding::m1}, {Symbols::rm8, Symbols::one}}, "ror", "Rotate eight bits rm8 right once"},
+            /* D0 */  {{{}, {OpEncoding::m2}, {Symbols::rm8, Symbols::one}}, "rcl", "Rotate nine bits (CF, rm8) left once"},
+            /* D0 */  {{{}, {OpEncoding::m3}, {Symbols::rm8, Symbols::one}}, "rcr", "Rotate nine bits (CF, rm8) right once"},
+            /* D0 */  {{{}, {OpEncoding::m4}, {Symbols::rm8, Symbols::one}}, "sal", "Multiply rm8 by 2, once"},
+            /* D0 */  {{{}, {OpEncoding::m5}, {Symbols::rm8, Symbols::one}}, "shr", "Unsigned divide rm8 by 2, once"},
+            /* D0 */  {{{}, {OpEncoding::m7}, {Symbols::rm8, Symbols::one}}, "sar", "Signed divide* rm8 by 2, once"}},
+            /* D1 */ {{{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::one}}, "rol", "Rotate 32 bits rm32 left once"},
+            /* D1 */  {{{}, {OpEncoding::m1}, {Symbols::rm32, Symbols::one}}, "ror", "Rotate 32 bits rm32 right once"},
+            /* D1 */  {{{}, {OpEncoding::m2}, {Symbols::rm32, Symbols::one}}, "rcl", "Rotate 33 bits (CF, rm32) left once"},
+            /* D1 */  {{{}, {OpEncoding::m3}, {Symbols::rm32, Symbols::one}}, "rcr", "Rotate 33 bits (CF, rm32) right once"},
+            /* D1 */  {{{}, {OpEncoding::m4}, {Symbols::rm32, Symbols::one}}, "shl", "Multiply rm16 by 2, once"},
+            /* D1 */  {{{}, {OpEncoding::m5}, {Symbols::rm32, Symbols::one}}, "shr", "Unsigned divide rm16 by 2, once"},
+            /* D1 */  {{{}, {OpEncoding::m7}, {Symbols::rm32, Symbols::one}}, "sar", "Signed divide* rm16 by 2, once"}},
+            /* D2 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::cl}}, "rol", "Rotate eight bits rm8 left CL times"},
+            /* D2 */  {{{}, {OpEncoding::m1}, {Symbols::rm8, Symbols::cl}}, "ror", "Rotate eight bits rm8 right CL times"},
+            /* D2 */  {{{}, {OpEncoding::m2}, {Symbols::rm8, Symbols::cl}}, "rcl", "Rotate nine bits (CF, rm8) left CL times"},
+            /* D2 */  {{{}, {OpEncoding::m3}, {Symbols::rm8, Symbols::cl}}, "rcr", "Rotate nine bits (CF, rm8) right CL times"},
+            /* D2 */  {{{}, {OpEncoding::m4}, {Symbols::rm8, Symbols::cl}}, "shl", "Multiply rm8 by 2, CL times"},
+            /* D2 */  {{{}, {OpEncoding::m5}, {Symbols::rm8, Symbols::cl}}, "shr", "Unsigned divide rm8 by 2, CL times"},
+            /* D2 */  {{{}, {OpEncoding::m7}, {Symbols::rm8, Symbols::cl}}, "sar", "Signed divide* rm8 by 2, CL times"}},
+            /* D3 */ {{{{}, {OpEncoding::m0}, {Symbols::rm16, Symbols::cl}}, "rol", "Rotate 16 bits rm16 left CL times"},
+            /* D3 */  {{{}, {OpEncoding::m1}, {Symbols::rm16, Symbols::cl}}, "ror", "Rotate 16 bits rm16 right CL times"},
+            /* D3 */  {{{}, {OpEncoding::m2}, {Symbols::rm32, Symbols::cl}}, "rcl", "Rotate 33 bits (CF, rm32) left CL times"},
+            /* D3 */  {{{}, {OpEncoding::m3}, {Symbols::rm32, Symbols::cl}}, "rcr", "Rotate 33 bits (CF, rm32) right CL times"},
+            /* D3 */  {{{}, {OpEncoding::m4}, {Symbols::rm16, Symbols::cl}}, "shl", "Multiply rm16 by 2, CL times"},
+            /* D3 */  {{{}, {OpEncoding::m5}, {Symbols::rm16, Symbols::cl}}, "shr", "Unsigned divide rm16 by 2, CL times"},
+            /* D3 */  {{{}, {OpEncoding::m7}, {Symbols::rm16, Symbols::cl}}, "sar", "Signed divide* rm16 by 2, CL times"}},
+            /* D4 */ {{{{0x0A}, {}, {}}, "aam", "ASCII adjust AX after multiply"}},
+            /* D5 */ {{{{0x0A}, {}, {}}, "aad", "ASCII adjust AX before division"}},
+            /* D6 */ {{{{}, {}, {}}, "???", "Unrecognized opcode"}},
+            /* D7 */ {{{{}, {}, {}}, "xlatb", "Set AL to memory byte DS:[(E)BX + unsigned AL]"}},
+            /* D8 */ {{{{0xC0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fadd", "Add ST(0) to ST(i) and store result in ST(0)"},
+            /* D8 */  {{{0xC8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fmul", "Multiply ST(0) by ST(i) and store result in ST(0)"},
+            /* D8 */  {{{0xD0}, {OpEncoding::i}, {Symbols::sti}}, "fcom", "Compare ST(0) with ST(i)."},
+            /* D8 */  {{{0xD8}, {OpEncoding::i}, {Symbols::sti}}, "fcomp", "Compare ST(0) with ST(i) and pop register stack."},
+            /* D8 */  {{{0xE0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fsub", "Subtract ST(i) from ST(0) and store result in ST(0)"},
+            /* D8 */  {{{0xE8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fsubr", "Subtract ST(0) from ST(i) and store result in ST(0)"},
+            /* D8 */  {{{0xF0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fdiv", "Divide ST(0) by ST(i) and store result in ST(0)"},
+            /* D8 */  {{{0xF8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fdivr", "Divide ST(i) by ST(0) and store result in ST(0)"},
+            /* D8 */  {{{}, {OpEncoding::m0}, {Symbols::m32real}}, "fadd", "Add m32real to ST(0) and store result in ST(0)"},
+            /* D8 */  {{{}, {OpEncoding::m1}, {Symbols::m32real}}, "fmul", "Multiply ST(0) by m32real and store result in ST(0)"},
+            /* D8 */  {{{}, {OpEncoding::m2}, {Symbols::m32real}}, "fcom", "Compare ST(0) with m32real."},
+            /* D8 */  {{{}, {OpEncoding::m3}, {Symbols::m32real}}, "fcomp", "Compare ST(0) with m32real and pop register stack."},
+            /* D8 */  {{{}, {OpEncoding::m4}, {Symbols::m32real}}, "fsub", "Subtract m32real from ST(0) and store result in ST(0)"},
+            /* D8 */  {{{}, {OpEncoding::m5}, {Symbols::m32real}}, "fsubr", "Subtract ST(0) from m32real and store result in ST(0)"},
+            /* D8 */  {{{}, {OpEncoding::m6}, {Symbols::m32real}}, "fdiv", "Divide ST(0) by m32real and store result in ST(0)"},
+            /* D8 */  {{{}, {OpEncoding::m7}, {Symbols::m32real}}, "fdivr", "Divide m32real by ST(0) and store result in ST(0)"}},
+            /* D9 */ {{{{0xC0}, {OpEncoding::i}, {Symbols::sti}}, "fld", "Push ST(i) onto the FPU register stack."},
+            /* D9 */  {{{0xC8}, {OpEncoding::i}, {Symbols::sti}}, "fxch", "Exchange the contents of ST(0) and ST(i)"},
+            /* D9 */  {{{0xC9}, {}, {}}, "fxch", "Exchange the contents of ST(0) and ST(1)"},
+            /* D9 */  {{{0xD0}, {}, {}}, "fnop", "No operation is performed"},
+            /* D9 */  {{{0xE0}, {}, {}}, "fchs", "Complements sign of ST(0)"},
+            /* D9 */  {{{0xE1}, {}, {}}, "fabs", "Replace ST with its absolute value"},
+            /* D9 */  {{{0xE4}, {}, {}}, "ftst", "Compare ST(0) with 0.0"},
+            /* D9 */  {{{0xE5}, {}, {}}, "fxam", "Classify value or number in ST(0)"},
+            /* D9 */  {{{0xE8}, {}, {}}, "fld1", "Push +1.0 onto the FPU register stack"},
+            /* D9 */  {{{0xE9}, {}, {}}, "fldl2t", "Push log 210 onto the FPU register stack"},
+            /* D9 */  {{{0xEA}, {}, {}}, "fltl2e", "Push log 2e onto the FPU register stack"},
+            /* D9 */  {{{0xEB}, {}, {}}, "fldpi", "Push PI onto the FPU register stack"},
+            /* D9 */  {{{0xEC}, {}, {}}, "fldlg2", "Push log 102 onto the FPU register stack"},
+            /* D9 */  {{{0xED}, {}, {}}, "fldln2", "Push log e2 onto the FPU register stack"},
+            /* D9 */  {{{0xEE}, {}, {}}, "fldz", "Push +0.0 onto the FPU register stack"},
+            /* D9 */  {{{0xF0}, {}, {}}, "f2xm1", "Replace ST(0) with (2 ST(0) – 1)"},
+            /* D9 */  {{{0xF1}, {}, {}}, "fyl2x", "Replace ST(1) with (ST(1) * log 2ST(0)) and pop the register stack"},
+            /* D9 */  {{{0xF2}, {}, {}}, "fptan", "Replace ST(0) with its tangent and push 1 onto the FPU stack"},
+            /* D9 */  {{{0xF3}, {}, {}}, "fpatan", "Replace ST(1) with arctan(ST(1)/ST(0)) and pop the register stack"},
+            /* D9 */  {{{0xF4}, {}, {}}, "fxtract", "Separate value in ST(0) into exponent and significand, store exponent in ST(0), and push the significand onto the register stack."},
+            /* D9 */  {{{0xF5}, {}, {}}, "fprem1", "Replace ST(0) with the IEEE remainder obtained from dividing ST(0) by ST(1)"},
+            /* D9 */  {{{0xF6}, {}, {}}, "fdecstp", "Decrement TOP field in FPU status word"},
+            /* D9 */  {{{0xF7}, {}, {}}, "fincstp", "Increment the TOP field in the FPU status register"},
+            /* D9 */  {{{0xF8}, {}, {}}, "fprem", "Replace ST(0) with the remainder obtained from dividing ST(0) by ST(1)"},
+            /* D9 */  {{{0xF9}, {}, {}}, "fyl2xp1", "Replace ST(1) with ST(1) * log 2 (ST(0) + 1.0) and pop the register stack"},
+            /* D9 */  {{{0xFA}, {}, {}}, "fsqrt", "Calculates square root of ST(0) and stores the result in ST(0)"},
+            /* D9 */  {{{0xFB}, {}, {}}, "fsincos", "Compute the sine and cosine of ST(0); replace ST(0) with the sine, and push the cosine onto the register stack"},
+            /* D9 */  {{{0xFC}, {}, {}}, "frndint", "Round ST(0) to an integer"},
+            /* D9 */  {{{0xFD}, {}, {}}, "fscale", "Scale ST(0) by ST(1)"},
+            /* D9 */  {{{0xFE}, {}, {}}, "fsin", "Replace ST(0) with its sine"},
+            /* D9 */  {{{0xFF}, {}, {}}, "fcos", "Replace ST(0) with its cosine"},
+            /* D9 */  {{{}, {OpEncoding::m0}, {Symbols::m32real}}, "fld", "Push m32real onto the FPU register stack"},
+            /* D9 */  {{{}, {OpEncoding::m2}, {Symbols::m32real}}, "fst", "Copy ST(0) to m32real"},
+            /* D9 */  {{{}, {OpEncoding::m3}, {Symbols::m32real}}, "fstp", "Copy ST(0) to m32real and pop register stack"},
+            /* D9 */  {{{}, {OpEncoding::m4}, {Symbols::m14_28byte}}, "fldenv", "Load FPU environment from m14byte or m28byte"},
+            /* D9 */  {{{}, {OpEncoding::m5}, {Symbols::m2byte}}, "fldcw", "Load FPU control word from m2byte"},
+            /* D9 */  {{{}, {OpEncoding::m6}, {Symbols::m14_28byte}}, "fnstenv", "Store FPU environment to m14byte or m28byte without checking for pending unmasked floating-point exceptions. Then mask all floating-point exceptions."},
+            /* D9 */  {{{}, {OpEncoding::m7}, {Symbols::m2byte}}, "fnstcw", "Store FPU control word to m2byte without checking for pending unmasked floating-point exceptions"}},
+            /* DA */ {{{{0xC0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovb", "Move if below (CF=1)"},
+            /* DA */  {{{0xC8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmove", "Move if equal (ZF=1)"},
+            /* DA */  {{{0xD0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovbe", "Move if below or equal (CF=1 or ZF=1)"},
+            /* DA */  {{{0xD8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovu", "Move if unordered (PF=1)"},
+            /* DA */  {{{}, {OpEncoding::m0}, {Symbols::m32int}}, "fiadd", "Add m32int to ST(0) and store result in ST(0)"},
+            /* DA */  {{{}, {OpEncoding::m1}, {Symbols::m32int}}, "fimul", "Multiply ST(0) by m32int and store result in ST(0)"},
+            /* DA */  {{{}, {OpEncoding::m2}, {Symbols::m32int}}, "ficom", "Compare ST(0) with m32int."},
+            /* DA */  {{{}, {OpEncoding::m3}, {Symbols::m32int}}, "ficomp", "Compare ST(0) with m32int and pop register stack."},
+            /* DA */  {{{}, {OpEncoding::m4}, {Symbols::m32int}}, "fisub", "Subtract m32int from ST(0) and store result in ST(0)"},
+            /* DA */  {{{}, {OpEncoding::m5}, {Symbols::m32int}}, "fisubr", "Subtract ST(0) from m32int and store result in ST(0)"},
+            /* DA */  {{{}, {OpEncoding::m6}, {Symbols::m32int}}, "fidiv", "Divide ST(0) by m32int and store result in ST(0)"},
+            /* DA */  {{{}, {OpEncoding::m7}, {Symbols::m32int}}, "fidivr", "Divide m32int by ST(0) and store result in ST(0)"}},
+
+
+
+        };
+    }
+        
+    
+    static void initTable3(std::unordered_map<std::string, std::vector<BaseSet_x86_64::OpData>>& oplookup_x86_64)
+    {
+        using OpEncoding = BaseSet_x86_64::OpEncoding;
+        using OpData = BaseSet_x86_64::OpData;
+        using Symbols = BaseSet_x86_64::Symbols;
 
         oplookup_x86_64 = std::unordered_map<std::string, std::vector<BaseSet_x86_64::OpData>>();
 
@@ -1235,9 +1615,8 @@ namespace Seraph
             { { 0xA9 }, { OpEncoding::iw }, { Symbols::ax, Symbols::imm16 } },
             { { 0xA9 }, { OpEncoding::id }, { Symbols::eax, Symbols::imm32 } },
         };
-        oplookup_x86_64["wait"] = {
-            { { 0x9B }, { }, { } }
-        };
+        oplookup_x86_64["wait"] = { { { 0x9B }, { }, { } } };
+        oplookup_x86_64["fwait"] = { { { 0x9B }, { }, { } } };
         oplookup_x86_64["xchg"] = {
             { { 0x86 }, { OpEncoding::r }, { Symbols::rm8, Symbols::r8 } },
             { { 0x86 }, { OpEncoding::r }, { Symbols::r8, Symbols::rm8 } },
@@ -1803,14 +2182,972 @@ namespace Seraph
         };
     }
 
+    static BaseSet_x86_64::Opcode read_x86_64(ByteStream& stream, uintptr_t& offset, size_t& pos, DisassemblyOptions& options, const std::unordered_map<std::string, uint8_t> prelookup_x86_64, const std::vector<std::vector<BaseSet_x86_64::OpRef>> oplookup_x86_64, bool is64mode)
+    {
+        using Opcode = BaseSet_x86_64::Opcode;
+        using OpEncoding = BaseSet_x86_64::OpEncoding;
+        using OpData = BaseSet_x86_64::OpData;
+        using OpRef = BaseSet_x86_64::OpRef;
+        using Symbols = BaseSet_x86_64::Symbols;
+
+        constexpr const uint8_t PRE_CS      = 0x2E;
+        constexpr const uint8_t PRE_SS      = 0x36;
+        constexpr const uint8_t PRE_DS      = 0x3E;
+        constexpr const uint8_t PRE_ES      = 0x26;
+        constexpr const uint8_t PRE_FS      = 0x64;
+        constexpr const uint8_t PRE_GS      = 0x65;
+        constexpr const uint8_t PRE_OPSOR1  = 0x66;
+        constexpr const uint8_t PRE_OPSOR2  = 0x67;
+        constexpr const uint8_t PRE_LOCK    = 0xF0;
+        constexpr const uint8_t PRE_REPNE   = 0xF2;
+        constexpr const uint8_t PRE_REPE    = 0xF3;
+
+        Opcode opcode = { 0 };
+        uint8_t cur = stream.next();
+        
+        OpData opData;
+        OpRef opRef = OpRef();
+
+        bool hasRex = false;
+        uint8_t rexEnc = 0;
+
+        auto findEntry = [](const std::vector<BaseSet_x86_64::OpEncoding>& entries, const BaseSet_x86_64::OpEncoding& enc)
+        {
+            if (entries.empty()) return false;
+
+            for (const auto entry : entries)
+                if (entry == enc)
+                    return true;
+
+            return false;
+        };
+
+        // Prefix check...
+        // x86/64 instructions allow up to 4 prefixes
+        //
+        for (int i = 0; i < 4; i++)
+        {
+            for (const auto ref : oplookup_x86_64[cur])
+            {
+                if (ref.extData.settings & BaseSet_x86_64::OPS_IS_PREFIX)
+                {
+                    switch (cur)
+                    {
+                    case PRE_CS:
+                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_CS;
+                        break;
+                    case PRE_SS:
+                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_SS;
+                        break;
+                    case PRE_DS:
+                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_DS;
+                        break;
+                    case PRE_ES:
+                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_ES;
+                        break;
+                    case PRE_FS:
+                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_FS;
+                        break;
+                    case PRE_GS:
+                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_GS;
+                        break;
+                    case PRE_LOCK:
+                        opcode.prefix |= BaseSet_x86_64::PRE_LOCK;
+                        opcode.text += "lock ";
+                        break;
+                    case PRE_REPNE:
+                        opcode.prefix |= BaseSet_x86_64::PRE_REPNE;
+                        opcode.text += "repne ";
+                        break;
+                    case PRE_REPE:
+                        opcode.prefix |= BaseSet_x86_64::PRE_REPE;
+                        opcode.text += "repe ";
+                        break;
+                    case PRE_OPSOR1:
+                        opcode.prefix |= BaseSet_x86_64::PRE_OPSOR1;
+                        break;
+                    case PRE_OPSOR2:
+                        opcode.prefix |= BaseSet_x86_64::PRE_OPSOR2;
+                        break;
+                    }
+
+                    cur = stream.next();
+                    break;
+                }
+            }
+
+            if (is64mode)
+            {
+                if (cur >= 0x40 && cur <= 0x4F)
+                {
+                    rexEnc = cur;
+                    hasRex = true;
+                    opcode.prefix |= BaseSet_x86_64::PRE_REX;
+                    cur = stream.next();
+                }
+            }
+        }
+
+        // Now we've sorted through the prefixes.
+        // Next we find out which instruction reference matches the opcode,
+        // since there may be varying modes and sizes per instruction
+        // 
+        const auto oldPos = stream.getpos();
+
+        for (const auto ref : oplookup_x86_64[cur])
+        {
+            stream.setpos(oldPos);
+
+            if (ref.extData.settings & BaseSet_x86_64::OPS_16MODE)
+                if (!((opcode.prefix & BaseSet_x86_64::PRE_OPSOR1) || (opcode.prefix & BaseSet_x86_64::PRE_OPSOR2)))
+                    continue;
+
+            bool matched = true;
+            bool vreg = false;
+
+            // ignore the final opcode byte if it has the rb/rw/rd mode...
+            // it is variable and determines the register
+            for (size_t i = 0; i < ref.extData.entries.size(); i++)
+            {
+                switch (ref.extData.entries[i])
+                {
+                case OpEncoding::rb:
+                case OpEncoding::rw:
+                case OpEncoding::rd:
+                    vreg = true;
+                    break;
+                }
+            }
+
+            for (size_t i = 0; i < ref.extData.code.size(); i++)
+            {
+                const auto b = stream.next();
+
+                if (vreg && i == ref.extData.code.size() - 1)
+                {
+                    // rb/rw/rd modes
+                    if (!(b >= ref.extData.code[i] && b < ref.extData.code[i] + 8))
+                    {
+                        matched = false;
+                        break;
+                    }
+                }
+                else if (b != ref.extData.code[i])
+                {
+                    matched = false;
+                    break;
+                }
+            }
+
+            if (!matched)
+                continue;
+
+            matched = true;
+
+            for (size_t i = 0; i < ref.extData.entries.size() && matched; i++)
+            {
+                const auto m = ((stream.current() % 0x40) / 8);
+
+                switch (ref.extData.entries[i])
+                {
+                case OpEncoding::m0:
+                    matched = (m == 0);
+                    break;
+                case OpEncoding::m1:
+                    matched = (m == 1);
+                    break;
+                case OpEncoding::m2:
+                    matched = (m == 2);
+                    break;
+                case OpEncoding::m3:
+                    matched = (m == 3);
+                    break;
+                case OpEncoding::m4:
+                    matched = (m == 4);
+                    break;
+                case OpEncoding::m5:
+                    matched = (m == 5);
+                    break;
+                case OpEncoding::m6:
+                    matched = (m == 6);
+                    break;
+                case OpEncoding::m7:
+                    matched = (m == 7);
+                    break;
+                }
+            }
+
+            if (!matched)
+                continue;
+
+            // ... perform other checks on opcode entries...
+            
+            opRef = ref;
+
+            // ... 
+            break;
+        }
+
+        if (opRef.opCodeName.empty())
+            return opcode;
+
+        const auto nOperands = opRef.extData.symbols.size();
+
+        opcode.text += opRef.opCodeName;
+        opcode.text += " ";
+        opcode.operands.resize(nOperands);
+
+        uint8_t setmodrm = 0, modrm = 0;
+
+        for (size_t i = 0; i < nOperands; i++)
+        {
+            if (i) opcode.text += ", ";
+
+            if (opRef.extData.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS)
+            {
+                switch (opRef.extData.symbols[i])
+                {
+                case Symbols::eax:
+                    opRef.extData.symbols[i] = Symbols::rax;
+                    break;
+                case Symbols::ecx:
+                    opRef.extData.symbols[i] = Symbols::rcx;
+                    break;
+                case Symbols::edx:
+                    opRef.extData.symbols[i] = Symbols::rdx;
+                    break;
+                case Symbols::ebx:
+                    opRef.extData.symbols[i] = Symbols::rbx;
+                    break;
+                case Symbols::esp:
+                    opRef.extData.symbols[i] = Symbols::rsp;
+                    break;
+                case Symbols::ebp:
+                    opRef.extData.symbols[i] = Symbols::rbp;
+                    break;
+                case Symbols::esi:
+                    opRef.extData.symbols[i] = Symbols::rsi;
+                    break;
+                case Symbols::edi:
+                    opRef.extData.symbols[i] = Symbols::rdi;
+                    break;
+                }
+            }
+
+            auto& cop = opcode.operands[i];
+            const auto symbol = opRef.extData.symbols[i];
+            switch (symbol)
+            {
+            case Symbols::one:
+                opcode.text += "1";
+                break;
+            case Symbols::imm8:
+            case Symbols::moffs8:
+            {
+                cop.imm8 = stream.current();
+                stream.skip(sizeof(uint8_t));
+                cop.immSize = 8;
+                char s[18];
+                sprintf(s, "%02Xh", cop.imm8);
+                opcode.text += s;
+                break;
+            }
+            case Symbols::imm16:
+            case Symbols::moffs16:
+            {
+                memcpy(&cop.imm16, stream.pcurrent(), sizeof(uint16_t));
+                stream.skip(sizeof(uint16_t));
+                cop.immSize = 16;
+                char s[18];
+                sprintf(s, "%04Xh", cop.imm16);
+                opcode.text += s;
+                break;
+            }
+            case Symbols::imm32:
+            case Symbols::moffs32:
+            {
+                if (rexEnc & (1 << 3) && !findEntry(opRef.extData.entries, OpEncoding::id))
+                {
+                    memcpy(&cop.imm64, stream.pcurrent(), sizeof(uint64_t));
+                    stream.skip(sizeof(uint64_t));
+                    cop.immSize = 64;
+                    char s[18];
+                    sprintf(s, "%016llXh", cop.imm64);
+                    opcode.text += s;
+                }
+                else
+                {
+                    memcpy(&cop.imm32, stream.pcurrent(), sizeof(uint32_t));
+                    stream.skip(sizeof(uint32_t));
+                    cop.immSize = 32;
+                    char s[18];
+                    sprintf(s, "%08Xh", cop.imm32);
+                    opcode.text += s;
+                }
+                break;
+            }
+            case Symbols::imm64:
+            case Symbols::moffs64:
+            {
+                memcpy(&cop.imm64, stream.pcurrent(), sizeof(uint64_t));
+                stream.skip(sizeof(uint64_t));
+                cop.immSize = 64;
+                char s[18];
+                sprintf(s, "%016llXh", cop.imm64);
+                opcode.text += s;
+                break;
+            }
+            case Symbols::ptr16_16:
+            case Symbols::ptr16_32:
+            {
+                memcpy(&cop.imm32, stream.pcurrent(), sizeof(uint32_t));
+                stream.skip(sizeof(uint32_t));
+                memcpy(&cop.disp16, stream.pcurrent(), sizeof(uint16_t));
+                stream.skip(sizeof(uint16_t));
+
+                char s[32];
+                sprintf(s, "%04X:%08Xh", cop.disp16, cop.imm32);
+                opcode.text += s;
+                break;
+            }
+            case Symbols::sreg:
+                if (findEntry(opRef.extData.entries, OpEncoding::r))
+                    cop.regs.push_back(((setmodrm ? modrm : stream.current()) % 0x40) / 8);
+                else
+                    cop.regs.push_back((setmodrm ? modrm : stream.current()) % 8);
+                opcode.text += Mnemonics::SREG[cop.regs.back()];
+                break;
+            case Symbols::al:
+                cop.regs.push_back(0);
+                cop.bitSize = 8;
+                opcode.text += Mnemonics::R8[cop.regs.back()];
+                break;
+            case Symbols::ax:
+                cop.regs.push_back(0);
+                cop.bitSize = 16;
+                opcode.text += Mnemonics::R16[cop.regs.back()];
+                break;
+            case Symbols::eax:
+                cop.regs.push_back(0);
+                cop.bitSize = 32;
+                opcode.text += (rexEnc & (1 << 3) && rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] :
+                    (rexEnc & (1 << 2)) ? Mnemonics::R32ext[cop.regs.back()] : ((rexEnc & (1 << 3)) ? Mnemonics::R64[cop.regs.back()] : Mnemonics::R32[cop.regs.back()]);
+                break;
+            case Symbols::rax:
+                cop.regs.push_back(0);
+                cop.bitSize = 64;
+                opcode.text += (rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                break;
+            case Symbols::cl:
+                cop.regs.push_back(1);
+                cop.bitSize = 8;
+                opcode.text += Mnemonics::R8[cop.regs.back()];
+                break;
+            case Symbols::cx:
+                cop.regs.push_back(1);
+                cop.bitSize = 16;
+                opcode.text += Mnemonics::R16[cop.regs.back()];
+                break;
+            case Symbols::ecx:
+                cop.regs.push_back(1);
+                cop.bitSize = 32;
+                opcode.text += (rexEnc & (1 << 3) && rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] : 
+                    (rexEnc & (1 << 2)) ? Mnemonics::R32ext[cop.regs.back()] : ((rexEnc & (1 << 3)) ? Mnemonics::R64[cop.regs.back()] : Mnemonics::R32[cop.regs.back()]);
+                break;
+            case Symbols::rcx:
+                cop.regs.push_back(1);
+                cop.bitSize = 64;
+                opcode.text += (rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                break;
+            case Symbols::dl:
+                cop.regs.push_back(2);
+                cop.bitSize = 8;
+                opcode.text += Mnemonics::R8[cop.regs.back()];
+                break;
+            case Symbols::dx:
+                cop.regs.push_back(2);
+                cop.bitSize = 16;
+                opcode.text += Mnemonics::R16[cop.regs.back()];
+                break;
+            case Symbols::edx:
+                cop.regs.push_back(2);
+                cop.bitSize = 32;
+                opcode.text += (rexEnc & (1 << 3) && rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] :
+                    (rexEnc & (1 << 2)) ? Mnemonics::R32ext[cop.regs.back()] : ((rexEnc & (1 << 3)) ? Mnemonics::R64[cop.regs.back()] : Mnemonics::R32[cop.regs.back()]);
+                break;
+            case Symbols::rdx:
+                cop.regs.push_back(2);
+                cop.bitSize = 64;
+                opcode.text += (rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                break;
+            case Symbols::bl:
+                cop.regs.push_back(3);
+                cop.bitSize = 8;
+                opcode.text += Mnemonics::R8[cop.regs.back()];
+                break;
+            case Symbols::bx:
+                cop.regs.push_back(3);
+                cop.bitSize = 16;
+                opcode.text += Mnemonics::R16[cop.regs.back()];
+                break;
+            case Symbols::ebx:
+                cop.regs.push_back(3);
+                cop.bitSize = 32;
+                opcode.text += (rexEnc & (1 << 3) && rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] :
+                    (rexEnc & (1 << 2)) ? Mnemonics::R32ext[cop.regs.back()] : ((rexEnc & (1 << 3)) ? Mnemonics::R64[cop.regs.back()] : Mnemonics::R32[cop.regs.back()]);
+                break;
+            case Symbols::rbx:
+                cop.regs.push_back(3);
+                cop.bitSize = 64;
+                opcode.text += (rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                break;
+            case Symbols::ah:
+                cop.regs.push_back(4);
+                cop.bitSize = 8;
+                opcode.text += Mnemonics::R8[cop.regs.back()];
+                break;
+            case Symbols::sp:
+                cop.regs.push_back(4);
+                cop.bitSize = 16;
+                opcode.text += Mnemonics::R16[cop.regs.back()];
+                break;
+            case Symbols::esp:
+                cop.regs.push_back(4);
+                cop.bitSize = 32;
+                opcode.text += (rexEnc & (1 << 3) && rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] :
+                    (rexEnc & (1 << 2)) ? Mnemonics::R32ext[cop.regs.back()] : ((rexEnc & (1 << 3)) ? Mnemonics::R64[cop.regs.back()] : Mnemonics::R32[cop.regs.back()]);
+                break;
+            case Symbols::rsp:
+                cop.regs.push_back(4);
+                cop.bitSize = 64;
+                opcode.text += (rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                break;
+            case Symbols::ch:
+                cop.regs.push_back(5);
+                cop.bitSize = 8;
+                opcode.text += Mnemonics::R8[cop.regs.back()];
+                break;
+            case Symbols::bp:
+                cop.regs.push_back(5);
+                cop.bitSize = 16;
+                opcode.text += Mnemonics::R16[cop.regs.back()];
+                break;
+            case Symbols::ebp:
+                cop.regs.push_back(5);
+                cop.bitSize = 32;
+                opcode.text += (rexEnc & (1 << 3) && rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] :
+                    (rexEnc & (1 << 2)) ? Mnemonics::R32ext[cop.regs.back()] : ((rexEnc & (1 << 3)) ? Mnemonics::R64[cop.regs.back()] : Mnemonics::R32[cop.regs.back()]);
+                break;
+            case Symbols::rbp:
+                cop.regs.push_back(5);
+                cop.bitSize = 64;
+                opcode.text += (rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                break;
+            case Symbols::dh:
+                cop.regs.push_back(6);
+                cop.bitSize = 8;
+                opcode.text += Mnemonics::R8[cop.regs.back()];
+                break;
+            case Symbols::si:
+                cop.regs.push_back(6);
+                cop.bitSize = 16;
+                opcode.text += Mnemonics::R16[cop.regs.back()];
+                break;
+            case Symbols::esi:
+                cop.regs.push_back(6);
+                cop.bitSize = 32;
+                opcode.text += (rexEnc & (1 << 3) && rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] :
+                    (rexEnc & (1 << 2)) ? Mnemonics::R32ext[cop.regs.back()] : ((rexEnc & (1 << 3)) ? Mnemonics::R64[cop.regs.back()] : Mnemonics::R32[cop.regs.back()]);
+                break;
+            case Symbols::rsi:
+                cop.regs.push_back(6);
+                cop.bitSize = 64;
+                opcode.text += (rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                break;
+            case Symbols::bh:
+                cop.regs.push_back(7);
+                cop.bitSize = 8;
+                opcode.text += Mnemonics::R8[cop.regs.back()];
+                break;
+            case Symbols::di:
+                cop.regs.push_back(7);
+                cop.bitSize = 16;
+                opcode.text += Mnemonics::R16[cop.regs.back()];
+                break;
+            case Symbols::edi:
+                cop.regs.push_back(7);
+                cop.bitSize = 32;
+                opcode.text += (rexEnc & (1 << 3) && rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] :
+                    (rexEnc & (1 << 2)) ? Mnemonics::R32ext[cop.regs.back()] : ((rexEnc & (1 << 3)) ? Mnemonics::R64[cop.regs.back()] : Mnemonics::R32[cop.regs.back()]);
+                break;
+            case Symbols::rdi:
+                cop.regs.push_back(7);
+                cop.bitSize = 64;
+                opcode.text += (rexEnc & 1) ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                break;
+            case Symbols::r8:
+                cop.bitSize = 8;
+                if (findEntry(opRef.extData.entries, OpEncoding::r))
+                    cop.regs.push_back(((setmodrm ? modrm : stream.current()) % 0x40) / 8);
+                else
+                    cop.regs.push_back((setmodrm ? modrm : stream.current()) % 8);
+                opcode.text += Mnemonics::R8[cop.regs.back()];
+                break;
+            case Symbols::r16:
+                cop.bitSize = 16;
+                if (findEntry(opRef.extData.entries, OpEncoding::r))
+                    cop.regs.push_back(((setmodrm ? modrm : stream.current()) % 0x40) / 8);
+                else
+                    cop.regs.push_back((setmodrm ? modrm : stream.current()) % 8);
+                opcode.text += Mnemonics::R16[cop.regs.back()];
+                break;
+            case Symbols::r32:
+            {
+                if (findEntry(opRef.extData.entries, OpEncoding::r))
+                    cop.regs.push_back(((setmodrm ? modrm : stream.current()) % 0x40) / 8);
+                else
+                    cop.regs.push_back((setmodrm ? modrm : stream.current()) % 8);
+
+                if (!hasRex)
+                {
+                    cop.bitSize = 32;
+                    opcode.text += Mnemonics::R32[cop.regs.back()];
+                }
+                else
+                {
+                    bool isLargeOp = (rexEnc & (1 << 3));
+                    bool isRegExt = (rexEnc & (1 << 2));
+
+                    if (isLargeOp)
+                    {
+                        cop.bitSize = 64;
+                        opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                    }
+                    else
+                    {
+                        cop.bitSize = 32;
+                        opcode.text += isRegExt ? Mnemonics::R32ext[cop.regs.back()] : Mnemonics::R32[cop.regs.back()];
+                    }
+                }
+                break;
+            }
+            case Symbols::mm:
+            {
+                if (findEntry(opRef.extData.entries, OpEncoding::r))
+                    cop.regs.push_back(((setmodrm ? modrm : stream.current()) % 0x40) / 8);
+                else
+                    cop.regs.push_back((setmodrm ? modrm : stream.current()) % 8);
+
+                if (!hasRex)
+                {
+                    cop.bitSize = 128;
+                    opcode.text += Mnemonics::MM[cop.regs.back()];
+                }
+                else
+                {
+                    bool isLargeOp = (rexEnc & (1 << 3));
+                    bool isRegExt = (rexEnc & (1 << 2));
+
+                    if (isLargeOp)
+                    {
+                        cop.bitSize = 128;
+                        opcode.text += isRegExt ? Mnemonics::MMext[cop.regs.back()] : Mnemonics::MM[cop.regs.back()];
+                    }
+                    else
+                    {
+                        cop.bitSize = 128;
+                        opcode.text += isRegExt ? Mnemonics::MMext[cop.regs.back()] : Mnemonics::MM[cop.regs.back()];
+                    }
+                }
+                break;
+            }
+            case Symbols::xmm:
+            {
+                if (findEntry(opRef.extData.entries, OpEncoding::r))
+                    cop.regs.push_back(((setmodrm ? modrm : stream.current()) % 0x40) / 8);
+                else
+                    cop.regs.push_back((setmodrm ? modrm : stream.current()) % 8);
+
+                if (!hasRex)
+                {
+                    cop.bitSize = 128;
+                    opcode.text += Mnemonics::XMM[cop.regs.back()];
+                }
+                else
+                {
+                    bool isLargeOp = (rexEnc & (1 << 3));
+                    bool isRegExt = (rexEnc & (1 << 2));
+
+                    if (isLargeOp)
+                    {
+                        cop.bitSize = 128;
+                        opcode.text += isRegExt ? Mnemonics::XMMext[cop.regs.back()] : Mnemonics::XMM[cop.regs.back()];
+                    }
+                    else
+                    {
+                        cop.bitSize = 128;
+                        opcode.text += isRegExt ? Mnemonics::XMMext[cop.regs.back()] : Mnemonics::XMM[cop.regs.back()];
+                    }
+                }
+                break;
+            }
+            case Symbols::m:
+            case Symbols::m8:
+            case Symbols::m16:
+            case Symbols::m32:
+            case Symbols::m32real:
+            case Symbols::m32int:
+            case Symbols::rm8:
+            case Symbols::rm16:
+            case Symbols::rm32:
+            case Symbols::rm64:
+            case Symbols::m16_16:
+            case Symbols::m16_32:
+            case Symbols::mm_m32:
+            case Symbols::mm_m64:
+            case Symbols::xmm_m32:
+            case Symbols::xmm_m64:
+            case Symbols::xmm_m128:
+            {
+                uint8_t sb = 0;
+                uint8_t mb = stream.current();
+                auto mode = mb >> 6;
+                auto r1 = (mode) ? ((mb % (mode << 6)) / 8) : 0;
+                auto r2 = ((mode) ? (mb % (mode << 6)) : mb) % 8;
+                bool hasSib = false;
+
+                if (findEntry(opRef.extData.entries, OpEncoding::r))
+                {
+                    setmodrm = true;
+                    modrm = mb;
+                }
+
+                switch (mode)
+                {
+                case 0:
+                {
+                    opcode.text += "[";
+
+                    if (r2 == 4)
+                    {
+                        stream.next();
+                        sb = stream.current();
+                        mode = sb >> 5;
+                        r1 = (mode) ? ((sb % (mode << 5)) / 8) : 0;
+                        r2 = ((mode) ? (sb % (mode << 5)) : sb) % 8;
+                        hasSib = true;
+                    }
+
+                    if (r2 == 5)
+                    {
+                        cop.regs.push_back(r1);
+
+                        if (!hasRex)
+                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                        else
+                        {
+                            bool isRegExt = (rexEnc & 1);
+
+                            cop.bitSize = 64;
+                            opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                        }
+
+                        int mul = ((sb >> 6) << 2) / 4;
+                        if (mul)
+                        {
+                            char s[4];
+                            mul--;
+                            std::vector<int>muls = { 2, 4, 8 };
+                            sprintf(s, "*%i", muls[mul]);
+                            opcode.text += s;
+                        }
+
+                        stream.skip(1);
+                        memcpy(&cop.imm32, stream.pcurrent(), sizeof(uint32_t));
+                        stream.skip(sizeof(uint32_t));
+                        cop.immSize = 32;
+                        char s[20];
+                        if (cop.imm32 > INT32_MAX)
+                            sprintf(s, "-%08Xh", (UINT32_MAX - cop.imm32) + 1);
+                        else
+                            sprintf(s, "+%08Xh", cop.imm32);
+                        opcode.text += s;
+                    }
+                    else
+                    {
+                        cop.regs.push_back(r2);
+
+                        if (!hasRex)
+                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                        else
+                        {
+                            bool isRegExt = (rexEnc & 1);
+
+                            cop.bitSize = 64;
+                            opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                        }
+
+                        if (hasSib && (sb % 0x40) != 0x24)
+                        {
+                            opcode.text += "+";
+                            cop.regs.push_back(r1);
+
+                            if (!hasRex)
+                                opcode.text += Mnemonics::R32[cop.regs.back()];
+                            else
+                            {
+                                bool isRegExt = (rexEnc & 2);
+
+                                cop.bitSize = 64;
+                                opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                            }
+
+                            int mul = ((sb >> 6) << 2) / 4;
+                            if (mul)
+                            {
+                                char s[4];
+                                mul--;
+                                std::vector<int>muls = { 2, 4, 8 };
+                                sprintf(s, "*%i", muls[mul]);
+                                opcode.text += s;
+                            }
+                        }
+                    }
+
+                    stream.skip(1);
+
+                    opcode.text += "]";
+                    break;
+                }
+                case 1:
+                {
+                    opcode.text += "[";
+
+                    if (r2 == 4)
+                    {
+                        stream.next();
+                        sb = stream.current();
+                        mode = sb >> 5;
+                        r1 = (mode) ? ((sb % (mode << 5)) / 8) : 0;
+                        r2 = ((mode) ? (sb % (mode << 5)) : sb) % 8;
+                        hasSib = true;
+                    }
+
+                    cop.regs.push_back(r2);
+
+                    if (!hasRex)
+                        opcode.text += Mnemonics::R32[cop.regs.back()];
+                    else
+                    {
+                        bool isRegExt = (rexEnc & 1);
+
+                        cop.bitSize = 64;
+                        opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                    }
+
+                    if (hasSib && (sb % 0x40) != 0x24)
+                    {
+                        opcode.text += "+";
+                        cop.regs.push_back(r1);
+
+                        if (!hasRex)
+                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                        else
+                        {
+                            bool isRegExt = (rexEnc & 2);
+
+                            cop.bitSize = 64;
+                            opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                        }
+
+                        int mul = ((sb >> 6) << 2) / 4;
+                        if (mul)
+                        {
+                            char s[4];
+                            mul--;
+                            std::vector<int>muls = { 2, 4, 8 };
+                            sprintf(s, "*%i", muls[mul]);
+                            opcode.text += s;
+                        }
+                    }
+                    
+                    stream.skip(1);
+                    cop.imm8 = stream.next();
+                    cop.immSize = 8;
+                    char s[20];
+                    if (cop.imm8 > INT8_MAX)
+                        sprintf(s, "-%02Xh]", (UINT8_MAX - cop.imm8) + 1);
+                    else
+                        sprintf(s, "+%02Xh]", cop.imm8);
+
+                    opcode.text += s;
+                    break;
+                }
+                case 2:
+                {
+                    opcode.text += "[";
+
+                    if (r2 == 4)
+                    {
+                        stream.next();
+                        sb = stream.current();
+                        mode = sb >> 5;
+                        r1 = (mode) ? ((sb % (mode << 5)) / 8) : 0;
+                        r2 = ((mode) ? (sb % (mode << 5)) : sb) % 8;
+                        hasSib = true;
+                    }
+
+                    cop.regs.push_back(r2);
+
+                    if (!hasRex)
+                        opcode.text += Mnemonics::R32[cop.regs.back()];
+                    else
+                    {
+                        bool isRegExt = (rexEnc & 1);
+
+                        cop.bitSize = 64;
+                        opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                    }
+
+                    if (hasSib && (sb % 0x40) != 0x24)
+                    {
+                        opcode.text += "+";
+                        cop.regs.push_back(r1);
+
+                        if (!hasRex)
+                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                        else
+                        {
+                            bool isRegExt = (rexEnc & 2);
+
+                            cop.bitSize = 64;
+                            opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                        }
+
+                        int mul = ((sb >> 6) << 2) / 4;
+                        if (mul)
+                        {
+                            char s[4];
+                            mul--;
+                            std::vector<int>muls = { 2, 4, 8 };
+                            sprintf(s, "*%i", muls[mul]);
+                            opcode.text += s;
+                        }
+                    }
+                    
+                    stream.skip(1);
+                    memcpy(&cop.imm32, stream.pcurrent(), sizeof(uint32_t));
+                    stream.skip(sizeof(uint32_t));
+                    cop.immSize = 32;
+                    char s[20];
+                    if (cop.imm32 > INT32_MAX)
+                        sprintf(s, "-%08Xh]", (UINT32_MAX - cop.imm32) + 1);
+                    else
+                        sprintf(s, "+%08Xh]", cop.imm32);
+
+                    opcode.text += s;
+                    break;
+                }
+                case 3:
+                {
+                    cop.regs.push_back(r2);
+
+                    if (!hasRex)
+                        opcode.text += Mnemonics::R32[cop.regs.back()];
+                    else
+                    {
+                        bool isLargeOp = (rexEnc & (1 << 3));
+                        bool isRegExt = (rexEnc & 1);
+
+                        if (isLargeOp)
+                        {
+                            cop.bitSize = 64;
+                            opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                        }
+                        else
+                        {
+                            cop.bitSize = 32;
+                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                        }
+                    }
+
+                    if (findEntry(opRef.extData.entries, OpEncoding::r))
+                        stream.skip(1);
+
+                    break;
+                }
+                }
+
+                // if there is no 'r' encoding to worry about,
+                // we can skip the mod/rm byte
+                if (!findEntry(opRef.extData.entries, OpEncoding::r))
+                    stream.skip(1);
+
+                break;
+            }
+            default:
+                //throw SeraphException("Unknown symbol");
+                break;
+            }
+        }
+
+        return opcode;
+    }
+
+    Disassembler<TargetArchitecture::x64>::Disassembler() : stream(), options(DisassemblyOptions::Default) 
+    {
+        initTable1(prelookup_x86_64);
+        initTable2(oplookup_x86_64); 
+    };
+
+    Disassembler<TargetArchitecture::x64>::Disassembler(const DisassemblyOptions& _options) : stream(), options(_options) 
+    {
+        initTable1(prelookup_x86_64);
+        initTable2(oplookup_x86_64);
+    };
+
+    Disassembler<TargetArchitecture::x64>::Disassembler(const ByteStream& _stream) : stream(_stream), options(DisassemblyOptions::Default) 
+    {
+        initTable1(prelookup_x86_64);
+        initTable2(oplookup_x86_64);
+    };
+
+    Disassembler<TargetArchitecture::x64>::Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options) : stream(_stream), options(_options)
+    {
+        initTable1(prelookup_x86_64);
+        initTable2(oplookup_x86_64);
+    };
+
+    //Disassembler(const DisassemblyOptions& _options) : stream(), options(_options) {};
+    //Disassembler(const ByteStream& _stream) : stream(_stream), options(DisassemblyOptions::Default) {};
+    //Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options) : stream(_stream), options(_options) {};
+
+
+    BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x86>::readNext()
+    {
+        return read_x86_64(stream, offset, pos, options, prelookup_x86_64, oplookup_x86_64, false);
+    }
+
+    BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x64>::readNext()
+    {
+        return read_x86_64(stream, offset, pos, options, prelookup_x86_64, oplookup_x86_64, true);
+    }
+
+    BaseSet_ARM::Opcode Disassembler<TargetArchitecture::ARM>::readNext()
+    {
+        return BaseSet_ARM::Opcode();
+    }
+
     Assembler<TargetArchitecture::x86>::Assembler()
     {
-        initTables(prelookup_x86_64, oplookup_x86_64);
+        initTable1(prelookup_x86_64);
+        initTable3(oplookup_x86_64);
     }
 
     Assembler<TargetArchitecture::x64>::Assembler()
     {
-        initTables(prelookup_x86_64, oplookup_x86_64);
+        initTable1(prelookup_x86_64);
+        initTable3(oplookup_x86_64);
     }
 
     // Parses and converts assembly code string directly to
@@ -2012,7 +3349,7 @@ namespace Seraph
                                     {
                                         if (!mode64) throw SeraphException("64-bit operands not supported");
 
-                                        operand.regExt = true;
+                                        operand.regExt = operand.regExt ? 4 : (operand.regs.empty()) ? 1 : 2;
 
                                         operand.opmode = (rm) ? Symbols::rm8 : Symbols::r8;
                                         operand.bitSize = 8;
@@ -2032,7 +3369,7 @@ namespace Seraph
                                     {
                                         if (!mode64) throw SeraphException("64-bit operands not supported");
 
-                                        operand.regExt = true;
+                                        operand.regExt = operand.regExt ? 4 : (operand.regs.empty()) ? 1 : 2;
 
                                         operand.opmode = (rm) ? Symbols::rm16 : Symbols::r16;
                                         operand.bitSize = 16;
@@ -2052,7 +3389,7 @@ namespace Seraph
                                     {
                                         if (!mode64) throw SeraphException("64-bit operands not supported");
 
-                                        operand.regExt = true;
+                                        operand.regExt = operand.regExt ? 4 : (operand.regs.empty()) ? 1 : 2;
 
                                         operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
                                         operand.bitSize = 32;
@@ -2074,7 +3411,7 @@ namespace Seraph
                                     {
                                         if (!mode64) throw SeraphException("64-bit operands not supported");
 
-                                        operand.regExt = true;
+                                        operand.regExt = operand.regExt ? 4 : (operand.regs.empty()) ? 1 : 2;
 
                                         operand.opmode = (rm) ? Symbols::rm32 : Symbols::r32;
                                         operand.bitSize = 64;
@@ -2102,7 +3439,7 @@ namespace Seraph
                                     {
                                         if (!mode64) throw SeraphException("64-bit operands not supported");
 
-                                        operand.regExt = true;
+                                        operand.regExt = operand.regExt ? 4 : (operand.regs.empty()) ? 1 : 2;
 
                                         operand.opmode = Symbols::sti;
                                         operand.bitSize = 16;
@@ -2122,7 +3459,7 @@ namespace Seraph
                                     {
                                         if (!mode64) throw SeraphException("64-bit operands not supported");
 
-                                        operand.regExt = true;
+                                        operand.regExt = operand.regExt ? 4 : (operand.regs.empty()) ? 1 : 2;
 
                                         operand.opmode = Symbols::cri;
                                         operand.bitSize = 32;
@@ -2142,7 +3479,7 @@ namespace Seraph
                                     {
                                         if (!mode64) throw SeraphException("64-bit operands not supported");
 
-                                        operand.regExt = true;
+                                        operand.regExt = operand.regExt ? 4 : (operand.regs.empty()) ? 1 : 2;
 
                                         operand.opmode = Symbols::dri;
                                         operand.bitSize = 32;
@@ -2164,7 +3501,7 @@ namespace Seraph
                                     {
                                         if (!mode64) throw SeraphException("64-bit operands not supported");
 
-                                        operand.regExt = true;
+                                        operand.regExt = operand.regExt ? 4 : (operand.regs.empty()) ? 1 : 2;
 
                                         node.mmx = true;
                                         operand.opmode = (rm) ? Symbols::mm_m32 : Symbols::mm;
@@ -2190,7 +3527,7 @@ namespace Seraph
                                         node.mmx = true;
 
                                         operand.bitSize = 128;
-                                        operand.regExt = true;
+                                        operand.regExt = operand.regExt ? 4 : (operand.regs.empty()) ? 1 : 2;
 
                                         operand.opmode = (rm) ? Symbols::xmm_m128 : Symbols::xmm;
                                         parts.push_back("xmm");
@@ -2208,7 +3545,9 @@ namespace Seraph
 
                                 bool isNumber = true;
                                 bool isNumberHex = false;
-                                bool isSegment = (token.find(":") != std::string::npos);
+
+                                const auto segPos = token.find(":");
+                                bool isSegment = (segPos != std::string::npos);
 
                                 if (token.length() <= ((mode64) ? 17u : 9u) || isSegment)
                                 {
@@ -2306,13 +3645,15 @@ namespace Seraph
                                             break;
                                         default: // Segment/Pointer Offset (Only supports hex)
                                         {
-                                            const auto pos = token.find(":");
-                                            operand.opmode = Symbols::ptr16_32;
-                                            operand.disp16 = static_cast<uint16_t>(std::strtoul(token.substr(0, pos).c_str(), nullptr, 16));
-                                            operand.imm32 = std::strtoul(token.substr(pos + 1, token.length() - (pos + 1)).c_str(), nullptr, 16);
-                                            operand.flags |= BaseSet_x86_64::OP_IMM16 | BaseSet_x86_64::OP_IMM32;
+                                            if (isSegment)
+                                            {
+                                                operand.opmode = Symbols::ptr16_32;
+                                                operand.disp16 = static_cast<uint16_t>(std::strtoul(token.substr(0, segPos).c_str(), nullptr, 16));
+                                                operand.imm32 = std::strtoul(token.substr(segPos + 1, token.length() - (segPos + 1)).c_str(), nullptr, 16);
+                                                operand.flags |= BaseSet_x86_64::OP_IMM16 | BaseSet_x86_64::OP_IMM32;
 
-                                            parts.push_back("ptr16_32");
+                                                parts.push_back("ptr16_32");
+                                            }
                                             break;
                                         }
                                         }
@@ -2854,7 +4195,7 @@ namespace Seraph
 
                             size_t streamStartIndex = stream.size();
                             uint8_t usingrex = 0;
-                            uint8_t rexenc = 0;
+                            uint8_t rexEnc = 0;
                             uint8_t hasextreg = 0;
                             uint8_t has64data = 0;
 
@@ -2891,7 +4232,7 @@ namespace Seraph
                                     if (has64data || hasextreg)
                                     {
                                         usingrex = 1;
-                                        rexenc |= 1 << 6; // 01000000
+                                        rexEnc |= 1 << 6; // 01000000
                                     }
                                 }
                             }
@@ -2947,7 +4288,11 @@ namespace Seraph
                                             stream.add(opvariant.code[i]);
 
                                     if (userOperands.front().regExt)
-                                        rexenc |= 1;
+                                    {
+                                        usingrex = 1;
+                                        rexEnc |= 1 << 6; // 01000000
+                                        rexEnc |= 1;
+                                    }
 
                                     stream.add(opvariant.code.back() + userOperands.front().regs.front());
 
@@ -3036,7 +4381,7 @@ namespace Seraph
                                         hasDisp32 = true;
                                         break;
                                     case Symbols::imm64:
-                                        rexenc |= 1 << 3;
+                                        rexEnc |= 1 << 3;
                                         disp64value = op.imm64;
                                         hasDisp64 = true;
                                         break;
@@ -3088,7 +4433,7 @@ namespace Seraph
                                         hasImm32 = true;
                                         break;
                                     case Symbols::moffs64:
-                                        rexenc |= 1 << 3;
+                                        rexEnc |= 1 << 3;
                                         imm64value = op.imm64;
                                         hasImm64 = true;
                                         break;
@@ -3104,10 +4449,10 @@ namespace Seraph
                                         useModByte = true;
 
                                         if (op.bitSize >= 64)
-                                            rexenc |= 1 << 3;
+                                            rexEnc |= 1 << 3;
 
                                         if (op.regExt)
-                                            rexenc |= 1 << 2;
+                                            rexEnc |= 1 << 2;
 
                                         if (!findEntry(opvariant.entries, OpEncoding::r))
                                         {
@@ -3141,10 +4486,10 @@ namespace Seraph
                                         if (op.regs.size() == 1 && !(op.flags & BaseSet_x86_64::OP_RM)/*!node.hasMod*/)
                                         {
                                             if (op.bitSize >= 64)
-                                                rexenc |= 1 << 3;
+                                                rexEnc |= 1 << 3;
 
                                             if (op.regExt)
-                                                rexenc |= 1;
+                                                rexEnc |= 1;
 
                                             modenc = 3 << 6;
                                             modbyte += op.regs.front();
@@ -3284,7 +4629,7 @@ namespace Seraph
                                         }
 
                                         if (useModByte && op.regExt)
-                                            rexenc |= 1;
+                                            rexEnc |= op.regExt == 4 ? 1 : op.regExt;
 
                                         break;
                                     }
@@ -3293,7 +4638,7 @@ namespace Seraph
                                 modbyte |= modenc;
 
                                 if (usingrex) // append our finished rex encoding at the beginning
-                                    stream.insert(stream.begin() + streamStartIndex, rexenc);
+                                    stream.insert(stream.begin() + streamStartIndex, rexEnc);
 
                                 if (useModByte)
                                     stream.add(modbyte);
