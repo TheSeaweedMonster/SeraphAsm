@@ -52,7 +52,7 @@ namespace Seraph
             return *this;
         }
         
-        inline ByteStream& operator=(ByteStream& o)
+        inline ByteStream& operator=(const ByteStream& o)
         {
             resize(o.size());
             memcpy(const_cast<uint8_t*>(&data()[0]), &o.data()[0], o.size());
@@ -215,7 +215,10 @@ namespace Seraph
         static const uint16_t PRE_SEG_ES    = 0x0040;
         static const uint16_t PRE_SEG_FS    = 0x0080;
         static const uint16_t PRE_SEG_GS    = 0x0100;
-        
+        static const uint16_t PRE_REX       = 0x0200;
+        static const uint16_t PRE_OPSOR1    = 0x0400; // Operand Size Override
+        static const uint16_t PRE_OPSOR2    = 0x0800; // (...more information needed)
+       
         // Basic filters
         static const uint32_t OP_NONE       = 0x00000000;
         static const uint32_t OP_SRC_ONLY   = 0x00000001;
@@ -295,6 +298,7 @@ namespace Seraph
             ptr16_32,       // A far pointer; Same as ptr16_16 but with a 32-bit offset
             r8,             // One of the byte general-purpose registers AL, CL, DL, BL, AH, CH, DH, or BH.
             r16,            // One of the word general-purpose registers AX, CX, DX, BX, SP, BP, SI, or DI.
+            r16_32,         // r32 by default, r16 depending on operand size prefix
             r32,            // One of the doubleword general-purpose registers EAX, ECX, EDX, EBX, ESP, EBP, ESI, or EDI.
             r64,            // ### x64 Mode ###
             imm8,           // An immediate byte value -- a signed number between –128 and +127 inclusive.
@@ -303,6 +307,7 @@ namespace Seraph
             imm64,          // ### x64 Mode ###
             rm8,            // A byte operand that is either the contents of a byte general-purpose register (AL, BL, CL, DL, AH, BH, CH, and DH), or a byte from memory.
             rm16,           // A word general-purpose register or memory operand (AX, BX, CX, DX, SP, BP, SI, and DI).
+            rm16_32,        // rm32 by default. rm16 depending on operand size prefix
             rm32,           // A doubleword general-purpose register or memory operand (EAX, EBX, ECX, EDX, ESP, EBP, ESI, and EDI).
             rm64,            // ### x64 Mode ###
             m,              // A 16- or 32-bit operand in memory
@@ -396,6 +401,8 @@ namespace Seraph
         static const uint32_t OPS_NONE = 0;
         static const uint32_t OPS_DEFAULT_64_BITS = 0x00000001;
         static const uint32_t OPS_REMOVED_X64 = 0x00000002;
+        static const uint32_t OPS_IS_PREFIX = 0x00000004;
+        static const uint32_t OPS_16MODE = 0x00000008;
 
         struct OpData
         {
@@ -403,6 +410,13 @@ namespace Seraph
             std::vector<OpEncoding> entries = {};
             std::vector<BaseSet_x86_64::Symbols> symbols = {};
             uint32_t settings = 0;
+        };
+
+        struct OpRef
+        {
+            OpData extData;
+            std::string opCodeName;
+            std::string opCodeDescription;
         };
 
         struct Operand
@@ -506,36 +520,56 @@ namespace Seraph
     };
 
     template <TargetArchitecture ArchType>
-    class Disassembler { };
+    class Disassembler {};
 
     template <>
     class Disassembler<TargetArchitecture::x86>
 	{
     protected:
+        // Used to identify the correct bytecode to use
+        // based on the instruction's name, type and format(s)
+        std::vector<std::vector<BaseSet_x86_64::OpRef>> oplookup_x86_64;
+
+        // Used to identify the correct prefix bytecode to use
+        std::unordered_map<std::string, uint8_t> prelookup_x86_64;
+
         DisassemblyOptions options;
         ByteStream stream;
-        uintptr_t offset;
-        int pos = 0;
+        uintptr_t offset = 0;
+        size_t pos = 0;
     public:
-        Disassembler() : offset(0), stream(), options(DisassemblyOptions::Default) { void(); };
-        Disassembler(const ByteStream& _stream) : offset(0), stream(_stream), options(DisassemblyOptions::Default) { void(); };
-        Disassembler(const ByteStream& _stream, const uintptr_t _address) : offset(_address), stream(_stream), options(DisassemblyOptions::Default) { void(); };
-        
+        Disassembler();
+        Disassembler(const DisassemblyOptions& _options);
+        Disassembler(const ByteStream& _stream);
+        Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options);
+
+        void use(const ByteStream& _stream) { stream = _stream; }
+
         BaseSet_x86_64::Opcode readNext();
-	};
+    };
 
     template <>
     class Disassembler<TargetArchitecture::x64>
 	{
     protected:
+        // Used to identify the correct bytecode to use
+        // based on the instruction's name, type and format(s)
+        std::vector<std::vector<BaseSet_x86_64::OpRef>> oplookup_x86_64;
+
+        // Used to identify the correct prefix bytecode to use
+        std::unordered_map<std::string, uint8_t> prelookup_x86_64;
+
         DisassemblyOptions options;
         ByteStream stream;
-        uintptr_t offset;
-        int pos = 0;
+        uintptr_t offset = 0;
+        size_t pos = 0;
     public:
-        Disassembler() : offset(0), stream(), options(DisassemblyOptions::Default) { void(); };
-        Disassembler(const ByteStream& _stream) : offset(0), stream(_stream), options(DisassemblyOptions::Default) { void(); };
-        Disassembler(const ByteStream& _stream, const uintptr_t _address) : offset(_address), stream(_stream), options(DisassemblyOptions::Default) { void(); };
+        Disassembler();
+        Disassembler(const DisassemblyOptions& _options);
+        Disassembler(const ByteStream& _stream);
+        Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options);
+
+        void use(const ByteStream& _stream) { stream = _stream; }
 
         BaseSet_x86_64::Opcode readNext();
     };
@@ -546,11 +580,13 @@ namespace Seraph
     protected:
         DisassemblyOptions options;
         ByteStream stream;
-        int pos = 0;
+        uintptr_t offset = 0;
+        size_t pos = 0;
     public:
-        Disassembler(void) = default;
+        Disassembler();
+        Disassembler(const DisassemblyOptions& _options);
         Disassembler(const ByteStream& _stream) : stream(_stream), options(DisassemblyOptions::Default) {};
-        Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options) : stream(_stream), options(_options) { };
+        Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options) : stream(_stream), options(_options) {};
 
         BaseSet_ARM::Opcode readNext();
 	};
