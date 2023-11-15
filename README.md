@@ -13,7 +13,7 @@ Features:<br>
 
 Percentage completion: 85%<br>
 
-Disassembly is not yet supported<br>
+Disassembly is incomplete, but functional.<br>
 For more information, see Release Notes<br>
 
 I am open to contributions (please give credit where due,<br>
@@ -21,8 +21,7 @@ if this has been forked or modified. Thanks!)<br>
 
 # Release Notes
 
-Compilation for x86 and x64 assembly is finished!<br>
-x64 may need some further testing (mainly for rex-encoding).<br>
+0F*, F2* and F3* opcodes aren't finished yet (will probably finish by tomorrow)<br>
 
 Please report any incorrect output or other problems so I can make improvements.<br>
 Input is highly appreciated, and also reasonable, non-negative criticism :).<br>
