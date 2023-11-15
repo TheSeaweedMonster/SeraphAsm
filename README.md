@@ -7,11 +7,11 @@ Features:<br>
 ✔️ Portable and easy to include<br>
 ✔️ Text-to-assembly to write instructions and/or function routines<br>
 ⏳ Analysis of function routines<br>
-⏳ Disassembly; text translation as well as text/AST decompilation of instructions (incomplete)<br>
+✔️ Disassembly; text translation as well as text/AST decompilation of instructions<br>
 ✔️ Memory-editing utilities for both internal and external application<br>
 ✔️ Open-sourced<br>
 
-Percentage completion: 65%<br>
+Percentage completion: 85%<br>
 
 Disassembly is not yet supported<br>
 For more information, see Release Notes<br>
