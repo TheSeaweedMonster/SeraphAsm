@@ -11,9 +11,7 @@ Features:<br>
 ✔️ Memory-editing utilities for both internal and external application<br>
 ✔️ Open-sourced<br>
 
-Disassembly: 98% complete.<br>
-Assembly: 100% complete, could use further testing though<br>
-Percentage completion: 90%<br>
+Percentage completion: 92%<br>
 
 For more information, see Release Notes<br>
 
@@ -22,11 +20,13 @@ if this has been forked or modified. Thanks<br>
 
 # Release Notes
 
-For disassembly:<br>
-Some F3* opcodes aren't supported yet<br>
-All other opcodes are supported but further testing is needed to refine the output<br>
+For assembly/disassembly:<br>
+All opcodes are supported but further testing is needed to refine the output<br>
 
-Please report any incorrect outputs or bugs to my discord (jay_howdy) so I can make improvements.<br>
+This project is essentially finished but I will continue adding updates<br>
+for more features.<br>
+
+Please report any incorrect outputs or bugs to my discord (jay_howdy).<br>
 Feedback much appreciated :)<br>
 
 # Pros/Cons
