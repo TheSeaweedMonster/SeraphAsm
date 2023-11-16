@@ -11,9 +11,10 @@ Features:<br>
 ✔️ Memory-editing utilities for both internal and external application<br>
 ✔️ Open-sourced<br>
 
-Percentage completion: 85%<br>
+Disassembly: 98% complete.<br>
+Assembly: 100% complete, could use further testing though<br>
+Percentage completion: 90%<br>
 
-Disassembly is incomplete, but functional.<br>
 For more information, see Release Notes<br>
 
 I am open to contributions (please give credit where due,<br>
@@ -21,10 +22,12 @@ if this has been forked or modified. Thanks!)<br>
 
 # Release Notes
 
-0F*, F2* and F3* opcodes aren't finished yet (will probably finish by tomorrow)<br>
+For disassembly:<br>
+Some F3* opcodes aren't supported yet<br>
+All other opcodes are supported but further testing is needed to refine the output<br>
 
-Please report any incorrect output or other problems so I can make improvements.<br>
-Input is highly appreciated, and also reasonable, non-negative criticism :).<br>
+Please report any incorrect outputs or bugs to my discord (jay_howdy) so I can make improvements.<br>
+Feedback much appreciated :)<br>
 
 # Pros/Cons
 
