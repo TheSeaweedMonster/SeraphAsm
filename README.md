@@ -58,7 +58,7 @@ int main()
 	try
 	{
 		stream = assembler.compile(R"(
-// single-line comments are allowed, but not multi-line (yet)
+// single-line comments are allowed, but multi-line not supported yet
 main: // automatic labeling system
 push ebp
 mov ebp, esp
@@ -153,12 +153,6 @@ Notice, for all relative values (such as `jmp AF001F0000h`), we need to provide 
 This is solved with the "offset" parameter of the compile function.<br>
 
 The size of this parameter depends on whether you compile your program as x86 or x64.<br>
-
-Well, that's all I've got for now :)<br>
-Enjoy.<br>
-
-
-DM for more information: jayyy#5764<br>
 
 
 
