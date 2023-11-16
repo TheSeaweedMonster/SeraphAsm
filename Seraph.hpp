@@ -537,7 +537,6 @@ namespace Seraph
         DisassemblyOptions options;
         ByteStream stream;
         uintptr_t offset = 0;
-        size_t pos = 0;
     public:
         Disassembler();
         Disassembler(const DisassemblyOptions& _options);
@@ -545,6 +544,7 @@ namespace Seraph
         Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options);
 
         void use(const ByteStream& _stream) { stream = _stream; }
+        void setOffset(const uintptr_t _offset) { offset = _offset; };
 
         BaseSet_x86_64::Opcode readNext();
     };
@@ -563,7 +563,6 @@ namespace Seraph
         DisassemblyOptions options;
         ByteStream stream;
         uintptr_t offset = 0;
-        size_t pos = 0;
     public:
         Disassembler();
         Disassembler(const DisassemblyOptions& _options);
@@ -571,6 +570,7 @@ namespace Seraph
         Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options);
 
         void use(const ByteStream& _stream) { stream = _stream; }
+        void setOffset(const uintptr_t _offset) { offset = _offset; };
 
         BaseSet_x86_64::Opcode readNext();
     };
@@ -582,7 +582,6 @@ namespace Seraph
         DisassemblyOptions options;
         ByteStream stream;
         uintptr_t offset = 0;
-        size_t pos = 0;
     public:
         Disassembler();
         Disassembler(const DisassemblyOptions& _options);
