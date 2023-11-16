@@ -189,6 +189,7 @@ namespace Seraph
     {
         size_t len = 0;
         std::string text = "";
+        std::string desc = "";
 
         uint32_t prefix = 0;
         uint32_t segment = 0;
