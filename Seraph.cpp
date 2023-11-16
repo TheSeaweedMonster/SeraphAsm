@@ -2595,7 +2595,7 @@ namespace Seraph
         };
     }
 
-    static BaseSet_x86_64::Opcode read_x86_64(ByteStream& stream, uintptr_t& offset, size_t& pos, DisassemblyOptions& options, const std::unordered_map<std::string, uint8_t> prelookup_x86_64, const std::vector<std::vector<BaseSet_x86_64::OpRef>> oplookup_x86_64, bool is64mode)
+    static BaseSet_x86_64::Opcode read_x86_64(ByteStream& stream, uintptr_t& offset, DisassemblyOptions& options, const std::unordered_map<std::string, uint8_t> prelookup_x86_64, const std::vector<std::vector<BaseSet_x86_64::OpRef>> oplookup_x86_64, bool is64mode)
     {
         using Opcode = BaseSet_x86_64::Opcode;
         using OpEncoding = BaseSet_x86_64::OpEncoding;
@@ -3672,12 +3672,12 @@ namespace Seraph
 
     BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x86>::readNext()
     {
-        return read_x86_64(stream, offset, pos, options, prelookup_x86_64, oplookup_x86_64, false);
+        return read_x86_64(stream, offset, options, prelookup_x86_64, oplookup_x86_64, false);
     }
 
     BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x64>::readNext()
     {
-        return read_x86_64(stream, offset, pos, options, prelookup_x86_64, oplookup_x86_64, true);
+        return read_x86_64(stream, offset, options, prelookup_x86_64, oplookup_x86_64, true);
     }
 
     BaseSet_ARM::Opcode Disassembler<TargetArchitecture::ARM>::readNext()
