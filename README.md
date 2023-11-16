@@ -174,6 +174,10 @@ By disassembling it rebuilds the instructions (so, exactly the reverse of compil
     }
 ```
 
+For relative jumps or calls, it has nothing to go off of except a byte stream.<br>
+So, if you know the offset or location of the bytes being disassembled,<br>
+you can use `disassembler.setOffset(...)` to supply it with that<br>
+offset, then jumps and call instructions will be relative to that (Rather than 0 + stream index)<br>
 
 
 # Utility API
