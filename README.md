@@ -41,10 +41,10 @@ a reference file in the project directory.<br>
 However, that means SeraphAsm will generate quite a bit of code.<br>
 This isnt much of a problem if you aren't concerned about project size or compilation speed.<br>
 
-# Documentation (x86)
+# Documentation
 
 I'll show some brief examples of this API's usage.<br>
-First, to demonstrate assembling:<br>
+First, to demonstrate assembling in x86 mode:<br>
 <br>
 
 ```cpp
@@ -71,7 +71,7 @@ retn
 		printf("\nOutput: \n\n");
 		while (stream.good())
 			printf("%02X ", stream.next());
-		printf("\n");
+		printf("\n\n");
 	}
 	catch (Seraph::SeraphException e)
 	{
@@ -110,7 +110,7 @@ extra control.<br>
 I will document the rest of the ByteStream class eventually.<br>
 
 
-# Documentation (x64)
+# x64 Mode:
 
 Let's take a look at compiling x64 assembly.<br>
 To do this we need to initialize a 64 bit Assembler.<br>
@@ -153,6 +153,26 @@ Notice, for all relative values (such as `jmp AF001F0000h`), we need to provide 
 This is solved with the "offset" parameter of the compile function.<br>
 
 The size of this parameter depends on whether you compile your program as x86 or x64.<br>
+
+# Disassembling
+
+To disassemble, or, convert byte values into readable instructions,<br>
+we create a Disassembler. We then feed it our stream (or any stream) that contains byte values.<br>
+
+You can simply add this code to the previous example.<br>
+By disassembling it rebuilds the instructions (so, exactly the reverse of compile):<br>
+
+
+```
+    Seraph::Disassembler<Seraph::TargetArchitecture::x64> disassembler;
+    disassembler.use(stream);
+
+    for (int i = 0; i < 50; i++)
+    {
+        auto next1 = disassembler.readNext();
+        printf("%i.	%s\n", i, next1.text.c_str());
+    }
+```
 
 
 
