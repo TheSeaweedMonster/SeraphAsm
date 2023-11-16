@@ -436,7 +436,9 @@ namespace Seraph
                 {{{0x08}, {}, {}}, "invd", OP_DESC("Flush internal caches; initiate flushing of external caches")},
                 {{{0x09}, {}, {}}, "wbinvd", OP_DESC("Write back and flush Internal caches; initiate writing-back and flushing of external caches")},
                 {{{0x0B}, {}, {}}, "ud2", OP_DESC("Raise invalid opcode exception")},
+                {{{0x10}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "movss", OP_DESC("Move 32 bits representing one scalar SP operand from XMM2/Mem to XMM1 register")},
                 {{{0x10}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "movups", OP_DESC("Move 128 bits representing four SP data from XMM2/Mem to XMM1 register")},
+                {{{0x11}, {OpEncoding::r}, {Symbols::xmm_m32, Symbols::xmm}, BaseSet_x86_64::OPS_PRE_F3}, "movss", OP_DESC("Move 32 bits representing one scalar SP operand from XMM1 register to XMM2/Mem")},
                 {{{0x11}, {OpEncoding::r}, {Symbols::xmm_m128, Symbols::xmm}}, "movups", OP_DESC("Move 128 bits representing four SP data from XMM1 register to XMM2/Mem")},
                 {{{0x12}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "movhlps", OP_DESC("Move 64 bits representing higher two SP operands from xmm2 to lower two fields of xmm1 register")},
                 {{{0x12}, {OpEncoding::r}, {Symbols::xmm, Symbols::m64}}, "movlps", OP_DESC("Move 64 bits representing two SP operands from Mem to lower two fields of XMM register")},
@@ -456,9 +458,12 @@ namespace Seraph
                 {{{0x23}, {OpEncoding::r}, {Symbols::dri, Symbols::r32}}, "mov", OP_DESC("Move r32 to debug register")},
                 {{{0x28}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "movaps", OP_DESC("Move 128 bits representing four packed SP data from XMM2/Mem to XMM1 register")},
                 {{{0x29}, {OpEncoding::r}, {Symbols::xmm_m128, Symbols::xmm}}, "movaps", OP_DESC("Move 128 bits representing four packed SP from XMM1 register to XMM2/Mem")},
+                {{{0x2A}, {OpEncoding::r}, {Symbols::xmm, Symbols::rm32}, BaseSet_x86_64::OPS_PRE_F3}, "cvtsi2ss", OP_DESC("Convert one 32-bit signed integer from Integer Reg/Mem to one SP FP")},
                 {{{0x2A}, {OpEncoding::r}, {Symbols::xmm, Symbols::mm_m64}}, "cvtpi2ps", OP_DESC("Convert two 32-bit signed integers from MM/ Mem to two SP FP")},
                 {{{0x2B}, {OpEncoding::r}, {Symbols::m128, Symbols::xmm}}, "movntps", OP_DESC("Move 128 bits representing four packed SP FP data from XMM register to Mem, minimizing pollution in the cache hierarchy")},
+                {{{0x2C}, {OpEncoding::r}, {Symbols::r32, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "cvttss2si", OP_DESC("Convert lowest SP FP from XMM/Mem to one 32 bit signed integer using truncate, and move the result to an integer register")},
                 {{{0x2C}, {OpEncoding::r}, {Symbols::mm, Symbols::xmm_m64}}, "cvttps2pi", OP_DESC("Convert lower two SP FP from XMM/Mem to two 32-bit signed integers in MM using truncate")},
+                {{{0x2D}, {OpEncoding::r}, {Symbols::r32, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "cvtss2si", OP_DESC("Convert one SP FP from XMM/Mem to one 32 bit signed integer using rounding mode specified by MXCSR, and move the result to an integer register")},
                 {{{0x2D}, {OpEncoding::r}, {Symbols::mm, Symbols::xmm_m64}}, "cvtps2pi", OP_DESC("Convert lower two SP FP from XMM/Mem to two 32-bit signed integers in MM using rounding specified by MXCSR")},
                 {{{0x2E}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}}, "ucomiss", OP_DESC("Compare lower SP FP number in XMM1 register with lower SP FP number in XMM2/Mem and set the status flags accordingly")},
                 {{{0x2F}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}}, "comiss", OP_DESC("Compare lower SP FP number in XMM1 register with lower SP FP number in XMM2/Mem and set the status flags accordingly")},
@@ -501,18 +506,27 @@ namespace Seraph
                 {{{0x4F}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovg", OP_DESC("Move if not less or equal (if greater) (ZF=0 and SF=OF)")},
                 {{{0x4F}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovg", OP_DESC("Move if not less or equal (if greater) (ZF=0 and SF=OF)")},
                 {{{0x50}, {OpEncoding::r}, {Symbols::r32, Symbols::xmm}}, "movmskps", OP_DESC("Move the single mask to r32")},
+                {{{0x51}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "sqrtss", OP_DESC("Square Root of the lower SP FP number in XMM2/Mem")},
                 {{{0x51}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "sqrtps", OP_DESC("Square Root of the packed SP FP numbers in XMM2/Mem")},
+                {{{0x52}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "rsqrtss", OP_DESC("Return an approximation of the square root of the reciprocal of the lowest SP FP number in XMM2/Mem")},
                 {{{0x52}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "rsqrtps", OP_DESC("Return a packed approximation of the square root of the reciprocal of XMM2/Mem")},
+                {{{0x53}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "rcpss", OP_DESC("Return an approximation of the reciprocal of the lower SP FP number in XMM2/Mem")},
                 {{{0x53}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "rcpps", OP_DESC("Return a packed approximation of the reciprocal of XMM2/Mem")},
                 {{{0x54}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "andps", OP_DESC("Logical AND of 128 bits from XMM2/Mem to XMM1 register")},
                 {{{0x55}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "andnps", OP_DESC("Invert the 128 bits in XMM1 and then AND the result with 128 bits from XMM2/Mem")},
                 {{{0x56}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "orps", OP_DESC("OR 128 bits from XMM2/Mem to XMM1 register")},
                 {{{0x57}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "xorps", OP_DESC("XOR 128 bits from XMM2/Mem to XMM1 register")},
+                {{{0x58}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "addss", OP_DESC("Add the lower SP FP number from XMM2/Mem to XMM1")},
                 {{{0x58}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "addps", OP_DESC("Add packed SP FP numbers from XMM2/Mem to XMM1")},
+                {{{0x59}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "mulss", OP_DESC("Multiply the lowest SP FP number in XMM2/Mem to XMM1")},
                 {{{0x59}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "mulps", OP_DESC("Multiply packed SP FP numbers in XMM2/Mem to XMM1")},
+                {{{0x5C}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "subss", OP_DESC("Subtract the lower SP FP numbers in XMM2/Mem from XMM1")},
                 {{{0x5C}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "subps", OP_DESC("Subtract packed SP FP numbers in XMM2/Mem from XMM1")},
+                {{{0x5D}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "minss", OP_DESC("Return the minimum SP FP number between the lowest SP FP numbers from XMM2/Mem and XMM1")},
                 {{{0x5D}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "minps", OP_DESC("Return the minimum SP numbers between XMM2/Mem and XMM1")},
+                {{{0x5E}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "divss", OP_DESC("Divide lower SP FP numbers in XMM1 by XMM2/Mem")},
                 {{{0x5E}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "divps", OP_DESC("Divide packed SP FP numbers in XMM1 by XMM2/Mem")},
+                {{{0x5F}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}, BaseSet_x86_64::OPS_PRE_F3}, "maxss", OP_DESC("Return the maximum SP FP number between the lower SP FP numbers from XMM2/Mem and XMM1")},
                 {{{0x5F}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "maxps", OP_DESC("Return the maximum SP FP numbers between XMM2/Mem and XMM1")},
                 {{{0x60}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m32}}, "punpcklbw", OP_DESC("Interleave low-order bytes from mm and mm/m64 into mm")},
                 {{{0x61}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m32}}, "punpcklwd", OP_DESC("Interleave low-order words from mm and mm/m64 into mm")},
@@ -634,6 +648,7 @@ namespace Seraph
                 {{{0xC0}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "xadd", OP_DESC("Exchange r8 and rm8; load sum into rm8")},
                 {{{0xC1}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "xadd", OP_DESC("Exchange r16 and rm16; load sum into rm16")},
                 {{{0xC1}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "xadd", OP_DESC("Exchange r32 and rm32; load sum into rm32")},
+                {{{0xC2}, {OpEncoding::r, OpEncoding::ib}, {Symbols::xmm, Symbols::xmm_m32, Symbols::imm8}, BaseSet_x86_64::OPS_PRE_F3}, "maxps", OP_DESC("Compare lowest SP FP number from XMM2/Mem to lowest SP FP number in XMM1 register using imm8 as predicate")},
                 {{{0xC2}, {OpEncoding::r, OpEncoding::ib}, {Symbols::xmm, Symbols::xmm_m128, Symbols::imm8}}, "cmpps", OP_DESC("Compare packed SP FP numbers from XMM2/Mem to packed SP FP numbers in XMM1 register using imm8 as predicate")},
                 {{{0xC2, 0x00}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "cmpeqps", OP_DESC("")},
                 {{{0xC2, 0x01}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "cmpltps", OP_DESC("")},
@@ -2798,11 +2813,14 @@ namespace Seraph
             if (!matched)
                 continue;
 
-            // ... perform other checks on opcode entries...
+            if (ref.extData.settings & BaseSet_x86_64::OPS_PRE_F3)
+                if (!(opcode.prefix & BaseSet_x86_64::PRE_REPE))
+                    continue;
+                else
+                    opcode.text.clear();
             
             opRef = ref;
 
-            // ... 
             break;
         }
 
@@ -4742,11 +4760,15 @@ namespace Seraph
                             
                             solved = true;
 
-                            size_t streamStartIndex = stream.size();
+                            size_t streamStartIndex;
                             uint8_t usingrex = 0;
                             uint8_t rexEnc = 0;
                             uint8_t hasextreg = 0;
                             uint8_t has64data = 0;
+
+                            // Add prefix flags
+                            for (const uint8_t pre : node.prefixes)
+                                stream.add(pre);
 
                             if (mode64)
                             {
@@ -4775,6 +4797,20 @@ namespace Seraph
                                     if (op.regExt)
                                         hasextreg++;
                                 }
+
+                                for (auto v : opvariant.symbols)
+                                {
+                                    switch (v)
+                                    {
+                                    case Symbols::xmm:
+                                    case Symbols::xmm2:
+                                    case Symbols::xmm_m32:
+                                    case Symbols::xmm_m64:
+                                    case Symbols::xmm_m128:
+                                        has64data = 0;
+                                        break;
+                                    }
+                                }
                                 
                                 if (!(opvariant.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS))
                                 {
@@ -4784,15 +4820,25 @@ namespace Seraph
                                         rexEnc |= 1 << 6; // 01000000
                                     }
                                 }
+
+                                // ### streamStartIndex is only used to mark where we put
+                                // the REX prefix, but that comes after the other prefixes
+                                streamStartIndex = stream.size();
+
+                                if (!opvariant.code.empty())
+                                {
+                                    for (const auto pre : prelookup_x86_64)
+                                    {
+                                        if (opvariant.code.front() == pre.second)
+                                        {
+                                            // Make sure we place the REX prefix after any other prefix bytes
+                                            // that might be automatically joined into the instruction
+                                            streamStartIndex++;
+                                            break;
+                                        }
+                                    }
+                                }
                             }
-
-                            // Add prefix flags
-                            for (const uint8_t pre : node.prefixes)
-                                stream.add(pre);
-
-                            // ### streamStartIndex is only used to mark where we put
-                            // the REX prefix, but that comes after the other prefixes
-                            streamStartIndex = stream.size();
 
                             const auto noperands = userOperands.size();
                             auto insCode = opvariant.code;
