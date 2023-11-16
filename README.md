@@ -18,7 +18,7 @@ Percentage completion: 90%<br>
 For more information, see Release Notes<br>
 
 I am open to contributions (please give credit where due,<br>
-if this has been forked or modified. Thanks!)<br>
+if this has been forked or modified. Thanks!<br>
 
 # Release Notes
 
