@@ -9,6 +9,13 @@
 #include <iomanip>
 #include <unordered_map>
 
+#define USE_OP_DESCRIPTIONS false
+#if USE_OP_DESCRIPTIONS
+#define OP_DESC(s) s
+#else
+#define OP_DESC(s) ""
+#endif
+
 static std::vector<std::string> split(const std::string& str, char delim)
 {
     std::vector<std::string> strings;
@@ -384,537 +391,808 @@ namespace Seraph
         using Symbols = BaseSet_x86_64::Symbols;
 
         oplookup_x86_64 = {
-            /* 00 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "add", "Add r8 to rm8"}},
-            /* 01 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "add", "Add r16 to rm16"},
-            /* 01 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "add", "Add r32 to rm32"}},
-            /* 02 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "add", "Add rm8 to r8"}},
-            /* 03 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "add", "Add rm16 to r16"},
-            /* 03 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "add", "Add rm32 to r32"}},
-            /* 04 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "add", "Add imm8 to AL"}},
-            /* 05 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "add", "Add imm16 to AX"},
-            /* 05 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "add", "Add imm32 to EAX"}},
-            /* 06 */ {{{{}, {}, {Symbols::es}}, "push", "Push ES"}},
-            /* 07 */ {{{{}, {}, {Symbols::es}}, "pop", "Pop top of stack into ES; increment stack pointer"}},
-            /* 08 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "or", "rm8 OR r8"}},
-            /* 09 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "or", "rm16 OR r16"},
-            /* 09 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "or", "rm32 OR r32"}},
-            /* 0A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "or", "r8 OR rm8"}},
-            /* 0B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "or", "r16 OR rm16"},
-            /* 0B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "or", "r32 OR rm32"}},
-            /* 0C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "or", "AL OR imm8"}},
-            /* 0D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "or", "AX OR imm16"},
-            /* 0D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "or", "EAX OR imm32"}},
-            /* 0E */ {{{{}, {}, {Symbols::cs}}, "push", "Push CS"}},
-            /* 0F */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "", "*SIMD Extended Instructions*"},
-                {}
+            /* 00 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "add", OP_DESC("Add r8 to rm8")}},
+            /* 01 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "add", OP_DESC("Add r16 to rm16")},
+            /* 01 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "add", OP_DESC("Add r32 to rm32")}},
+            /* 02 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "add", OP_DESC("Add rm8 to r8")}},
+            /* 03 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "add", OP_DESC("Add rm16 to r16")},
+            /* 03 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "add", OP_DESC("Add rm32 to r32")}},
+            /* 04 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "add", OP_DESC("Add imm8 to AL")}},
+            /* 05 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "add", OP_DESC("Add imm16 to AX")},
+            /* 05 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "add", OP_DESC("Add imm32 to EAX")}},
+            /* 06 */ {{{{}, {}, {Symbols::es}}, "push", OP_DESC("Push ES")}},
+            /* 07 */ {{{{}, {}, {Symbols::es}}, "pop", OP_DESC("Pop top of stack into ES; increment stack pointer")}},
+            /* 08 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "or", OP_DESC("rm8 OR r8")}},
+            /* 09 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "or", OP_DESC("rm16 OR r16")},
+            /* 09 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "or", OP_DESC("rm32 OR r32")}},
+            /* 0A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "or", OP_DESC("r8 OR rm8")}},
+            /* 0B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "or", OP_DESC("r16 OR rm16")},
+            /* 0B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "or", OP_DESC("r32 OR rm32")}},
+            /* 0C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "or", OP_DESC("AL OR imm8")}},
+            /* 0D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "or", OP_DESC("AX OR imm16")},
+            /* 0D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "or", OP_DESC("EAX OR imm32")}},
+            /* 0E */ {{{{}, {}, {Symbols::cs}}, "push", OP_DESC("Push CS")}},
+            /* 0F */ {
+                {{{0x00}, {OpEncoding::m0}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "sldt", OP_DESC("Stores segment selector from LDTR in rm16")},
+                {{{0x00}, {OpEncoding::m0}, {Symbols::rm32}}, "sldt", OP_DESC("Store segment selector from LDTR in low-order 16 bits of rm32")},
+                {{{0x00}, {OpEncoding::m1}, {Symbols::rm16}}, "str", OP_DESC("Stores segment selector from TR in rm16")},
+                {{{0x00}, {OpEncoding::m2}, {Symbols::rm16}}, "lldt", OP_DESC("Load segment selector rm16 into LDTR")},
+                {{{0x00}, {OpEncoding::m3}, {Symbols::rm16}}, "ltr", OP_DESC("Load rm16 into task register")},
+                {{{0x00}, {OpEncoding::m4}, {Symbols::rm16}}, "verr", OP_DESC("Set ZF=1 if segment specified with rm16 can be read")},
+                {{{0x00}, {OpEncoding::m5}, {Symbols::rm16}}, "verw", OP_DESC("Set ZF=1 if segment specified with rm16 can be written")},
+                {{{0x01}, {OpEncoding::m0}, {Symbols::m}}, "sgdt", OP_DESC("Store GDTR to m")},
+                {{{0x01}, {OpEncoding::m1}, {Symbols::m}}, "sidt", OP_DESC("Store IDTR to m")},
+                {{{0x01}, {OpEncoding::m2}, {Symbols::m16and32}}, "lgdt", OP_DESC("Load m into GDTR")},
+                {{{0x01}, {OpEncoding::m3}, {Symbols::m16and32}}, "lidt", OP_DESC("Load m into IDTR")},
+                {{{0x01}, {OpEncoding::m4}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "smsw", OP_DESC("Store machine status word to rm16")},
+                {{{0x01}, {OpEncoding::m4}, {Symbols::rm32}}, "smsw", OP_DESC("Store machine status word in low-order 16 bits of r32/m16; high-order 16 bits of r32 are undefined")}, // r32/m16
+                {{{0x01}, {OpEncoding::m6}, {Symbols::rm16}}, "lmsw", OP_DESC("Loads rm16 in machine status word of CR0")},
+                {{{0x01}, {OpEncoding::m7}, {Symbols::m}}, "invlpg", OP_DESC("Invalidate TLB Entry for page that contains m")},
+                {{{0x02}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "lar", OP_DESC("r16 <- rm16 masked by FF00H")},
+                {{{0x02}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "lar", OP_DESC("r32 <- rm32 masked by 00FxFF00H")},
+                {{{0x03}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "lsl", OP_DESC("Load: r16 <- segment limit, selector rm16")},
+                {{{0x03}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "lsl", OP_DESC("Load: r32 <- segment limit, selector rm32")},
+                {{{0x06}, {}, {}}, "clts", OP_DESC("Clears TS flag in CR0")},
+                {{{0x08}, {}, {}}, "invd", OP_DESC("Flush internal caches; initiate flushing of external caches")},
+                {{{0x09}, {}, {}}, "wbinvd", OP_DESC("Write back and flush Internal caches; initiate writing-back and flushing of external caches")},
+                {{{0x0B}, {}, {}}, "ud2", OP_DESC("Raise invalid opcode exception")},
+                {{{0x10}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "movups", OP_DESC("Move 128 bits representing four SP data from XMM2/Mem to XMM1 register")},
+                {{{0x11}, {OpEncoding::r}, {Symbols::xmm_m128, Symbols::xmm}}, "movups", OP_DESC("Move 128 bits representing four SP data from XMM1 register to XMM2/Mem")},
+                {{{0x12}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "movhlps", OP_DESC("Move 64 bits representing higher two SP operands from xmm2 to lower two fields of xmm1 register")},
+                {{{0x12}, {OpEncoding::r}, {Symbols::xmm, Symbols::m64}}, "movlps", OP_DESC("Move 64 bits representing two SP operands from Mem to lower two fields of XMM register")},
+                {{{0x13}, {OpEncoding::r}, {Symbols::m64, Symbols::xmm}}, "movlps", OP_DESC("Move 64 bits representing two SP operands from lower two fields of XMM register to Mem")},
+                {{{0x14}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "unpcklps", OP_DESC("Interleaves SP FP numbers from the low halves of XMM1 and XMM2/Mem into XMM1 register")},
+                {{{0x15}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "unpckhps", OP_DESC("Interleaves SP FP numbers from the high halves of XMM1 and XMM2/Mem into XMM1 register")},
+                {{{0x16}, {OpEncoding::r}, {Symbols::xmm, Symbols::m64}}, "movhps", OP_DESC("Move 64 bits representing two SP operands from Mem to upper two fields of XMM register")},
+                {{{0x16}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "movlhps", OP_DESC("Move 64 bits representing lower two SP operands from xmm2 to upper two fields of xmm1 register")},
+                {{{0x17}, {OpEncoding::r}, {Symbols::m64, Symbols::xmm}}, "movhps", OP_DESC("Move 64 bits representing two SP operands from upper two fields of XMM register to Mem")},
+                {{{0x18}, {OpEncoding::m0}, {Symbols::m8}}, "prefetcht0", OP_DESC("Move data specified by address closer to the processor using the t0 hint")},
+                {{{0x18}, {OpEncoding::m1}, {Symbols::m8}}, "prefetcht1", OP_DESC("Move data specified by address closer to the processor using the t1 hint")},
+                {{{0x18}, {OpEncoding::m2}, {Symbols::m8}}, "prefetcht2", OP_DESC("Move data specified by address closer to the processor using the t2 hint")},
+                {{{0x18}, {OpEncoding::m3}, {Symbols::m8}}, "prefetchnta", OP_DESC("Move data specified by address closer to the processor using the nta hint")},
+                {{{0x20}, {OpEncoding::r}, {Symbols::r32, Symbols::cri}}, "mov", OP_DESC("Move control register to r32")},
+                {{{0x21}, {OpEncoding::r}, {Symbols::r32, Symbols::dri}}, "mov", OP_DESC("Move debug register to r32")},
+                {{{0x22}, {OpEncoding::r}, {Symbols::cri, Symbols::r32}}, "mov", OP_DESC("Move r32 to control register")},
+                {{{0x23}, {OpEncoding::r}, {Symbols::dri, Symbols::r32}}, "mov", OP_DESC("Move r32 to debug register")},
+                {{{0x28}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "movaps", OP_DESC("Move 128 bits representing four packed SP data from XMM2/Mem to XMM1 register")},
+                {{{0x29}, {OpEncoding::r}, {Symbols::xmm_m128, Symbols::xmm}}, "movaps", OP_DESC("Move 128 bits representing four packed SP from XMM1 register to XMM2/Mem")},
+                {{{0x2A}, {OpEncoding::r}, {Symbols::xmm, Symbols::mm_m64}}, "cvtpi2ps", OP_DESC("Convert two 32-bit signed integers from MM/ Mem to two SP FP")},
+                {{{0x2B}, {OpEncoding::r}, {Symbols::m128, Symbols::xmm}}, "movntps", OP_DESC("Move 128 bits representing four packed SP FP data from XMM register to Mem, minimizing pollution in the cache hierarchy")},
+                {{{0x2C}, {OpEncoding::r}, {Symbols::mm, Symbols::xmm_m64}}, "cvttps2pi", OP_DESC("Convert lower two SP FP from XMM/Mem to two 32-bit signed integers in MM using truncate")},
+                {{{0x2D}, {OpEncoding::r}, {Symbols::mm, Symbols::xmm_m64}}, "cvtps2pi", OP_DESC("Convert lower two SP FP from XMM/Mem to two 32-bit signed integers in MM using rounding specified by MXCSR")},
+                {{{0x2E}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}}, "ucomiss", OP_DESC("Compare lower SP FP number in XMM1 register with lower SP FP number in XMM2/Mem and set the status flags accordingly")},
+                {{{0x2F}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m32}}, "comiss", OP_DESC("Compare lower SP FP number in XMM1 register with lower SP FP number in XMM2/Mem and set the status flags accordingly")},
+                {{{0x30}, {}, {}}, "wrmsr", OP_DESC("Write the value in EDX:EAX to MSR specified by ECX")},
+                {{{0x31}, {}, {}}, "rdtsc", OP_DESC("Read time-stamp counter into EDX:EAX")},
+                {{{0x32}, {}, {}}, "rdmsr", OP_DESC("Load MSR specified by ECX into EDX:EAX")},
+                {{{0x33}, {}, {}}, "rdpmc", OP_DESC("Read performance-monitoring counter specified by ECX into EDX:EAX")},
+                {{{0x34}, {}, {}}, "sysenter", OP_DESC("Transition to System Call Entry Point")},
+                {{{0x35}, {}, {}}, "sysexit", OP_DESC("Transition from System Call Entry Point")},
+                {{{0x40}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovo", OP_DESC("Move if overflow (OF=0)")},
+                {{{0x40}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovo", OP_DESC("Move if overflow (OF=0)")},
+                {{{0x41}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovno", OP_DESC("Move if not overflow (OF=0)")},
+                {{{0x41}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovno", OP_DESC("Move if not overflow (OF=0)")},
+                {{{0x42}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovb", OP_DESC("Move if not above or equal [if below or carry] (CF=1)")},
+                {{{0x42}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovb", OP_DESC("Move if not above or equal [if below or carry] (CF=1)")},
+                {{{0x43}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovnb", OP_DESC("Move if above or equal [if not below or carry] (CF=0)")},
+                {{{0x43}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovnb", OP_DESC("Move if above or equal [if not below or carry] (CF=0)")},
+                {{{0x44}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmove", OP_DESC("Move if equal/zero (ZF=1)")},
+                {{{0x44}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmove", OP_DESC("Move if equal/zero (ZF=1)")},
+                {{{0x45}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovne", OP_DESC("Move if not equal/zero (ZF=0)")},
+                {{{0x45}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovne", OP_DESC("Move if not equal/zero (ZF=0)")},
+                {{{0x46}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovna", OP_DESC("Move if below or equal [if not above] (CF=1 or ZF=1)")},
+                {{{0x46}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovna", OP_DESC("Move if below or equal [if not above] (CF=1 or ZF=1)")},
+                {{{0x47}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmova", OP_DESC("Move if above [if not below or equal] (CF=0 and ZF=0)")},
+                {{{0x47}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmova", OP_DESC("Move if above [if not below or equal] (CF=0 and ZF=0)")},
+                {{{0x48}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovs", OP_DESC("Move if sign (SF=1)")},
+                {{{0x48}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovs", OP_DESC("Move if sign (SF=1)")},
+                {{{0x49}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovns", OP_DESC("Move if not sign (SF=0)")},
+                {{{0x49}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovns", OP_DESC("Move if not sign (SF=0)")},
+                {{{0x4A}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovp", OP_DESC("Move if parity/parity even (PF=1)")},
+                {{{0x4A}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovp", OP_DESC("Move if parity/parity even (PF=1)")},
+                {{{0x4B}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovnp", OP_DESC("Move if not parity/parity odd (PF=0)")},
+                {{{0x4B}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovnp", OP_DESC("Move if not parity/parity odd (PF=0)")},
+                {{{0x4C}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovl", OP_DESC("Move if less (not greater or equal) (SF<>OF)")},
+                {{{0x4C}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovl", OP_DESC("Move if less (not greater or equal) (SF<>OF)")},
+                {{{0x4D}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovnl", OP_DESC("Move if greater or equal (not less) (SF=OF)")},
+                {{{0x4D}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovnl", OP_DESC("Move if greater or equal (not less) (SF=OF)")},
+                {{{0x4E}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovng", OP_DESC("Move if less or equal (not greater) (ZF=1 or SF<>OF)")},
+                {{{0x4E}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovng", OP_DESC("Move if less or equal (not greater) (ZF=1 or SF<>OF)")},
+                {{{0x4F}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmovg", OP_DESC("Move if not less or equal (if greater) (ZF=0 and SF=OF)")},
+                {{{0x4F}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmovg", OP_DESC("Move if not less or equal (if greater) (ZF=0 and SF=OF)")},
+                {{{0x50}, {OpEncoding::r}, {Symbols::r32, Symbols::xmm}}, "movmskps", OP_DESC("Move the single mask to r32")},
+                {{{0x51}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "sqrtps", OP_DESC("Square Root of the packed SP FP numbers in XMM2/Mem")},
+                {{{0x52}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "rsqrtps", OP_DESC("Return a packed approximation of the square root of the reciprocal of XMM2/Mem")},
+                {{{0x53}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "rcpps", OP_DESC("Return a packed approximation of the reciprocal of XMM2/Mem")},
+                {{{0x54}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "andps", OP_DESC("Logical AND of 128 bits from XMM2/Mem to XMM1 register")},
+                {{{0x55}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "andnps", OP_DESC("Invert the 128 bits in XMM1 and then AND the result with 128 bits from XMM2/Mem")},
+                {{{0x56}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "orps", OP_DESC("OR 128 bits from XMM2/Mem to XMM1 register")},
+                {{{0x57}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "xorps", OP_DESC("XOR 128 bits from XMM2/Mem to XMM1 register")},
+                {{{0x58}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "addps", OP_DESC("Add packed SP FP numbers from XMM2/Mem to XMM1")},
+                {{{0x59}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "mulps", OP_DESC("Multiply packed SP FP numbers in XMM2/Mem to XMM1")},
+                {{{0x5C}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "subps", OP_DESC("Subtract packed SP FP numbers in XMM2/Mem from XMM1")},
+                {{{0x5D}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "minps", OP_DESC("Return the minimum SP numbers between XMM2/Mem and XMM1")},
+                {{{0x5E}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "divps", OP_DESC("Divide packed SP FP numbers in XMM1 by XMM2/Mem")},
+                {{{0x5F}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "maxps", OP_DESC("Return the maximum SP FP numbers between XMM2/Mem and XMM1")},
+                {{{0x60}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m32}}, "punpcklbw", OP_DESC("Interleave low-order bytes from mm and mm/m64 into mm")},
+                {{{0x61}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m32}}, "punpcklwd", OP_DESC("Interleave low-order words from mm and mm/m64 into mm")},
+                {{{0x62}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m32}}, "punpckldq", OP_DESC("Interleave low-order doublewords from mm and mm/m64 into mm")},
+                {{{0x63}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "packsswb", OP_DESC("Packs and saturate pack four signed words from mm and four signed words from mm/m64 into eight signed bytes in mm")},
+                {{{0x64}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pcmpgtb", OP_DESC("Compare packed bytes in mm with packed bytes in mm/m64 for greater value")},
+                {{{0x65}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pcmpgtw", OP_DESC("Compare packed words in mm with packed words in mm/m64 for greater value")},
+                {{{0x66}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pcmpgtd", OP_DESC("Compare packed doublewords in mm with packed doublewords in mm/m64 for greater value")},
+                {{{0x67}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "packuswb", OP_DESC("Pack and saturate four signed words from mm and four signed words from mm/m64 into eight unsigned bytes in mm")},
+                {{{0x68}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "punpckhbw", OP_DESC("Interleave high-order bytes from mm and mm/m64 into mm")},
+                {{{0x69}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "punpckhwd", OP_DESC("Interleave high-order words from mm and mm/m64 into mm")},
+                {{{0x6A}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "punpckhdq", OP_DESC("Interleave high-order doublewords from mm and mm/m64 into mm")},
+                {{{0x6B}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "packssdw", OP_DESC("Pack and saturate two signed doublewords from mm and two signed doublewords from mm/m64 into four signed words in mm")},
+                {{{0x6E}, {OpEncoding::r}, {Symbols::mm, Symbols::rm32}}, "movd", OP_DESC("Move doubleword from rm32 to mm")},
+                {{{0x6F}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "movq", OP_DESC("Move quadword from mm/m64 to mm")},
+                {{{0x70}, {OpEncoding::r, OpEncoding::ib}, {Symbols::mm, Symbols::mm_m64, Symbols::imm8}}, "pshufw", OP_DESC("Shuffle the words in MM2/Mem based on the encoding in imm8 and store in MM1")},
+                {{{0x71}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::mm, Symbols::imm8}}, "psrlw", OP_DESC("Shift words in mm right by imm8")},
+                {{{0x71}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::mm, Symbols::imm8}}, "psraw", OP_DESC("Shift words in mm right by imm8 while shifting in sign bits")},
+                {{{0x71}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::mm, Symbols::imm8}}, "psllw", OP_DESC("Shift words in mm left by imm8, while shifting in zeroes")},
+                {{{0x72}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::mm, Symbols::imm8}}, "psrld", OP_DESC("Shift doublewords in mm right by imm8")},
+                {{{0x72}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::mm, Symbols::imm8}}, "psrad", OP_DESC("Shift doublewords in mm right by imm8 while shifting in sign bits")},
+                {{{0x72}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::mm, Symbols::imm8}}, "pslld", OP_DESC("Shift doublewords in mm by imm8, while shifting in zeroes")},
+                {{{0x73}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::mm, Symbols::imm8}}, "psrlq", OP_DESC("Shift mm right by imm8 while shifting in zeroes")},
+                {{{0x73}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::mm, Symbols::imm8}}, "psllq", OP_DESC("Shift mm left by Imm8, while shifting in zeroes")},
+                {{{0x74}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pcmpeqb", OP_DESC("Compare packed bytes in mm/m64 with packed bytes in mm for equality")},
+                {{{0x75}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pcmpeqw", OP_DESC("Compare packed words in mm/m64 with packed words in mm for equality")},
+                {{{0x76}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pcmpeqd", OP_DESC("Compare packed doublewords in mm/m64 with packed doublewords in mm for equality")},
+                {{{0x77}, {}, {}}, "emms", OP_DESC("Set the FP tag word to empty")},
+                {{{0x7E}, {OpEncoding::r}, {Symbols::rm32, Symbols::mm}}, "movd", OP_DESC("Move doubleword from mm to rm32")},
+                {{{0x7F}, {OpEncoding::r}, {Symbols::mm_m64, Symbols::mm}}, "movq", OP_DESC("Move quadword from mm to mm/m64")},
+                {{{0x80}, {OpEncoding::cd}, {Symbols::rel32}}, "jo",    OP_DESC("Jump short if overflow (OF=1)")},
+                {{{0x81}, {OpEncoding::cd}, {Symbols::rel32}}, "jno",   OP_DESC("Jump short if not overflow (OF=0)")},
+                {{{0x82}, {OpEncoding::cd}, {Symbols::rel32}}, "jb",    OP_DESC("Jump short if below/carry (CF=1)")},
+                {{{0x83}, {OpEncoding::cd}, {Symbols::rel32}}, "jnb",   OP_DESC("Jump short if not below/carry (if above or equal) (CF=0)")},
+                {{{0x84}, {OpEncoding::cd}, {Symbols::rel32}}, "je",    OP_DESC("Jump short if equal/zero (ZF=1)")},
+                {{{0x85}, {OpEncoding::cd}, {Symbols::rel32}}, "jne",   OP_DESC("Jump short if not equal/zero (ZF=0)")},
+                {{{0x86}, {OpEncoding::cd}, {Symbols::rel32}}, "jna",   OP_DESC("Jump short if below or equal (if not above) (CF=1 or ZF=1)")},
+                {{{0x87}, {OpEncoding::cd}, {Symbols::rel32}}, "ja",    OP_DESC("Jump short if above (CF=0 and ZF=0)")},
+                {{{0x88}, {OpEncoding::cd}, {Symbols::rel32}}, "js",    OP_DESC("Jump short if sign (SF=1)")},
+                {{{0x89}, {OpEncoding::cd}, {Symbols::rel32}}, "jns",   OP_DESC("Jump short if not sign (SF=0)")},
+                {{{0x8A}, {OpEncoding::cd}, {Symbols::rel32}}, "jp",    OP_DESC("Jump short if parity (PF=1)")},
+                {{{0x8B}, {OpEncoding::cd}, {Symbols::rel32}}, "jpo",   OP_DESC("Jump short if parity odd (PF=0)")},
+                {{{0x8C}, {OpEncoding::cd}, {Symbols::rel32}}, "jl",    OP_DESC("Jump short if less (not greater or equal) (SF<>OF)")},
+                {{{0x8D}, {OpEncoding::cd}, {Symbols::rel32}}, "jnl",   OP_DESC("Jump short if not less (if greater or equal) (SF=OF)")},
+                {{{0x8E}, {OpEncoding::cd}, {Symbols::rel32}}, "jng",   OP_DESC("Jump short if not greater (if less or equal) (ZF=1 or SF<>OF)")},
+                {{{0x8F}, {OpEncoding::cd}, {Symbols::rel32}}, "jg",    OP_DESC("Jump short if greater (ZF=0 and SF=OF)")},
+                {{{0x90}, {OpEncoding::cd}, {Symbols::rel32}}, "seto",  OP_DESC("Set byte if overflow (OF=1)")},
+                {{{0x91}, {OpEncoding::cd}, {Symbols::rel32}}, "setno", OP_DESC("Set byte if not overflow (OF=0)")},
+                {{{0x92}, {OpEncoding::cd}, {Symbols::rel32}}, "setb",  OP_DESC("Set byte if below/carry (CF=1)")},
+                {{{0x93}, {OpEncoding::cd}, {Symbols::rel32}}, "setnb", OP_DESC("Set byte if not below/carry (if above or equal) (CF=0)")},
+                {{{0x94}, {OpEncoding::cd}, {Symbols::rel32}}, "sete",  OP_DESC("Set byte if equal/zero (ZF=1)")},
+                {{{0x95}, {OpEncoding::cd}, {Symbols::rel32}}, "setne", OP_DESC("Set byte if not equal/zero (ZF=0)")},
+                {{{0x96}, {OpEncoding::cd}, {Symbols::rel32}}, "setna", OP_DESC("Set byte if below or equal (if not above) (CF=1 or ZF=1)")},
+                {{{0x97}, {OpEncoding::cd}, {Symbols::rel32}}, "seta",  OP_DESC("Set byte if above (CF=0 and ZF=0)")},
+                {{{0x98}, {OpEncoding::cd}, {Symbols::rel32}}, "sets",  OP_DESC("Set byte if sign (SF=1)")},
+                {{{0x99}, {OpEncoding::cd}, {Symbols::rel32}}, "setns", OP_DESC("Set byte if not sign (SF=0)")},
+                {{{0x9A}, {OpEncoding::cd}, {Symbols::rel32}}, "setp",  OP_DESC("Set byte if parity (PF=1)")},
+                {{{0x9B}, {OpEncoding::cd}, {Symbols::rel32}}, "setpo", OP_DESC("Set byte if parity odd (PF=0)")},
+                {{{0x9C}, {OpEncoding::cd}, {Symbols::rel32}}, "setl",  OP_DESC("Set byte if less (not greater or equal) (SF<>OF)")},
+                {{{0x9D}, {OpEncoding::cd}, {Symbols::rel32}}, "setnl", OP_DESC("Set byte if not less (if greater or equal) (SF=OF)")},
+                {{{0x9E}, {OpEncoding::cd}, {Symbols::rel32}}, "setng", OP_DESC("Set byte if not greater (if less or equal) (ZF=1 or SF<>OF)")},
+                {{{0x9F}, {OpEncoding::cd}, {Symbols::rel32}}, "setg",  OP_DESC("Set byte if greater (ZF=0 and SF=OF)")},
+                {{{0xA0}, {}, {Symbols::fs}}, "push", OP_DESC("Push FS")},
+                {{{0xA1}, {}, {Symbols::fs}}, "pop", OP_DESC("Pop top of stack into FS; increment stack pointer")},
+                {{{0xA2}, {}, {}}, "cpuid", OP_DESC("EAX <- Processor identification information")},
+                {{{0xA3}, {}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "bt", OP_DESC("Store selected bit in CF flag")},
+                {{{0xA3}, {}, {Symbols::rm32, Symbols::r32}}, "bt", OP_DESC("Store selected bit in CF flag")},
+                {{{0xA4}, {}, {Symbols::rm16, Symbols::r16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "shld", OP_DESC("Shift rm16 to left imm8 places while shifting bits from r16 in from the right")},
+                {{{0xA4}, {}, {Symbols::rm32, Symbols::r32, Symbols::imm8}}, "shld", OP_DESC("Shift rm32 to left imm8 places while shifting bits from r32 in from the right")},
+                {{{0xA5}, {}, {Symbols::rm16, Symbols::r16, Symbols::cl}, BaseSet_x86_64::OPS_16MODE}, "shld", OP_DESC("Shift rm16 to left CL places while shifting bits from r16 in from the right")},
+                {{{0xA5}, {}, {Symbols::rm32, Symbols::r32, Symbols::cl}}, "shld", OP_DESC("Shift rm32 to left CL places while shifting bits from r32 in from the right")},
+                {{{0xA8}, {}, {Symbols::gs}}, "push", OP_DESC("Push GS")},
+                {{{0xA9}, {}, {Symbols::gs}}, "pop", OP_DESC("Pop top of stack into GS; increment stack pointer")},
+                {{{0xAA}, {}, {}}, "rsm", OP_DESC("Resume operation of interrupted program")},
+                {{{0xAB}, {}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "bts", OP_DESC("Store selected bit in CF flag and set")},
+                {{{0xAB}, {}, {Symbols::rm32, Symbols::r32}}, "bts", OP_DESC("Store selected bit in CF flag and set")},
+                {{{0xAC}, {}, {Symbols::rm16, Symbols::r16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "shrd", OP_DESC("Shift rm16 to right imm8 places while shifting bits from r16 in from the left")},
+                {{{0xAC}, {}, {Symbols::rm32, Symbols::r32, Symbols::imm8}}, "shrd", OP_DESC("Shift rm32 to right imm8 places while shifting bits from r32 in from the left")},
+                {{{0xAD}, {}, {Symbols::rm16, Symbols::r16, Symbols::cl}, BaseSet_x86_64::OPS_16MODE}, "shrd", OP_DESC("Shift rm16 to right CL places while shifting bits from r16 in from the left")},
+                {{{0xAD}, {}, {Symbols::rm32, Symbols::r32, Symbols::cl}}, "shrd", OP_DESC("Shift rm32 to right CL places while shifting bits from r32 in from the left")},
+                {{{0xAE}, {OpEncoding::m0}, {Symbols::m512byte}}, "fxsave", OP_DESC("Store FP and MMX™ technology state and Streaming SIMD Extension state to m512byte")},
+                {{{0xAE}, {OpEncoding::m1}, {Symbols::m512byte}}, "fxrstor", OP_DESC("Load FP and MMX™ technology and Streaming SIMD Extension state from m512byte")},
+                {{{0xAE}, {OpEncoding::m2}, {Symbols::m32}}, "ldmxcsr", OP_DESC("Load Streaming SIMD Extension control/status word from m32")},
+                {{{0xAE}, {OpEncoding::m3}, {Symbols::m32}}, "stmxcsr", OP_DESC("Store Streaming SIMD Extension control/status word to m32")},
+                {{{0xAE}, {OpEncoding::m7}, {}}, "sfence", OP_DESC("Guarantees that every store instruction that precedes in program order the store fence instruction is globally visible before any store instruction which follows the fence is globally visible")},
+                {{{0xAF}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "imul", OP_DESC("word register <- word register * rm word")},
+                {{{0xAF}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "imul", OP_DESC("doubleword register <- doubleword register * rm doubleword")},
+                {{{0xB0}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "cmpxchg", OP_DESC("Compare AL with rm8. If equal, ZF is set and r8 is loaded intorm8. Else, clear ZF and load rm8 into AL")},
+                {{{0xB1}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "cmpxchg", OP_DESC("Compare AX with rm16. If equal, ZF is set and r16 is loaded into rm16. Else, clear ZF and load rm16 into AL")},
+                {{{0xB1}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "cmpxchg", OP_DESC("Compare EAX with rm32. If equal, ZF is set and r32 is loaded into rm32. Else, clear ZF and load rm32 into AL")},
+                {{{0xB2}, {OpEncoding::r}, {Symbols::r16, Symbols::m16_16}, BaseSet_x86_64::OPS_16MODE}, "lss", OP_DESC("Load SS: r16 with far pointer from memory")},
+                {{{0xB2}, {OpEncoding::r}, {Symbols::r32, Symbols::m16_32}}, "lss", OP_DESC("Load SS: r32 with far pointer from memory")},
+                {{{0xB3}, {}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "btr", OP_DESC("Store selected bit in CF flag and clear")},
+                {{{0xB3}, {}, {Symbols::rm32, Symbols::r32}}, "btr", OP_DESC("Store selected bit in CF flag and clear")},
+                {{{0xB4}, {OpEncoding::r}, {Symbols::r16, Symbols::m16_16}, BaseSet_x86_64::OPS_16MODE}, "lfs", OP_DESC("Load FS: r16 with far pointer from memory")},
+                {{{0xB4}, {OpEncoding::r}, {Symbols::r32, Symbols::m16_32}}, "lfs", OP_DESC("Load FS: r32 with far pointer from memory")},
+                {{{0xB5}, {OpEncoding::r}, {Symbols::r16, Symbols::m16_16}, BaseSet_x86_64::OPS_16MODE}, "lgs", OP_DESC("Load GS: r16 with far pointer from memory")},
+                {{{0xB5}, {OpEncoding::r}, {Symbols::r32, Symbols::m16_32}}, "lgs", OP_DESC("Load GS: r32 with far pointer from memory")},
+                {{{0xB6}, {OpEncoding::r}, {Symbols::r16, Symbols::rm8}, BaseSet_x86_64::OPS_16MODE}, "movzx", OP_DESC("Move byte to word with zero-extension")},
+                {{{0xB6}, {OpEncoding::r}, {Symbols::r32, Symbols::rm8}}, "movzx", OP_DESC("Move byte to doubleword, zero-extension")},
+                {{{0xB7}, {OpEncoding::r}, {Symbols::r32, Symbols::rm16}}, "movzx", OP_DESC("Move word to doubleword, zero-extension")},
+                {{{0xBA}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "bt", OP_DESC("Store selected bit in CF flag")},
+                {{{0xBA}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "bt", OP_DESC("Store selected bit in CF flag")},
+                {{{0xBA}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "bts", OP_DESC("Store selected bit in CF flag and set")},
+                {{{0xBA}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "bts", OP_DESC("Store selected bit in CF flag and set")},
+                {{{0xBA}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::rm16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "btr", OP_DESC("Store selected bit in CF flag and clear")},
+                {{{0xBA}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "btr", OP_DESC("Store selected bit in CF flag and clear")},
+                {{{0xBA}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "btc", OP_DESC("Store selected bit in CF flag and complement")},
+                {{{0xBA}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "btc", OP_DESC("Store selected bit in CF flag and complement")},
+                {{{0xBB}, {}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "btc", OP_DESC("Store selected bit in CF flag and complement")},
+                {{{0xBB}, {}, {Symbols::rm32, Symbols::r32}}, "btc", OP_DESC("Store selected bit in CF flag and complement")},
+                {{{0xBC}, {}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "bsf",  OP_DESC("Bit scan forward on rm16")},
+                {{{0xBC}, {}, {Symbols::rm32, Symbols::r32}}, "bsf", OP_DESC("Bit scan forward on rm32")},
+                {{{0xBD}, {}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "bsr",  OP_DESC("Bit scan reverse on rm16")},
+                {{{0xBD}, {}, {Symbols::rm32, Symbols::r32}}, "bsr", OP_DESC("Bit scan reverse on rm32")},
+                {{{0xBE}, {OpEncoding::r}, {Symbols::r16, Symbols::rm8}, BaseSet_x86_64::OPS_16MODE}, "movsx", OP_DESC("Move byte to word with sign-extension")},
+                {{{0xBE}, {OpEncoding::r}, {Symbols::r32, Symbols::rm8}}, "movsx", OP_DESC("Move byte to doubleword, sign-extension")},
+                {{{0xBF}, {OpEncoding::r}, {Symbols::r32, Symbols::rm16}}, "movsx", OP_DESC("Move word to doubleword, sign-extension")},
+                {{{0xC0}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "xadd", OP_DESC("Exchange r8 and rm8; load sum into rm8")},
+                {{{0xC1}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "xadd", OP_DESC("Exchange r16 and rm16; load sum into rm16")},
+                {{{0xC1}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "xadd", OP_DESC("Exchange r32 and rm32; load sum into rm32")},
+                {{{0xC2}, {OpEncoding::r, OpEncoding::ib}, {Symbols::xmm, Symbols::xmm_m128, Symbols::imm8}}, "cmpps", OP_DESC("Compare packed SP FP numbers from XMM2/Mem to packed SP FP numbers in XMM1 register using imm8 as predicate")},
+                {{{0xC2, 0x00}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "cmpeqps", OP_DESC("")},
+                {{{0xC2, 0x01}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "cmpltps", OP_DESC("")},
+                {{{0xC2, 0x02}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "cmpleps", OP_DESC("")},
+                {{{0xC2, 0x03}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "cmpunordps", OP_DESC("")},
+                {{{0xC2, 0x04}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "cmpneqps", OP_DESC("")},
+                {{{0xC2, 0x05}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "cmpnltps", OP_DESC("")},
+                {{{0xC2, 0x06}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "cmpnleps", OP_DESC("")},
+                {{{0xC2, 0x07}, {OpEncoding::r}, {Symbols::xmm, Symbols::xmm_m128}}, "cmpordps", OP_DESC("")},
+                {{{0xC4}, {OpEncoding::r, OpEncoding::ib}, {Symbols::mm, Symbols::rm16, Symbols::imm8}}, "pinsrw", OP_DESC("Insert the word from the lower half of r32 or from Mem16 into the position in MM pointed to by imm8 without touching the other words")},
+                {{{0xC5}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r32, Symbols::mm, Symbols::imm8}}, "pextrw", OP_DESC("Extract the word pointed to by imm8 from MM and move it to a 32-bit integer register")},
+                {{{0xC6}, {OpEncoding::r, OpEncoding::ib}, {Symbols::xmm, Symbols::xmm_m128, Symbols::imm8}}, "shufps", OP_DESC("Packed interleave shuffle of quadruplets of Single Precision Floating-Point values")},
+                {{{0xC7}, {OpEncoding::m1}, {Symbols::m64}}, "cmpxchg8b", OP_DESC("Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into m64. Else, clear ZF and load m64 into EDX:EAX")},
+                {{{0xC8}, {OpEncoding::rd}, {Symbols::r32}}, "bswap", OP_DESC("Reverses the byte order of a 32-bit register")},
+                {{{0xD1}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psrlw", OP_DESC("Shift words in mm right by amount specified in mm/m64 while shifting in zeroes")},
+                {{{0xD2}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psrld", OP_DESC("Shift doublewords in mm right by amount specified in mm/m64 while shifting in zeroes")},
+                {{{0xD3}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psrlq", OP_DESC("Shift mm right by amount specified in mm/m64 while shifting in zeroes")},
+                {{{0xD5}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pmullw", OP_DESC("Multiply the packed words in mm with the packed words in mm/m64, then store the low-order word of each doubleword result in mm")},
+                {{{0xD7}, {OpEncoding::r}, {Symbols::r32, Symbols::mm}}, "pmovmskb", OP_DESC("Move the byte mask of MM to r32")},
+                {{{0xD8}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psubusb", OP_DESC("Subtract unsigned packed bytes in mm/m64 from unsigned packed bytes in mm and saturate")},
+                {{{0xD9}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psubusw", OP_DESC("Subtract unsigned packed words in mm/m64 from unsigned packed words in mm and saturate")},
+                {{{0xDA}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pminub", OP_DESC("Return the minimum bytes between MM2/Mem and MM1")},
+                {{{0xDB}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pand", OP_DESC("AND quadword from mm/m64 to quadword in mm")},
+                {{{0xDC}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "paddusb", OP_DESC("Add unsigned packed bytes from mm/m64 to unsigned packed bytes in mm and saturate")},
+                {{{0xDD}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "paddusw", OP_DESC("Add unsigned packed words from mm/m64 to unsigned packed words in mm and saturate")},
+                {{{0xDE}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pmaxub", OP_DESC("Return the maximum bytes between MM2/Mem and MM1")},
+                {{{0xDF}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pandn", OP_DESC("AND quadword from mm/m64 to NOT quadword in mm")},
+                {{{0xE0}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pavgb", OP_DESC("Average with rounding packed unsigned bytes from MM2/Mem to packed bytes in MM1 register")},
+                {{{0xE1}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psraw", OP_DESC("Shift words in mm right by amount specified in mm/m64 while shifting in sign bits")},
+                {{{0xE2}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psrad", OP_DESC("Shift doublewords in mm right by amount specified in mm/m64 while shifting in sign bits")},
+                {{{0xE3}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pavgw", OP_DESC("Average with rounding packed unsigned words from MM2/Mem to packed words in MM1 register")},
+                {{{0xE4}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pmulhuw", OP_DESC("Multiply the packed unsigned words in MM1 register with the packed unsigned words in MM2/Mem, then store the high-order 16 bits of the results in MM1")},
+                {{{0xE5}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pmulhw", OP_DESC("Multiply the signed packed words in mm by the signed packed words in mm/m64, then store the high-order word of each doubleword result in mm")},
+                {{{0xE7}, {OpEncoding::r}, {Symbols::m64, Symbols::mm}}, "movntq", OP_DESC("Move 64 bits representing integer operands (8b, 16b, 32b) from MM register to memory, minimizing pollution within cache hierarchy")},
+                {{{0xE8}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psubsb", OP_DESC("Subtract signed packed bytes in mm/m64 from signed packed bytes in mm and saturate")},
+                {{{0xE9}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psubsw", OP_DESC("Subtract signed packed words in mm/m64 from signed packed words in mm and saturate")},
+                {{{0xEA}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pminsw", OP_DESC("Return the minimum words between MM2/Mem and MM1")},
+                {{{0xEB}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "por", OP_DESC("OR quadword from mm/m64 to quadword in mm")},
+                {{{0xEC}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "paddsb", OP_DESC("Add signed packed bytes from mm/m64 to signed packed bytes in mm and saturate")},
+                {{{0xED}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "paddsw", OP_DESC("Add signed packed words from mm/m64 to signed packed words in mm and saturate")},
+                {{{0xEE}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pmaxsw", OP_DESC("Return the maximum words between MM2/Mem and MM1")},
+                {{{0xEF}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pxor", OP_DESC("XOR quadword from mm/m64 to quadword in mm")},
+                {{{0xF1}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psllw", OP_DESC("Shift words in mm left by amount specified in mm/m64, while shifting in zeroes")},
+                {{{0xF2}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pslld", OP_DESC("Shift doublewords in mm left by amount specified in mm/m64, while shifting in zeroes")},
+                {{{0xF3}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psllq", OP_DESC("Shift mm left by amount specified in mm/m64, while shifting in zeroes")},
+                {{{0xF5}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "pmaddwd", OP_DESC("Multiply the packed words in mm by the packed words in mm/m64. Add the 32-bit pairs of results and store in mm as doubleword")},
+                {{{0xF6}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psadbw", OP_DESC("Absolute difference of packed unsigned bytes from MM2 /Mem and MM1; these differences are then summed to produce a word result")},
+                {{{0xF7}, {OpEncoding::r}, {Symbols::mm, Symbols::mm2}}, "maskmovq", OP_DESC("Move 64-bits representing integer data from MM1 register to memory location specified by the edi register, using the byte mask in MM2 register")},
+                {{{0xF8}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psubb", OP_DESC("Subtract packed bytes in mm/m64 from packed bytes in mm")},
+                {{{0xF9}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psubw", OP_DESC("Subtract packed words in mm/m64 from packed words in mm")},
+                {{{0xFA}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "psubd", OP_DESC("Subtract packed doublewords in mm/m64 from packed doublewords in mm")},
+                {{{0xFC}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "paddb", OP_DESC("Add packed bytes from mm/m64 to packed bytes in mm")},
+                {{{0xFD}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "paddw", OP_DESC("Add packed words from mm/m64 to packed words in mm")},
+                {{{0xFE}, {OpEncoding::r}, {Symbols::mm, Symbols::mm_m64}}, "paddd", OP_DESC("Add packed doublewords from mm/m64 to packed doublewords in mm")},
+                {{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", OP_DESC("*SIMD Extended Instructions*")}
             },
-            /* 10 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "adc", "Add with carry byte register to rm8"}},
-            /* 11 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "adc", "Add with carry r16 to rm16"},
-            /* 11 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "adc", "Add with CF r32 to rm32"}},
-            /* 12 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "adc", "Add with carry rm8 to byte register"}},
-            /* 13 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "adc", "Add with carry rm16 to r16"},
-            /* 13 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "adc", "Add with CF rm32 to r32"}},
-            /* 14 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "adc", "Add with carry imm8 to AL"}},
-            /* 15 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "adc", "Add with carry imm16 to AX"},
-            /* 15 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "adc", "Add with carry imm32 to EAX"}},
-            /* 16 */ {{{{}, {}, {Symbols::ss}}, "push", "Push SS"}},
-            /* 17 */ {{{{}, {}, {Symbols::ss}}, "pop", "Pop top of stack into SS; increment stack pointer"}},
-            /* 18 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "sbb", "Subtract with borrow r8 from rm8"}},
-            /* 19 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "sbb", "Subtract with borrow r16 from rm16"},
-            /* 19 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "sbb", "Subtract with borrow r32 from rm32"}},
-            /* 1A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "sbb", "Subtract with borrow rm8 from r8"}},
-            /* 1B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "sbb", "Subtract with borrow rm16 from r16"},
-            /* 1B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "sbb", "Subtract with borrow rm32 from r32"}},
-            /* 1C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "sbb", "Subtract with borrow imm8 from AL"}},
-            /* 1D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "sbb", "Subtract with borrow imm16 from AX"},
-            /* 1D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "sbb", "Subtract with borrow imm32 from EAX"}},
-            /* 1E */ {{{{}, {}, {Symbols::ds}}, "push", "Push DS"}},
-            /* 1F */ {{{{}, {}, {Symbols::ds}}, "pop", "Pop top of stack into DS; increment stack pointer"}},
-            /* 20 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "and", "rm8 AND r8"}},
-            /* 21 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "and", "rm16 AND r16"},
-            /* 21 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "and", "rm32 AND r32"}},
-            /* 22 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "and", "r8 AND rm8"}},
-            /* 23 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "and", "r16 AND rm16"},
-            /* 23 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "and", "r32 AND rm32"}},
-            /* 24 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "and", "AL AND imm8"}},
-            /* 25 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "and", "AX AND imm16"},
-            /* 25 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "and", "EAX AND imm32"}},
-            /* 26 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unregistered opcode"}},
-            /* 27 */ {{{{}, {}, {}}, "daa", "Decimal adjust AL after addition"}},
-            /* 28 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "sub", "Subtract r8 from rm8"}},
-            /* 29 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "sub", "Subtract r16 from rm16"},
-            /* 29 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "sub", "Subtract r32 from rm32"}},
-            /* 2A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "sub", "Subtract rm8 from r8"}},
-            /* 2B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "sub", "Subtract rm16 from r16"},
-            /* 2B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "sub", "Subtract rm32 from r32"}},
-            /* 2C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "sub", "Subtract imm8 from AL"}},
-            /* 2D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "sub", "Subtract imm16 from AX"},
-            /* 2D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "sub", "Subtract imm32 from EAX"}},
-            /* 2E */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unregistered opcode"}},
-            /* 2F */ {{{{}, {}, {}}, "das", "Decimal adjust AL after subtraction"}},
-            /* 30 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "xor", "rm8 XOR r8"}},
-            /* 31 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "xor", "rm16 XOR r16"},
-            /* 31 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "xor", "rm32 XOR r32"}},
-            /* 32 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "xor", "r8 XOR rm8"}},
-            /* 33 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "xor", "r16 XOR rm16"},
-            /* 33 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "xor", "r32 XOR rm32"}},
-            /* 34 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "xor", "AL XOR imm8"}},
-            /* 35 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "xor", "AX XOR imm16"},
-            /* 35 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "xor", "EAX XOR imm32"}},
-            /* 36 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unregistered opcode"}},
-            /* 37 */ {{{{}, {}, {}}, "aaa", "ASCII adjust AL after addition"}},
-            /* 38 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "cmp", "Compare r8 with rm8"}},
-            /* 39 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "cmp", "Compare r16 with rm16"},
-            /* 39 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "cmp", "Compare r32 with rm32"}},
-            /* 3A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "cmp", "Compare rm8 with r8"}},
-            /* 3B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmp", "Compare rm16 with r16"},
-            /* 3B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmp", "Compare rm32 with r32"}},
-            /* 3C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "cmp", "Compare imm8 with AL"}},
-            /* 3D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "cmp", "Compare imm16 with AX"},
-            /* 3D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "cmp", "Compare imm32 with EAX"}},
-            /* 3E */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unregistered opcode"}},
-            /* 3F */ {{{{}, {}, {}}, "aas", "ASCII adjust AL after subtraction"}},
-            /* 40 */ {{{{}, {}, {Symbols::eax}}, "inc", "Increment doubleword register by 1"}},
-            /* 41 */ {{{{}, {}, {Symbols::ecx}}, "inc", "Increment doubleword register by 1"}},
-            /* 42 */ {{{{}, {}, {Symbols::edx}}, "inc", "Increment doubleword register by 1"}},
-            /* 43 */ {{{{}, {}, {Symbols::ebx}}, "inc", "Increment doubleword register by 1"}},
-            /* 44 */ {{{{}, {}, {Symbols::esp}}, "inc", "Increment doubleword register by 1"}},
-            /* 45 */ {{{{}, {}, {Symbols::ebp}}, "inc", "Increment doubleword register by 1"}},
-            /* 46 */ {{{{}, {}, {Symbols::esi}}, "inc", "Increment doubleword register by 1"}},
-            /* 47 */ {{{{}, {}, {Symbols::edi}}, "inc", "Increment doubleword register by 1"}},
-            /* 48 */ {{{{}, {}, {Symbols::eax}}, "dec", "Decrement doubleword register by 1"}},
-            /* 49 */ {{{{}, {}, {Symbols::ecx}}, "dec", "Decrement doubleword register by 1"}},
-            /* 4A */ {{{{}, {}, {Symbols::edx}}, "dec", "Decrement doubleword register by 1"}},
-            /* 4B */ {{{{}, {}, {Symbols::ebx}}, "dec", "Decrement doubleword register by 1"}},
-            /* 4C */ {{{{}, {}, {Symbols::esp}}, "dec", "Decrement doubleword register by 1"}},
-            /* 4D */ {{{{}, {}, {Symbols::ebp}}, "dec", "Decrement doubleword register by 1"}},
-            /* 4E */ {{{{}, {}, {Symbols::esi}}, "dec", "Decrement doubleword register by 1"}},
-            /* 4F */ {{{{}, {}, {Symbols::edi}}, "dec", "Decrement doubleword register by 1"}},
-            /* 50 */ {{{{}, {}, {Symbols::eax}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
-            /* 51 */ {{{{}, {}, {Symbols::ecx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
-            /* 52 */ {{{{}, {}, {Symbols::edx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
-            /* 53 */ {{{{}, {}, {Symbols::ebx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
-            /* 54 */ {{{{}, {}, {Symbols::esp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
-            /* 55 */ {{{{}, {}, {Symbols::ebp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
-            /* 56 */ {{{{}, {}, {Symbols::esi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
-            /* 57 */ {{{{}, {}, {Symbols::edi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", "Push doubleword register"}},
-            /* 58 */ {{{{}, {}, {Symbols::eax}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
-            /* 59 */ {{{{}, {}, {Symbols::ecx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
-            /* 5A */ {{{{}, {}, {Symbols::edx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
-            /* 5B */ {{{{}, {}, {Symbols::ebx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
-            /* 5C */ {{{{}, {}, {Symbols::esp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
-            /* 5D */ {{{{}, {}, {Symbols::ebp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
-            /* 5E */ {{{{}, {}, {Symbols::esi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
-            /* 5F */ {{{{}, {}, {Symbols::edi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", "Pop doubleword register"}},
-            /* 60 */ {{{{}, {}, {}}, "pushad", "Push all doubleword registers"}},
-            /* 61 */ {{{{}, {}, {}}, "popad", "Pop all doubleword registers"}},
-            /* 62 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::m16and16}, BaseSet_x86_64::OPS_16MODE}, "bound", "Check if r16 (array index) is within bounds specified by m16&16"},
-            /* 62 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::m32and32}}, "bound", "Check if r32 (array index) is within bounds specified by m32&32"}},
-            /* 63 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}}, "arpl", "Adjust RPL of rm16 to not less than RPL of r16"}},
-            /* 64 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unrecognized opcode"}},
-            /* 65 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unrecognized opcode"}},
-            /* 66 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unrecognized opcode"}},
-            /* 67 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", "Unrecognized opcode"}},
-            /* 68 */ {{{{}, {}, {Symbols::imm32}}, "push", "Push imm32 value onto the stack"}},
-            /* 69 */ {{{{}, {OpEncoding::r, OpEncoding::iw}, {Symbols::r16, Symbols::rm16, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "imul", "word register < rm16 * immediate word"},
-            /* 69 */  {{{}, {OpEncoding::r, OpEncoding::id}, {Symbols::r32, Symbols::rm32, Symbols::imm32}}, "imul", "doubleword register < rm32 * immediate doubleword"},
-            /* 69 */  {{{}, {OpEncoding::r, OpEncoding::iw}, {Symbols::r16, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "imul", "word register < rm16 * immediate word"},
-            /* 69 */  {{{}, {OpEncoding::r, OpEncoding::id}, {Symbols::r32, Symbols::imm32}}, "imul", "doubleword register < rm32 * immediate doubleword"}},
-            /* 6A */ {{{{}, {}, {Symbols::imm8}}, "push", "Push imm8 value onto the stack"}},
-            /* 6B */ {{{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r16, Symbols::rm16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "imul", "word register < rm16 * sign-extended immediate byte"},
-            /* 6B */  {{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r32, Symbols::rm32, Symbols::imm8}}, "imul", "doubleword register < rm32 * sign-extended immediate byte"},
-            /* 6B */  {{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "imul", "word register < rm16 * sign-extended immediate byte"},
-            /* 6B */  {{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r32, Symbols::imm8}}, "imul", "doubleword register < rm32 * sign-extended immediate byte"}},
-            /* 6C */ {{{{}, {}, {}}, "insb", "Input byte from I/O port specified in DX into memory location specified with ES:(E)DI"} },
-            /* 6D */ {{{{}, {}, {}}, "insd", "Input doubleword from I/O port specified in DX into memory location specified in ES:(E)DI"} },
-            /* 6E */ {{{{}, {}, {}}, "outsb", "Output byte from memory location specified in DS:(E)SI to I/O port specified in DX"} },
-            /* 6F */ {{{{}, {}, {}}, "outsd", "Output doubleword from memory location specified in DS:(E)SI to I/O port specified in DX"} },
-            /* 70 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jo", "Jump short if overflow (OF=1)"} },
-            /* 71 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jno", "Jump short if not overflow (OF=0)"} },
-            /* 72 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jb", "Jump short if below/carry (CF=1)"} },
-            /* 73 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jnb", "Jump short if not below/carry (if above or equal) (CF=0)"} },
-            /* 74 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "je", "Jump short if equal/zero (ZF=1)"} },
-            /* 75 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jne", "Jump short if not equal/zero (ZF=0)"} },
-            /* 76 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jna", "Jump short if below or equal (if not above) (CF=1 or ZF=1)"} },
-            /* 77 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "ja", "Jump short if above (CF=0 and ZF=0)"} },
-            /* 78 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "js", "Jump short if sign (SF=1)"} },
-            /* 79 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jns", "Jump short if not sign (SF=0)"} },
-            /* 7A */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jp", "Jump short if parity (PF=1)"} },
-            /* 7B */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jpo", "Jump short if parity odd (PF=0)"} },
-            /* 7C */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jl", "Jump short if less (not greater or equal) (SF<>OF)"} },
-            /* 7D */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jnl", "Jump short if not less (if greater or equal) (SF=OF)"} },
-            /* 7E */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jng", "Jump short if not greater (if less or equal) (ZF=1 or SF<>OF)"} },
-            /* 7F */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jg", "Jump short if greater (ZF=0 and SF=OF)"} },
-            /* 80 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "add", "Add imm8 to rm8"},
-            /* 80 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "or", "rm8 OR imm8"},
-            /* 80 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "adc", "Add with carry imm8 to rm8"},
-            /* 80 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sbb", "Subtract with borrow imm8 from rm8"},
-            /* 80 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "and", "rm8 AND imm8"},
-            /* 80 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sub", "Subtract imm8 from rm8"},
-            /* 80 */  {{{}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "xor", "rm8 XOR imm8"},
-            /* 80 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "cmp", "Compare imm8 with rm8"}},
-            /* 81 */ {{{{}, {OpEncoding::m0, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "add", "Add imm32 to rm32"},
-            /* 81 */  {{{}, {OpEncoding::m1, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "or", "rm32 OR imm32"},
-            /* 81 */  {{{}, {OpEncoding::m2, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "adc", "Add with carry imm32 to rm32"},
-            /* 81 */  {{{}, {OpEncoding::m3, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "sbb", "Subtract with borrow imm32 from rm32"},
-            /* 81 */  {{{}, {OpEncoding::m4, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "and", "rm32 AND imm32"}, // ***
-            /* 81 */  {{{}, {OpEncoding::m5, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "sub", "Subtract imm32 from rm32"},
-            /* 81 */  {{{}, {OpEncoding::m6, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "xor", "rm32 XOR imm32"},
-            /* 81 */  {{{}, {OpEncoding::m7, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "cmp", "Compare imm32 with rm32"}},
-            /* 82 */ {{{{}, {}, {}}, "???", "Unregistered opcode"}},
-            /* 83 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "add", "Add sign-extended imm8 to rm32"},
-            /* 83 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "or", "rm32 OR imm8 (sign-extended)"},
-            /* 83 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "adc", "Add with CF sign-extended imm8 into rm32"},
-            /* 83 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sbb", "Subtract with borrow sign-extended imm8 from rm32"},
-            /* 83 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "and", "rm32 AND imm8 (sign-extended)"},
-            /* 83 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sub", "Subtract sign-extended imm8 from rm32"},
-            /* 83 */  {{{}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "xor", "rm32 XOR imm8 (sign-extended)"},
-            /* 83 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "cmp", "Compare imm8 with rm32"} },
-            /* 84 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "test", "AND r8 with rm8; set SF, ZF, PF according to result"}},
-            /* 85 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "test", "AND r16 with rm16; set SF, ZF, PF according to result"},
-            /* 85 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "test", "AND r32 with rm32; set SF, ZF, PF according to result"}},
-            /* 86 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "xchg", "Exchange r8 (byte register) with byte from rm8"},
-            /* 86 */  {{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "xchg", "Exchange byte from rm8 with r8 (byte register)"}},
-            /* 87 */ {{{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "xchg", "Exchange r32 with doubleword from rm32"},
-            /* 87 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "xchg", "Exchange doubleword from rm32 with r32"}},
-            /* 88 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "mov", "Move r8 to rm8"}},
-            /* 89 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "mov", "Move r16 to rm16"},
-            /* 89 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "mov", "Move r32 to rm32"}},
-            /* 8A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "mov", "Move rm8 to r8"}},
-            /* 8B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "mov", "Move rm16 to r16"},
-            /* 8B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "mov", "Move rm32 to r32"}},
-            /* 8C */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::sreg}}, "mov", "Move segment register to rm16"}},
-            /* 8D */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "lea", "Store effective address for m in register r16"},
-            /* 8D */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "lea", "Store effective address for m in register r32"}},
-            /* 8E */ {{{{}, {OpEncoding::r}, {Symbols::sreg, Symbols::rm16}}, "mov", "Move rm16 to segment register"}},
-            /* 8F */ {{{{}, {OpEncoding::m0}, {Symbols::m16}, BaseSet_x86_64::OPS_16MODE}, "pop", "Pop top of stack into m16; increment stack pointer"},
-            /* 8F */  {{{}, {OpEncoding::m0}, {Symbols::m32}}, "pop", "Pop top of stack into m32; increment stack pointer"}},
-            /* 90 */ {{{{}, {}, {}}, "nop", "No operation"}},
-            /* 91 */ {{{{}, {}, {Symbols::eax, Symbols::ecx}}, "xchg", "Exchange r32 with EAX"}},
-            /* 92 */ {{{{}, {}, {Symbols::eax, Symbols::edx}}, "xchg", "Exchange r32 with EAX"}},
-            /* 93 */ {{{{}, {}, {Symbols::eax, Symbols::ebx}}, "xchg", "Exchange r32 with EAX"}},
-            /* 94 */ {{{{}, {}, {Symbols::eax, Symbols::esp}}, "xchg", "Exchange r32 with EAX"}},
-            /* 95 */ {{{{}, {}, {Symbols::eax, Symbols::ebp}}, "xchg", "Exchange r32 with EAX"}},
-            /* 96 */ {{{{}, {}, {Symbols::eax, Symbols::esi}}, "xchg", "Exchange r32 with EAX"}},
-            /* 97 */ {{{{}, {}, {Symbols::eax, Symbols::edi}}, "xchg", "Exchange r32 with EAX"}},
-            /* 98 */ {{{{}, {}, {}}, "cwde", "EAX <- sign-extend of AX"}},
-            /* 99 */ {{{{}, {}, {}}, "cdq", "EDX:EAX <- sign-extend of EAX"}},
-            /* 9A */ {{{{}, {OpEncoding::cd}, {Symbols::ptr16_16}}, "call", "Call far, absolute, address given in operand"},
-            /* 9A */  {{{}, {OpEncoding::cp}, {Symbols::ptr16_32}}, "call", "Call far, absolute, address given in operand"}},
-            /* 9B */ {{{{0xD9}, {OpEncoding::m6}, {Symbols::m14_28byte}}, "fstenv", "Store FPU environment to m14byte or m28byte after checking for pending unmasked floating-point exceptions. Then mask all floating-point exceptions"},
-            /* 9B */  {{{0xD9}, {OpEncoding::m7}, {Symbols::m2byte}}, "fstcw", "Store FPU control word to m2byte after checking for pending unmasked floating-point exceptions"},
-            /* 9B */  {{{0xDB, 0xE2}, {}, {}}, "fclex", "Clear floating-point exception flags after checking forpending unmasked floating-point exceptions"},
-            /* 9B */  {{{0xDB, 0xE3}, {}, {}}, "finit", "Initialize FPU after checking for pending unmasked floating-point exceptions"},
-            /* 9B */  {{{0xDD}, {OpEncoding::m6}, {Symbols::m94_108byte}}, "fsave", "Store FPU state to m94byte or m108byte after checking for pending unmasked floating-point exceptions. Then re- initialize the FPU"},
-            /* 9B */  {{{0xDD}, {OpEncoding::m7}, {Symbols::m2byte}}, "fstsw", "Store FPU status word at m2byte after checking for pending unmasked floating-point exceptions"},
-            /* 9B */  {{{0xDF, 0xE0}, {}, {Symbols::ax}}, "fstsw", "Store FPU status word in AX register after checking for pending unmasked floating-point exceptions"},
-            /* 9B */  {{{}, {}, {}}, "fwait", "Check pending unmasked floating-point exceptions"}},
-            /* 9C */ {{{{}, {}, {}}, "pushfd", "Push EFLAGS"}},
-            /* 9D */ {{{{}, {}, {}}, "popfd", "Pop top of stack into EFLAGS"}},
-            /* 9E */ {{{{}, {}, {}}, "sahf", "Loads SF, ZF, AF, PF, and CF from AH into EFLAGS register"}},
-            /* 9F */ {{{{}, {}, {}}, "lahf", "Load: AH = EFLAGS(SF:ZF:0:AF:0:PF:1:CF)"}},
-            /* A0 */ {{{{}, {}, {Symbols::al, Symbols::moffs8}}, "mov", "Move byte at (seg:offset) to AL"}},
-            /* A1 */ {{{{}, {}, {Symbols::ax, Symbols::moffs16}}, "mov", "Move word at (seg:offset) to AX"},
-            /* A1 */  {{{}, {}, {Symbols::eax, Symbols::moffs32}}, "mov", "Move doubleword at (seg:offset) to EAX"}},
-            /* A2 */ {{{{}, {}, {Symbols::moffs8, Symbols::al}}, "mov", "Move AL to (seg:offset)"}},
-            /* A3 */ {{{{}, {}, {Symbols::moffs16, Symbols::ax}}, "mov", "Move AX to (seg:offset)"},
-            /* A3 */  {{{}, {}, {Symbols::moffs32, Symbols::eax}}, "mov", "Move EAX to (seg:offset)"}},
-            /* A4 */ {{{{}, {}, {}}, "movsb", "Move byte at address DS:(E)SI to address ES:(E)DI"}},
-            /* A5 */ {{{{}, {}, {}}, "movsd", "Move doubleword at address DS:(E)SI to address ES:(E)DI"}},
-            /* A6 */ {{{{}, {}, {}}, "cmpsb", "Compares byte at address DS:(E)SI with byte at address ES:(E)DI and sets the status flags accordingly"}},
-            /* A7 */ {{{{}, {}, {}}, "cmpsd", "Compares doubleword at address DS:(E)SI with doubleword at address ES:(E)DI and sets the status flags accordingly"}},
-            /* A8 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "test", "AND imm8 with AL; set SF, ZF, PF according to result"}},
-            /* A9 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}}, "test", "AND imm16 with AX; set SF, ZF, PF according to result"},
-            /* A9 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "test", "AND imm32 with EAX; set SF, ZF, PF according to result"}},
-            /* AA */ {{{{}, {}, {}}, "stosb", "Store AL at address ES:(E)DI"}},
-            /* AB */ {{{{}, {}, {}}, "stosd", "Store EAX at address ES:(E)DI"}},
-            /* AC */ {{{{}, {}, {}}, "lodsb", "Load byte at address DS:(E)SI into AL"}},
-            /* AD */ {{{{}, {}, {}}, "lodsd", "Load doubleword at address DS:(E)SI into EAX"}},
-            /* AE */ {{{{}, {}, {}}, "scasb", "Compare AL with byte at ES:(E)DI and set status flags"}},
-            /* AF */ {{{{}, {}, {}}, "scasd", "Compare EAX with doubleword at ES:(E)DI and set status flags"}},
-            /* B0 */ {{{{}, {}, {Symbols::al, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
-            /* B1 */ {{{{}, {}, {Symbols::bl, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
-            /* B2 */ {{{{}, {}, {Symbols::cl, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
-            /* B3 */ {{{{}, {}, {Symbols::dl, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
-            /* B4 */ {{{{}, {}, {Symbols::ah, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
-            /* B5 */ {{{{}, {}, {Symbols::bh, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
-            /* B6 */ {{{{}, {}, {Symbols::ch, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
-            /* B7 */ {{{{}, {}, {Symbols::dh, Symbols::imm8}}, "mov", "Move imm8 to r8"}},
-            /* B8 */ {{{{}, {}, {Symbols::eax, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
-            /* B9 */ {{{{}, {}, {Symbols::ecx, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
-            /* BA */ {{{{}, {}, {Symbols::edx, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
-            /* BB */ {{{{}, {}, {Symbols::ebx, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
-            /* BC */ {{{{}, {}, {Symbols::esp, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
-            /* BD */ {{{{}, {}, {Symbols::ebp, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
-            /* BE */ {{{{}, {}, {Symbols::esi, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
-            /* BF */ {{{{}, {}, {Symbols::edi, Symbols::imm32}}, "mov", "Move imm32 to r32"}},
-            /* C0 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rol", "Rotate eight bits rm8 left imm8 times"},
-            /* C0 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "ror", "Rotate eight bits rm16 right imm8 times"},
-            /* C0 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rcl", "Rotate nine bits (CF, rm8) left imm8 times"},
-            /* C0 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rcr", "Rotate nine bits (CF, rm8) right imm8 times"},
-            /* C0 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sal", "Multiply rm8 by 2, imm8 times"},
-            /* C0 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "shr", "Unsigned divide rm8 by 2, imm8 times"},
-            /* C0 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sar", "Signed divide* rm8 by 2, imm8 times"}},
-            /* C1 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm16, Symbols::imm8}}, "rol", "Rotate 16 bits rm16 left imm8 times"},
-            /* C1 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "ror", "Rotate 32 bits rm32 right imm8 times"},
-            /* C1 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "rcl", "Rotate 17 bits (CF, rm16) left imm8 times"},
-            /* C1 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "rcr", "Rotate 33 bits (CF, rm32) right imm8 times"},
-            /* C1 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sal", "Multiply rm32 by 2, imm8 times"},
-            /* C1 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "shr", "Unsigned divide rm32 by 2, imm8 times"},
-            /* C1 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sar", "Signed divide* rm32 by 2, imm8 times"}},
-            /* C2 */ {{{{}, {OpEncoding::iw}, {Symbols::imm16}}, "ret", "Near return to calling procedure and pop imm16 bytes from stack"}},
-            /* C3 */ {{{{}, {}, {}}, "retn", "Near return to calling procedure"}},
-            /* C4 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::m16_16}}, "les", "Load ES: r16 with far pointer from memory"},
-            /* C4 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::m16_32}}, "les", "Load ES: r32 with far pointer from memory"}},
-            /* C5 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::m16_16}}, "lds", "Load DS: r16 with far pointer from memory"},
-            /* C5 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::m16_32}}, "lds", "Load DS: r32 with far pointer from memory"}},
-            /* C6 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::imm8}}, "mov", "Move imm8 to rm8"}},
-            /* C7 */ {{{{}, {OpEncoding::m0}, {Symbols::rm16, Symbols::imm16}}, "mov", "Move imm16 to rm16"},
-            /* C7 */  {{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::imm32}}, "mov", "Move imm32 to rm32"}},
-            /* C8 */ {{{{}, {OpEncoding::iw, OpEncoding::ib}, {Symbols::imm16, Symbols::imm8}}, "enter", "Create a nested (if imm8 > 0) stack frame for a procedure"}},
-            /* C9 */ {{{{}, {}, {}}, "leave", "Set ESP to EBP, then pop EBP"}},
-            /* CA */ {{{{}, {OpEncoding::iw}, {Symbols::imm16}}, "ret", "Far return to calling procedure and pop imm16 bytes from stack"}},
-            /* CB */ {{{{}, {}, {}}, "ret", "Far return to calling procedure"}},
-            /* CC */ {{{{}, {}, {}}, "int 3", "Interrupt 3—trap to debugger"}},
-            /* CD */ {{{{}, {OpEncoding::ib}, {Symbols::imm8}}, "int", "Interrupt vector number specified by immediate byte"}},
-            /* CE */ {{{{}, {}, {}}, "into", "Interrupt 4—if overflow flag is 1"}},
-            /* CF */ {{{{}, {}, {}}, "iretd", "Interrupt return (32-bit operand size)"}},
-            /* D0 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::one}}, "rol", "Rotate eight bits rm8 left once"},
-            /* D0 */  {{{}, {OpEncoding::m1}, {Symbols::rm8, Symbols::one}}, "ror", "Rotate eight bits rm8 right once"},
-            /* D0 */  {{{}, {OpEncoding::m2}, {Symbols::rm8, Symbols::one}}, "rcl", "Rotate nine bits (CF, rm8) left once"},
-            /* D0 */  {{{}, {OpEncoding::m3}, {Symbols::rm8, Symbols::one}}, "rcr", "Rotate nine bits (CF, rm8) right once"},
-            /* D0 */  {{{}, {OpEncoding::m4}, {Symbols::rm8, Symbols::one}}, "sal", "Multiply rm8 by 2, once"},
-            /* D0 */  {{{}, {OpEncoding::m5}, {Symbols::rm8, Symbols::one}}, "shr", "Unsigned divide rm8 by 2, once"},
-            /* D0 */  {{{}, {OpEncoding::m7}, {Symbols::rm8, Symbols::one}}, "sar", "Signed divide* rm8 by 2, once"}},
-            /* D1 */ {{{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::one}}, "rol", "Rotate 32 bits rm32 left once"},
-            /* D1 */  {{{}, {OpEncoding::m1}, {Symbols::rm32, Symbols::one}}, "ror", "Rotate 32 bits rm32 right once"},
-            /* D1 */  {{{}, {OpEncoding::m2}, {Symbols::rm32, Symbols::one}}, "rcl", "Rotate 33 bits (CF, rm32) left once"},
-            /* D1 */  {{{}, {OpEncoding::m3}, {Symbols::rm32, Symbols::one}}, "rcr", "Rotate 33 bits (CF, rm32) right once"},
-            /* D1 */  {{{}, {OpEncoding::m4}, {Symbols::rm32, Symbols::one}}, "shl", "Multiply rm16 by 2, once"},
-            /* D1 */  {{{}, {OpEncoding::m5}, {Symbols::rm32, Symbols::one}}, "shr", "Unsigned divide rm16 by 2, once"},
-            /* D1 */  {{{}, {OpEncoding::m7}, {Symbols::rm32, Symbols::one}}, "sar", "Signed divide* rm16 by 2, once"}},
-            /* D2 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::cl}}, "rol", "Rotate eight bits rm8 left CL times"},
-            /* D2 */  {{{}, {OpEncoding::m1}, {Symbols::rm8, Symbols::cl}}, "ror", "Rotate eight bits rm8 right CL times"},
-            /* D2 */  {{{}, {OpEncoding::m2}, {Symbols::rm8, Symbols::cl}}, "rcl", "Rotate nine bits (CF, rm8) left CL times"},
-            /* D2 */  {{{}, {OpEncoding::m3}, {Symbols::rm8, Symbols::cl}}, "rcr", "Rotate nine bits (CF, rm8) right CL times"},
-            /* D2 */  {{{}, {OpEncoding::m4}, {Symbols::rm8, Symbols::cl}}, "shl", "Multiply rm8 by 2, CL times"},
-            /* D2 */  {{{}, {OpEncoding::m5}, {Symbols::rm8, Symbols::cl}}, "shr", "Unsigned divide rm8 by 2, CL times"},
-            /* D2 */  {{{}, {OpEncoding::m7}, {Symbols::rm8, Symbols::cl}}, "sar", "Signed divide* rm8 by 2, CL times"}},
-            /* D3 */ {{{{}, {OpEncoding::m0}, {Symbols::rm16, Symbols::cl}}, "rol", "Rotate 16 bits rm16 left CL times"},
-            /* D3 */  {{{}, {OpEncoding::m1}, {Symbols::rm16, Symbols::cl}}, "ror", "Rotate 16 bits rm16 right CL times"},
-            /* D3 */  {{{}, {OpEncoding::m2}, {Symbols::rm32, Symbols::cl}}, "rcl", "Rotate 33 bits (CF, rm32) left CL times"},
-            /* D3 */  {{{}, {OpEncoding::m3}, {Symbols::rm32, Symbols::cl}}, "rcr", "Rotate 33 bits (CF, rm32) right CL times"},
-            /* D3 */  {{{}, {OpEncoding::m4}, {Symbols::rm16, Symbols::cl}}, "shl", "Multiply rm16 by 2, CL times"},
-            /* D3 */  {{{}, {OpEncoding::m5}, {Symbols::rm16, Symbols::cl}}, "shr", "Unsigned divide rm16 by 2, CL times"},
-            /* D3 */  {{{}, {OpEncoding::m7}, {Symbols::rm16, Symbols::cl}}, "sar", "Signed divide* rm16 by 2, CL times"}},
-            /* D4 */ {{{{0x0A}, {}, {}}, "aam", "ASCII adjust AX after multiply"}},
-            /* D5 */ {{{{0x0A}, {}, {}}, "aad", "ASCII adjust AX before division"}},
-            /* D6 */ {{{{}, {}, {}}, "???", "Unrecognized opcode"}},
-            /* D7 */ {{{{}, {}, {}}, "xlatb", "Set AL to memory byte DS:[(E)BX + unsigned AL]"}},
-            /* D8 */ {{{{0xC0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fadd", "Add ST(0) to ST(i) and store result in ST(0)"},
-            /* D8 */  {{{0xC8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fmul", "Multiply ST(0) by ST(i) and store result in ST(0)"},
-            /* D8 */  {{{0xD0}, {OpEncoding::i}, {Symbols::sti}}, "fcom", "Compare ST(0) with ST(i)"},
-            /* D8 */  {{{0xD8}, {OpEncoding::i}, {Symbols::sti}}, "fcomp", "Compare ST(0) with ST(i) and pop register stack"},
-            /* D8 */  {{{0xE0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fsub", "Subtract ST(i) from ST(0) and store result in ST(0)"},
-            /* D8 */  {{{0xE8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fsubr", "Subtract ST(0) from ST(i) and store result in ST(0)"},
-            /* D8 */  {{{0xF0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fdiv", "Divide ST(0) by ST(i) and store result in ST(0)"},
-            /* D8 */  {{{0xF8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fdivr", "Divide ST(i) by ST(0) and store result in ST(0)"},
-            /* D8 */  {{{}, {OpEncoding::m0}, {Symbols::m32real}}, "fadd", "Add m32real to ST(0) and store result in ST(0)"},
-            /* D8 */  {{{}, {OpEncoding::m1}, {Symbols::m32real}}, "fmul", "Multiply ST(0) by m32real and store result in ST(0)"},
-            /* D8 */  {{{}, {OpEncoding::m2}, {Symbols::m32real}}, "fcom", "Compare ST(0) with m32real"},
-            /* D8 */  {{{}, {OpEncoding::m3}, {Symbols::m32real}}, "fcomp", "Compare ST(0) with m32real and pop register stack"},
-            /* D8 */  {{{}, {OpEncoding::m4}, {Symbols::m32real}}, "fsub", "Subtract m32real from ST(0) and store result in ST(0)"},
-            /* D8 */  {{{}, {OpEncoding::m5}, {Symbols::m32real}}, "fsubr", "Subtract ST(0) from m32real and store result in ST(0)"},
-            /* D8 */  {{{}, {OpEncoding::m6}, {Symbols::m32real}}, "fdiv", "Divide ST(0) by m32real and store result in ST(0)"},
-            /* D8 */  {{{}, {OpEncoding::m7}, {Symbols::m32real}}, "fdivr", "Divide m32real by ST(0) and store result in ST(0)"}},
-            /* D9 */ {{{{0xC0}, {OpEncoding::i}, {Symbols::sti}}, "fld", "Push ST(i) onto the FPU register stack"},
-            /* D9 */  {{{0xC8}, {OpEncoding::i}, {Symbols::sti}}, "fxch", "Exchange the contents of ST(0) and ST(i)"},
-            /* D9 */  {{{0xC9}, {}, {}}, "fxch", "Exchange the contents of ST(0) and ST(1)"},
-            /* D9 */  {{{0xD0}, {}, {}}, "fnop", "No operation is performed"},
-            /* D9 */  {{{0xE0}, {}, {}}, "fchs", "Complements sign of ST(0)"},
-            /* D9 */  {{{0xE1}, {}, {}}, "fabs", "Replace ST with its absolute value"},
-            /* D9 */  {{{0xE4}, {}, {}}, "ftst", "Compare ST(0) with 0.0"},
-            /* D9 */  {{{0xE5}, {}, {}}, "fxam", "Classify value or number in ST(0)"},
-            /* D9 */  {{{0xE8}, {}, {}}, "fld1", "Push +1.0 onto the FPU register stack"},
-            /* D9 */  {{{0xE9}, {}, {}}, "fldl2t", "Push log 210 onto the FPU register stack"},
-            /* D9 */  {{{0xEA}, {}, {}}, "fltl2e", "Push log 2e onto the FPU register stack"},
-            /* D9 */  {{{0xEB}, {}, {}}, "fldpi", "Push PI onto the FPU register stack"},
-            /* D9 */  {{{0xEC}, {}, {}}, "fldlg2", "Push log 102 onto the FPU register stack"},
-            /* D9 */  {{{0xED}, {}, {}}, "fldln2", "Push log e2 onto the FPU register stack"},
-            /* D9 */  {{{0xEE}, {}, {}}, "fldz", "Push +0.0 onto the FPU register stack"},
-            /* D9 */  {{{0xF0}, {}, {}}, "f2xm1", "Replace ST(0) with (2 ST(0) – 1)"},
-            /* D9 */  {{{0xF1}, {}, {}}, "fyl2x", "Replace ST(1) with (ST(1) * log 2ST(0)) and pop the register stack"},
-            /* D9 */  {{{0xF2}, {}, {}}, "fptan", "Replace ST(0) with its tangent and push 1 onto the FPU stack"},
-            /* D9 */  {{{0xF3}, {}, {}}, "fpatan", "Replace ST(1) with arctan(ST(1)/ST(0)) and pop the register stack"},
-            /* D9 */  {{{0xF4}, {}, {}}, "fxtract", "Separate value in ST(0) into exponent and significand, store exponent in ST(0), and push the significand onto the register stack"},
-            /* D9 */  {{{0xF5}, {}, {}}, "fprem1", "Replace ST(0) with the IEEE remainder obtained from dividing ST(0) by ST(1)"},
-            /* D9 */  {{{0xF6}, {}, {}}, "fdecstp", "Decrement TOP field in FPU status word"},
-            /* D9 */  {{{0xF7}, {}, {}}, "fincstp", "Increment the TOP field in the FPU status register"},
-            /* D9 */  {{{0xF8}, {}, {}}, "fprem", "Replace ST(0) with the remainder obtained from dividing ST(0) by ST(1)"},
-            /* D9 */  {{{0xF9}, {}, {}}, "fyl2xp1", "Replace ST(1) with ST(1) * log 2 (ST(0) + 1.0) and pop the register stack"},
-            /* D9 */  {{{0xFA}, {}, {}}, "fsqrt", "Calculates square root of ST(0) and stores the result in ST(0)"},
-            /* D9 */  {{{0xFB}, {}, {}}, "fsincos", "Compute the sine and cosine of ST(0); replace ST(0) with the sine, and push the cosine onto the register stack"},
-            /* D9 */  {{{0xFC}, {}, {}}, "frndint", "Round ST(0) to an integer"},
-            /* D9 */  {{{0xFD}, {}, {}}, "fscale", "Scale ST(0) by ST(1)"},
-            /* D9 */  {{{0xFE}, {}, {}}, "fsin", "Replace ST(0) with its sine"},
-            /* D9 */  {{{0xFF}, {}, {}}, "fcos", "Replace ST(0) with its cosine"},
-            /* D9 */  {{{}, {OpEncoding::m0}, {Symbols::m32real}}, "fld", "Push m32real onto the FPU register stack"},
-            /* D9 */  {{{}, {OpEncoding::m2}, {Symbols::m32real}}, "fst", "Copy ST(0) to m32real"},
-            /* D9 */  {{{}, {OpEncoding::m3}, {Symbols::m32real}}, "fstp", "Copy ST(0) to m32real and pop register stack"},
-            /* D9 */  {{{}, {OpEncoding::m4}, {Symbols::m14_28byte}}, "fldenv", "Load FPU environment from m14byte or m28byte"},
-            /* D9 */  {{{}, {OpEncoding::m5}, {Symbols::m2byte}}, "fldcw", "Load FPU control word from m2byte"},
-            /* D9 */  {{{}, {OpEncoding::m6}, {Symbols::m14_28byte}}, "fnstenv", "Store FPU environment to m14byte or m28byte without checking for pending unmasked floating-point exceptions. Then mask all floating-point exceptions"},
-            /* D9 */  {{{}, {OpEncoding::m7}, {Symbols::m2byte}}, "fnstcw", "Store FPU control word to m2byte without checking for pending unmasked floating-point exceptions"}},
-            /* DA */ {{{{0xC0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovb", "Move if below (CF=1)"},
-            /* DA */  {{{0xC8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmove", "Move if equal (ZF=1)"},
-            /* DA */  {{{0xD0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovbe", "Move if below or equal (CF=1 or ZF=1)"},
-            /* DA */  {{{0xD8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovu", "Move if unordered (PF=1)"},
-            /* DA */  {{{0xE9}, {}, {}}, "fucompp", "Compare ST(0) with ST(1) and pop register stack twice"},
-            /* DA */  {{{}, {OpEncoding::m0}, {Symbols::m32int}}, "fiadd", "Add m32int to ST(0) and store result in ST(0)"},
-            /* DA */  {{{}, {OpEncoding::m1}, {Symbols::m32int}}, "fimul", "Multiply ST(0) by m32int and store result in ST(0)"},
-            /* DA */  {{{}, {OpEncoding::m2}, {Symbols::m32int}}, "ficom", "Compare ST(0) with m32int"},
-            /* DA */  {{{}, {OpEncoding::m3}, {Symbols::m32int}}, "ficomp", "Compare ST(0) with m32int and pop register stack"},
-            /* DA */  {{{}, {OpEncoding::m4}, {Symbols::m32int}}, "fisub", "Subtract m32int from ST(0) and store result in ST(0)"},
-            /* DA */  {{{}, {OpEncoding::m5}, {Symbols::m32int}}, "fisubr", "Subtract ST(0) from m32int and store result in ST(0)"},
-            /* DA */  {{{}, {OpEncoding::m6}, {Symbols::m32int}}, "fidiv", "Divide ST(0) by m32int and store result in ST(0)"},
-            /* DA */  {{{}, {OpEncoding::m7}, {Symbols::m32int}}, "fidivr", "Divide m32int by ST(0) and store result in ST(0)"}},
-            /* DB */ {{{{0xC0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovnb", "Move if not below (CF=0)"},
-            /* DB */  {{{0xC8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovne", "Move if not equal (ZF=0)"},
-            /* DB */  {{{0xD0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovnbe", "Move if not below or equal (CF=0 and ZF=0)"},
-            /* DB */  {{{0xD8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovnu", "Move if not unordered (PF=0)"},
-            /* DB */  {{{0xE2}, {}, {}}, "fnclex", "Clear floating-point exception flags without checking for pending unmasked floating-point exceptions"},
-            /* DB */  {{{0xE3}, {}, {}}, "fninit", "Initialize FPU without checking for pending unmasked floating-point exceptions"},
-            /* DB */  {{{0xE8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fucomi", "Compare ST(0) with ST(i), check for ordered values, and set status flags accordingly"},
-            /* DB */  {{{0xF0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcomi", "Compare ST(0) with ST(i) and set status flags accordingly"},
-            /* DB */  {{{}, {OpEncoding::m0}, {Symbols::m32int}}, "fild", "Push m32int onto the FPU register stack"},
-            /* DB */  {{{}, {OpEncoding::m2}, {Symbols::m32int}}, "fist", "Store ST(0) in m32int"},
-            /* DB */  {{{}, {OpEncoding::m3}, {Symbols::m32int}}, "fistp", "Store ST(0) in m32int and pop register stack"},
-            /* DB */  {{{}, {OpEncoding::m5}, {Symbols::m80real}}, "fld", "Push m80real onto the FPU register stack"},
-            /* DB */  {{{}, {OpEncoding::m7}, {Symbols::m80real}}, "fstp", "Copy ST(0) to m80real and pop register stack"}},
-            /* DC */ {{{{0xC0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fadd", "Add ST(i) to ST(0) and store result in ST(i)"},
-            /* DC */  {{{0xC8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fmul", "Multiply ST(i) by ST(0) and store result in ST(i)"},
-            /* DC */  {{{0xE0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fsub", "Subtract ST(0) from ST(i) and store result in ST(i)"},
-            /* DC */  {{{0xE8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fsubr", "Subtract ST(0) from ST(i) and store result in ST(i)"},
-            /* DC */  {{{0xF0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fdiv", "Divide ST(0) by ST(i) and store result in ST(i)"},
-            /* DC */  {{{0xF8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fdivr", "Divide ST(i) by ST(0) and store result in ST(i)"},
-            /* DC */  {{{}, {OpEncoding::m0}, {Symbols::m64real}}, "fadd", "Add m64real to ST(0) and store result in ST(0)"},
-            /* DC */  {{{}, {OpEncoding::m1}, {Symbols::m64real}}, "fmul", "Multiply ST(0) by m64real and store result in ST(0)"},
-            /* DC */  {{{}, {OpEncoding::m2}, {Symbols::m64real}}, "fcom", "Compare ST(0) with m64real"},
-            /* DC */  {{{}, {OpEncoding::m3}, {Symbols::m64real}}, "fcomp", "Compare ST(0) with m64real and pop register stack"},
-            /* DC */  {{{}, {OpEncoding::m4}, {Symbols::m64real}}, "fsub", "Subtract m64real from ST(0) and store result in ST(0)"},
-            /* DC */  {{{}, {OpEncoding::m5}, {Symbols::m64real}}, "fsubr", "Subtract ST(0) from m64real and store result in ST(0)"},
-            /* DC */  {{{}, {OpEncoding::m6}, {Symbols::m64real}}, "fdiv", "Divide ST(0) by m64real and store result in ST(0)"},
-            /* DC */  {{{}, {OpEncoding::m7}, {Symbols::m64real}}, "fdivr", "Divide m64real by ST(0) and store result in ST(0)"}},
-            /* DD */ {{{{0xC0}, {OpEncoding::i}, {Symbols::sti}}, "ffree", "Sets tag for ST(i) to empty"},
-            /* DD */  {{{0xD0}, {OpEncoding::i}, {Symbols::sti}}, "fst", "Copy ST(0) to ST(i)"},
-            /* DD */  {{{0xD8}, {OpEncoding::i}, {Symbols::sti}}, "fstp", "Copy ST(0) to ST(i) and pop register stack"},
-            /* DD */  {{{0xE0}, {OpEncoding::i}, {Symbols::sti}}, "fucom", "Compare ST(0) with ST(1)"},
-            /* DD */  {{{0xE8}, {OpEncoding::i}, {Symbols::sti}}, "fucomp", "Compare ST(0) with ST(i) and pop register stack"},
-            /* DD */  {{{}, {OpEncoding::m0}, {Symbols::m64real}}, "fld", "Push m64real onto the FPU register stack"},
-            /* DD */  {{{}, {OpEncoding::m2}, {Symbols::m64real}}, "fst", "Copy ST(0) to m64real"},
-            /* DD */  {{{}, {OpEncoding::m3}, {Symbols::m64real}}, "fstp", "Copy ST(0) to m64real and pop register stack"},
-            /* DD */  {{{}, {OpEncoding::m4}, {Symbols::m94_108byte}}, "frstor", "Load FPU state from m94byte or m108byte"},
-            /* DD */  {{{}, {OpEncoding::m6}, {Symbols::m94_108byte}}, "fnsave", "Store FPU environment to m94byte or m108byte without checking for pending unmasked floating-point exceptions. Then re-initialize the FPU"},
-            /* DD */  {{{}, {OpEncoding::m7}, {Symbols::m2byte}}, "fnstsw", "Store FPU status word at m2byte without checking for pending unmasked floating-point exceptions"}},
-            /* DE */ {{{{0xC0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "faddp", "Add ST(0) to ST(i), store result in ST(i), and pop the register stack"},
-            /* DE */  {{{0xC8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fmulp", "Multiply ST(i) by ST(0), store result in ST(i), and pop the register stack"},
-            /* DE */  {{{0xD0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fcomprp", "Compare ST(0) with ST(1) and pop register stack twice"},
-            /* DE */  {{{0xD8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fcompp", "Compare ST(0) with ST(1) and pop register stack twice"},
-            /* DE */  {{{0xE0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fsubrp", "Subtract ST(i) from ST(0), store result in ST(i), and pop register stack"},
-            /* DE */  {{{0xE8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fsubp", "Subtract ST(0) from ST(i), store result in ST(i), and pop register stack"},
-            /* DE */  {{{0xF0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fdivrp", "Divide ST(0) by ST(i), store result in ST(i), and pop the register stack"},
-            /* DE */  {{{0xF8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fdivp", "Divide ST(i) by ST(0), store result in ST(i), and pop the register stack"},
-            /* DE */  {{{}, {OpEncoding::m0}, {Symbols::m16int}}, "fiadd", "Add m16int to ST(0) and store result in ST(0)"},
-            /* DE */  {{{}, {OpEncoding::m1}, {Symbols::m16int}}, "fimul", "Multiply ST(0) by m16int and store result in ST(0)"},
-            /* DE */  {{{}, {OpEncoding::m2}, {Symbols::m16int}}, "ficom", "Compare ST(0) with m16int"},
-            /* DE */  {{{}, {OpEncoding::m3}, {Symbols::m16int}}, "ficomp", "Compare ST(0) with m16int and pop register stack"},
-            /* DE */  {{{}, {OpEncoding::m4}, {Symbols::m16int}}, "fisub", "Subtract m16int from ST(0) and store result in ST(0)"},
-            /* DE */  {{{}, {OpEncoding::m5}, {Symbols::m16int}}, "fisubr", "Subtract ST(0) from m16int and store result in ST(0)"},
-            /* DE */  {{{}, {OpEncoding::m6}, {Symbols::m16int}}, "fidiv", "Divide ST(0) by m16int and store result in ST(0)"},
-            /* DE */  {{{}, {OpEncoding::m7}, {Symbols::m16int}}, "fidivr", "Divide m16int by ST(0) and store result in ST(0)"}},
-            /* DF */ {{{{0xE0}, {}, {Symbols::ax}}, "fnstsw", "Store FPU status word in AX register without checking for pending unmasked floating-point exceptions"},
-            /* DF */  {{{0xE8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fucomip", "Compare ST(0) with ST(i), check for ordered values, set status flags accordingly, and pop register stack"},
-            /* DF */  {{{0xF0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcomip", "Compare ST(0) with ST(i), set status flags accordingly, and pop register stack"},
-            /* DF */  {{{}, {OpEncoding::m0}, {Symbols::m16int}}, "fild", "Push m16int onto the FPU register stack"},
-            /* DF */  {{{}, {OpEncoding::m2}, {Symbols::m16int}}, "fist", "Store ST(0) in m16int"},
-            /* DF */  {{{}, {OpEncoding::m3}, {Symbols::m16int}}, "fistp", "Store ST(0) in m16int and pop register stack"},
-            /* DF */  {{{}, {OpEncoding::m4}, {Symbols::m80dec}}, "fbld", "Convert BCD value to real and push onto the FPU stack"},
-            /* DF */  {{{}, {OpEncoding::m5}, {Symbols::m64int}}, "fild", "Push m64int onto the FPU register stack"},
-            /* DF */  {{{}, {OpEncoding::m6}, {Symbols::m80bcd}}, "fbstp", "Store ST(0) in m80bcd and pop ST(0)"},
-            /* DF */  {{{}, {OpEncoding::m7}, {Symbols::m64int}}, "fistp", "Store ST(0) in m64int and pop register stack"}},
-            /* E0 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "loopne", "Decrement count; jump short if count != 0 and ZF=0"}},
-            /* E1 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "loope", "Decrement count; jump short if count != 0 and ZF=1"}},
-            /* E2 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "loop", "Decrement count; jump short if count != 0"}},
-            /* E3 */ {{{{}, {}, {}}, "???", "Unrecognized opcode"}},
-            /* E4 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "in", "Input byte from imm8 I/O port address into AL"}},
-            /* E5 */ {{{{}, {OpEncoding::ib}, {Symbols::ax, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "in", "Input byte from imm8 I/O port address into AX"},
-            /* E5 */  {{{}, {OpEncoding::ib}, {Symbols::eax, Symbols::imm8}}, "in", "Input byte from imm8 I/O port address into EAX"}},
-            /* E6 */ {{{{}, {OpEncoding::ib}, {Symbols::imm8, Symbols::al}}, "out", "Output byte in AL to I/O port address imm8"}},
-            /* E7 */ {{{{}, {OpEncoding::ib}, {Symbols::imm8, Symbols::ax}, BaseSet_x86_64::OPS_16MODE}, "out", "Output byte in AX to I/O port address imm8"},
-            /* E7 */  {{{}, {OpEncoding::ib}, {Symbols::imm8, Symbols::eax}}, "out", "Output byte in EAX to I/O port address imm8"}},
-            /* E8 */ {{{{}, {OpEncoding::cd}, {Symbols::rel32}}, "call", "Call near, relative, displacement relative to next instruction"}},
-            /* E9 */ {{{{}, {OpEncoding::cd}, {Symbols::rel32}}, "jmp", "Jump near, relative, displacement relative to next instruction"}},
-            /* EA */ {{{{}, {OpEncoding::cp}, {Symbols::ptr16_32}}, "jmp", "Jump far, absolute, address given in operand"}},
-            /* EB */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jmp", "Jump short, relative, displacement relative to next instruction"}},
-            /* EC */ {{{{}, {}, {Symbols::al, Symbols::dx}}, "in", "Input byte from I/O port in DX into AL"}},
-            /* ED */ {{{{}, {}, {Symbols::ax, Symbols::dx}, BaseSet_x86_64::OPS_16MODE}, "in", "Input doubleword from I/O port in DX into AX"},
-            /* ED */  {{{}, {}, {Symbols::eax, Symbols::dx}}, "in", "Input doubleword from I/O port in DX into EAX"}},
-            /* EE */ {{{{}, {}, {Symbols::dx, Symbols::al}}, "out", "Output byte in AL to I/O port address in DX"}},
-            /* EF */ {{{{}, {}, {Symbols::dx, Symbols::ax}, BaseSet_x86_64::OPS_16MODE}, "out", "Output doubleword in AX to I/O port address in DX"},
-            /* EF */  {{{}, {}, {Symbols::dx, Symbols::eax}}, "out", "Output doubleword in EAX to I/O port address in DX"}},
-            /* F0 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "lock", "Asserts LOCK# signal for duration of the accompanying instruction"}},
-            /* F1 */ {{{{}, {}, {}}, "???", "Unrecognized opcode"}},
-            /* F2 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "repne", "Prefix"}
-            
-            },
-            /* F3 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "repe", "Prefix"}
-            
-            },
-            /* F4 */ {{{{}, {}, {}}, "hlt", "Halt"}},
-            /* F5 */ {{{{}, {}, {}}, "cmc", "Complement CF flag"}},
-            /* F6 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::imm8}}, "test", "AND imm8 with rm8; set SF, ZF, PF according to result"},
-            /* F6 */  {{{}, {OpEncoding::m2}, {Symbols::rm8}}, "not", "Reverse each bit of rm8"},
-            /* F6 */  {{{}, {OpEncoding::m3}, {Symbols::rm8}}, "neg", "Two’s complement negate rm8"},
-            /* F6 */  {{{}, {OpEncoding::m4}, {Symbols::rm8}}, "mul", "Unsigned multiply (AX <- AL * rm8)"},
-            /* F6 */  {{{}, {OpEncoding::m5}, {Symbols::rm8}}, "imul", "AX <- AL * rm byte"},
-            /* F6 */  {{{}, {OpEncoding::m6}, {Symbols::rm8}}, "div", "Unsigned divide AX by rm8; AL <- Quotient, AH <- Remainder"},
-            /* F6 */  {{{}, {OpEncoding::m7}, {Symbols::rm8}}, "idiv", "Signed divide AX (where AH must contain sign-extension of AL) by rm byte. (Results: AL=Quotient, AH=Remainder)"}},
-            /* F7 */ {{{{}, {OpEncoding::m0}, {Symbols::rm16, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "test", "AND imm16 with rm16; set SF, ZF, PF according to resul"},
-            /* F7 */  {{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::imm32}}, "test", "AND imm32 with rm32; set SF, ZF, PF according to result"},
-            /* F7 */  {{{}, {OpEncoding::m2}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "not", "Reverse each bit of rm16"},
-            /* F7 */  {{{}, {OpEncoding::m2}, {Symbols::rm32}}, "not", "Reverse each bit of rm32"},
-            /* F7 */  {{{}, {OpEncoding::m3}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "neg", "Two’s complement negate rm16"},
-            /* F7 */  {{{}, {OpEncoding::m3}, {Symbols::rm32}}, "neg", "Two’s complement negate rm32"},
-            /* F7 */  {{{}, {OpEncoding::m4}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "mul", "Unsigned multiply (DX:AX <- AX * rm16)"},
-            /* F7 */  {{{}, {OpEncoding::m4}, {Symbols::rm32}}, "mul", "Unsigned multiply (EDX:EAX <- EAX * rm32)"},
-            /* F7 */  {{{}, {OpEncoding::m5}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "imul", "DX:AX <- AX * rm word"},
-            /* F7 */  {{{}, {OpEncoding::m5}, {Symbols::rm32}}, "imul", "EDX:EAX <- EAX * rm doubleword"},
-            /* F7 */  {{{}, {OpEncoding::m6}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "div", "Unsigned divide DX:AX by rm16; AX <- Quotient, DX <- Remainder"},
-            /* F7 */  {{{}, {OpEncoding::m6}, {Symbols::rm32}}, "div", "Unsigned divide EDX:EAX by rm32 doubleword; EAX <- Quotient, EDX <- Remainder"},
-            /* F7 */  {{{}, {OpEncoding::m7}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "idiv", "Signed divide DX:AX (where DX must contain sign- extension of AX) by rm word. (Results: AX=Quotient, DX=Remainder)"},
-            /* F7 */  {{{}, {OpEncoding::m7}, {Symbols::rm32}}, "idiv", "Signed divide EDX:EAX (where EDX must contain sign-extension of EAX) by rm doubleword. (Results: EAX=Quotient, EDX=Remainder)"}},
-            /* F8 */ {{{{}, {}, {}}, "clc", "Clear CF flag"}},
-            /* F9 */ {{{{}, {}, {}}, "stc", "Set CF flag"}},
-            /* FA */ {{{{}, {}, {}}, "cli", "Clear interrupt flag; interrupts disabled when interrupt flag cleared"}},
-            /* FB */ {{{{}, {}, {}}, "sti", "Set interrupt flag; external, maskable interrupts enabled at the end of the next instruction"}},
-            /* FC */ {{{{}, {}, {}}, "cld", "Clear DF flag"}},
-            /* FD */ {{{{}, {}, {}}, "std", "Set DF flag"}},
-            /* FE */ {{{{}, {OpEncoding::m0}, {Symbols::rm8}}, "inc", "Increment rm byte by 1"},
-            /* FE */  {{{}, {OpEncoding::m1}, {Symbols::rm8}}, "dec", "Decrement rm byte by 1"}},
-            /* FF */ {{{{}, {OpEncoding::m0}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "inc", "Increment rm word by 1"},
-            /* FF */  {{{}, {OpEncoding::m0}, {Symbols::rm32}}, "inc", "Increment rm doubleword by 1"},
-            /* FF */  {{{}, {OpEncoding::m1}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "dec", "Decrement rm word by 1"},
-            /* FF */  {{{}, {OpEncoding::m1}, {Symbols::rm32}}, "dec", "Decrement rm doubleword by 1"},
-            /* FF */  {{{}, {OpEncoding::m2}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "call", "Call near, absolute indirect, address given in rm16"},
-            /* FF */  {{{}, {OpEncoding::m2}, {Symbols::rm32}}, "call", "Call near, absolute indirect, address given in rm32"},
-            /* FF */  {{{}, {OpEncoding::m3}, {Symbols::m16_16}, BaseSet_x86_64::OPS_16MODE}, "call", "Call far, absolute indirect, address given in m16:16"},
-            /* FF */  {{{}, {OpEncoding::m3}, {Symbols::m16_32}}, "call", "Call far, absolute indirect, address given in m16:32"},
-            /* FF */  {{{}, {OpEncoding::m4}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "jmp", "Jump near, absolute indirect, address given in rm16"},
-            /* FF */  {{{}, {OpEncoding::m4}, {Symbols::rm32}}, "jmp", "Jump near, absolute indirect, address given in rm32"},
-            /* FF */  {{{}, {OpEncoding::m5}, {Symbols::m16_16}, BaseSet_x86_64::OPS_16MODE}, "jmp", "Jump far, absolute indirect, address given in m16:16"},
-            /* FF */  {{{}, {OpEncoding::m5}, {Symbols::m16_32}}, "jmp", "Jump far, absolute indirect, address given in m16:32"},
-            /* FF */  {{{}, {OpEncoding::m6}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "push", "Push rm16"},
-            /* FF */  {{{}, {OpEncoding::m6}, {Symbols::rm32}}, "push", "Push rm32"}}
+            /* 10 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "adc", OP_DESC("Add with carry byte register to rm8")}},
+            /* 11 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "adc", OP_DESC("Add with carry r16 to rm16")},
+            /* 11 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "adc", OP_DESC("Add with CF r32 to rm32")}},
+            /* 12 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "adc", OP_DESC("Add with carry rm8 to byte register")}},
+            /* 13 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "adc", OP_DESC("Add with carry rm16 to r16")},
+            /* 13 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "adc", OP_DESC("Add with CF rm32 to r32")}},
+            /* 14 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "adc", OP_DESC("Add with carry imm8 to AL")}},
+            /* 15 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "adc", OP_DESC("Add with carry imm16 to AX")},
+            /* 15 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "adc", OP_DESC("Add with carry imm32 to EAX")}},
+            /* 16 */ {{{{}, {}, {Symbols::ss}}, "push", OP_DESC("Push SS")}},
+            /* 17 */ {{{{}, {}, {Symbols::ss}}, "pop", OP_DESC("Pop top of stack into SS; increment stack pointer")}},
+            /* 18 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "sbb", OP_DESC("Subtract with borrow r8 from rm8")}},
+            /* 19 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "sbb", OP_DESC("Subtract with borrow r16 from rm16")},
+            /* 19 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "sbb", OP_DESC("Subtract with borrow r32 from rm32")}},
+            /* 1A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "sbb", OP_DESC("Subtract with borrow rm8 from r8")}},
+            /* 1B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "sbb", OP_DESC("Subtract with borrow rm16 from r16")},
+            /* 1B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "sbb", OP_DESC("Subtract with borrow rm32 from r32")}},
+            /* 1C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "sbb", OP_DESC("Subtract with borrow imm8 from AL")}},
+            /* 1D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "sbb", OP_DESC("Subtract with borrow imm16 from AX")},
+            /* 1D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "sbb", OP_DESC("Subtract with borrow imm32 from EAX")}},
+            /* 1E */ {{{{}, {}, {Symbols::ds}}, "push", OP_DESC("Push DS")}},
+            /* 1F */ {{{{}, {}, {Symbols::ds}}, "pop", OP_DESC("Pop top of stack into DS; increment stack pointer")}},
+            /* 20 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "and", OP_DESC("rm8 AND r8")}},
+            /* 21 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "and", OP_DESC("rm16 AND r16")},
+            /* 21 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "and", OP_DESC("rm32 AND r32")}},
+            /* 22 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "and", OP_DESC("r8 AND rm8")}},
+            /* 23 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "and", OP_DESC("r16 AND rm16")},
+            /* 23 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "and", OP_DESC("r32 AND rm32")}},
+            /* 24 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "and", OP_DESC("AL AND imm8")}},
+            /* 25 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "and", OP_DESC("AX AND imm16")},
+            /* 25 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "and", OP_DESC("EAX AND imm32")}},
+            /* 26 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", OP_DESC("Unregistered opcode")}},
+            /* 27 */ {{{{}, {}, {}}, "daa", OP_DESC("Decimal adjust AL after addition")}},
+            /* 28 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "sub", OP_DESC("Subtract r8 from rm8")}},
+            /* 29 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "sub", OP_DESC("Subtract r16 from rm16")},
+            /* 29 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "sub", OP_DESC("Subtract r32 from rm32")}},
+            /* 2A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "sub", OP_DESC("Subtract rm8 from r8")}},
+            /* 2B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "sub", OP_DESC("Subtract rm16 from r16")},
+            /* 2B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "sub", OP_DESC("Subtract rm32 from r32")}},
+            /* 2C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "sub", OP_DESC("Subtract imm8 from AL")}},
+            /* 2D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "sub", OP_DESC("Subtract imm16 from AX")},
+            /* 2D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "sub", OP_DESC("Subtract imm32 from EAX")}},
+            /* 2E */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", OP_DESC("Unregistered opcode")}},
+            /* 2F */ {{{{}, {}, {}}, "das", OP_DESC("Decimal adjust AL after subtraction")}},
+            /* 30 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "xor", OP_DESC("rm8 XOR r8")}},
+            /* 31 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "xor", OP_DESC("rm16 XOR r16")},
+            /* 31 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "xor", OP_DESC("rm32 XOR r32")}},
+            /* 32 */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "xor", OP_DESC("r8 XOR rm8")}},
+            /* 33 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "xor", OP_DESC("r16 XOR rm16")},
+            /* 33 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "xor", OP_DESC("r32 XOR rm32")}},
+            /* 34 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "xor", OP_DESC("AL XOR imm8")}},
+            /* 35 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "xor", OP_DESC("AX XOR imm16")},
+            /* 35 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "xor", OP_DESC("EAX XOR imm32")}},
+            /* 36 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", OP_DESC("Unregistered opcode")}},
+            /* 37 */ {{{{}, {}, {}}, "aaa", OP_DESC("ASCII adjust AL after addition")}},
+            /* 38 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "cmp", OP_DESC("Compare r8 with rm8")}},
+            /* 39 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "cmp", OP_DESC("Compare r16 with rm16")},
+            /* 39 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "cmp", OP_DESC("Compare r32 with rm32")}},
+            /* 3A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "cmp", OP_DESC("Compare rm8 with r8")}},
+            /* 3B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "cmp", OP_DESC("Compare rm16 with r16")},
+            /* 3B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "cmp", OP_DESC("Compare rm32 with r32")}},
+            /* 3C */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "cmp", OP_DESC("Compare imm8 with AL")}},
+            /* 3D */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "cmp", OP_DESC("Compare imm16 with AX")},
+            /* 3D */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "cmp", OP_DESC("Compare imm32 with EAX")}},
+            /* 3E */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", OP_DESC("Unregistered opcode")}},
+            /* 3F */ {{{{}, {}, {}}, "aas", OP_DESC("ASCII adjust AL after subtraction")}},
+            /* 40 */ {{{{}, {}, {Symbols::eax}}, "inc", OP_DESC("Increment doubleword register by 1")}},
+            /* 41 */ {{{{}, {}, {Symbols::ecx}}, "inc", OP_DESC("Increment doubleword register by 1")}},
+            /* 42 */ {{{{}, {}, {Symbols::edx}}, "inc", OP_DESC("Increment doubleword register by 1")}},
+            /* 43 */ {{{{}, {}, {Symbols::ebx}}, "inc", OP_DESC("Increment doubleword register by 1")}},
+            /* 44 */ {{{{}, {}, {Symbols::esp}}, "inc", OP_DESC("Increment doubleword register by 1")}},
+            /* 45 */ {{{{}, {}, {Symbols::ebp}}, "inc", OP_DESC("Increment doubleword register by 1")}},
+            /* 46 */ {{{{}, {}, {Symbols::esi}}, "inc", OP_DESC("Increment doubleword register by 1")}},
+            /* 47 */ {{{{}, {}, {Symbols::edi}}, "inc", OP_DESC("Increment doubleword register by 1")}},
+            /* 48 */ {{{{}, {}, {Symbols::eax}}, "dec", OP_DESC("Decrement doubleword register by 1")}},
+            /* 49 */ {{{{}, {}, {Symbols::ecx}}, "dec", OP_DESC("Decrement doubleword register by 1")}},
+            /* 4A */ {{{{}, {}, {Symbols::edx}}, "dec", OP_DESC("Decrement doubleword register by 1")}},
+            /* 4B */ {{{{}, {}, {Symbols::ebx}}, "dec", OP_DESC("Decrement doubleword register by 1")}},
+            /* 4C */ {{{{}, {}, {Symbols::esp}}, "dec", OP_DESC("Decrement doubleword register by 1")}},
+            /* 4D */ {{{{}, {}, {Symbols::ebp}}, "dec", OP_DESC("Decrement doubleword register by 1")}},
+            /* 4E */ {{{{}, {}, {Symbols::esi}}, "dec", OP_DESC("Decrement doubleword register by 1")}},
+            /* 4F */ {{{{}, {}, {Symbols::edi}}, "dec", OP_DESC("Decrement doubleword register by 1")}},
+            /* 50 */ {{{{}, {}, {Symbols::eax}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", OP_DESC("Push doubleword register")}},
+            /* 51 */ {{{{}, {}, {Symbols::ecx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", OP_DESC("Push doubleword register")}},
+            /* 52 */ {{{{}, {}, {Symbols::edx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", OP_DESC("Push doubleword register")}},
+            /* 53 */ {{{{}, {}, {Symbols::ebx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", OP_DESC("Push doubleword register")}},
+            /* 54 */ {{{{}, {}, {Symbols::esp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", OP_DESC("Push doubleword register")}},
+            /* 55 */ {{{{}, {}, {Symbols::ebp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", OP_DESC("Push doubleword register")}},
+            /* 56 */ {{{{}, {}, {Symbols::esi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", OP_DESC("Push doubleword register")}},
+            /* 57 */ {{{{}, {}, {Symbols::edi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "push", OP_DESC("Push doubleword register")}},
+            /* 58 */ {{{{}, {}, {Symbols::eax}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", OP_DESC("Pop doubleword register")}},
+            /* 59 */ {{{{}, {}, {Symbols::ecx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", OP_DESC("Pop doubleword register")}},
+            /* 5A */ {{{{}, {}, {Symbols::edx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", OP_DESC("Pop doubleword register")}},
+            /* 5B */ {{{{}, {}, {Symbols::ebx}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", OP_DESC("Pop doubleword register")}},
+            /* 5C */ {{{{}, {}, {Symbols::esp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", OP_DESC("Pop doubleword register")}},
+            /* 5D */ {{{{}, {}, {Symbols::ebp}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", OP_DESC("Pop doubleword register")}},
+            /* 5E */ {{{{}, {}, {Symbols::esi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", OP_DESC("Pop doubleword register")}},
+            /* 5F */ {{{{}, {}, {Symbols::edi}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "pop", OP_DESC("Pop doubleword register")}},
+            /* 60 */ {{{{}, {}, {}}, "pushad", OP_DESC("Push all doubleword registers")}},
+            /* 61 */ {{{{}, {}, {}}, "popad", OP_DESC("Pop all doubleword registers")}},
+            /* 62 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::m16and16}, BaseSet_x86_64::OPS_16MODE}, "bound", OP_DESC("Check if r16 (array index) is within bounds specified by m16&16")},
+            /* 62 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::m32and32}}, "bound", OP_DESC("Check if r32 (array index) is within bounds specified by m32&32")}},
+            /* 63 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}}, "arpl", OP_DESC("Adjust RPL of rm16 to not less than RPL of r16")}},
+            /* 64 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", OP_DESC("Unrecognized opcode")}},
+            /* 65 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", OP_DESC("Unrecognized opcode")}},
+            /* 66 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", OP_DESC("Unrecognized opcode")}},
+            /* 67 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "???", OP_DESC("Unrecognized opcode")}},
+            /* 68 */ {{{{}, {}, {Symbols::imm32}}, "push", OP_DESC("Push imm32 value onto the stack")}},
+            /* 69 */ {{{{}, {OpEncoding::r, OpEncoding::iw}, {Symbols::r16, Symbols::rm16, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "imul", OP_DESC("word register < rm16 * immediate word")},
+            /* 69 */  {{{}, {OpEncoding::r, OpEncoding::id}, {Symbols::r32, Symbols::rm32, Symbols::imm32}}, "imul", OP_DESC("doubleword register < rm32 * immediate doubleword")},
+            /* 69 */  {{{}, {OpEncoding::r, OpEncoding::iw}, {Symbols::r16, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "imul", OP_DESC("word register < rm16 * immediate word")},
+            /* 69 */  {{{}, {OpEncoding::r, OpEncoding::id}, {Symbols::r32, Symbols::imm32}}, "imul", OP_DESC("doubleword register < rm32 * immediate doubleword")}},
+            /* 6A */ {{{{}, {}, {Symbols::imm8}}, "push", OP_DESC("Push imm8 value onto the stack")}},
+            /* 6B */ {{{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r16, Symbols::rm16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "imul", OP_DESC("word register < rm16 * sign-extended immediate byte")},
+            /* 6B */  {{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r32, Symbols::rm32, Symbols::imm8}}, "imul", OP_DESC("doubleword register < rm32 * sign-extended immediate byte")},
+            /* 6B */  {{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r16, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "imul", OP_DESC("word register < rm16 * sign-extended immediate byte")},
+            /* 6B */  {{{}, {OpEncoding::r, OpEncoding::ib}, {Symbols::r32, Symbols::imm8}}, "imul", OP_DESC("doubleword register < rm32 * sign-extended immediate byte")}},
+            /* 6C */ {{{{}, {}, {}}, "insb", OP_DESC("Input byte from I/O port specified in DX into memory location specified with ES:(E)DI")} },
+            /* 6D */ {{{{}, {}, {}}, "insd", OP_DESC("Input doubleword from I/O port specified in DX into memory location specified in ES:(E)DI")} },
+            /* 6E */ {{{{}, {}, {}}, "outsb", OP_DESC("Output byte from memory location specified in DS:(E)SI to I/O port specified in DX")} },
+            /* 6F */ {{{{}, {}, {}}, "outsd", OP_DESC("Output doubleword from memory location specified in DS:(E)SI to I/O port specified in DX")} },
+            /* 70 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jo", OP_DESC("Jump short if overflow (OF=1)")} },
+            /* 71 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jno", OP_DESC("Jump short if not overflow (OF=0)")} },
+            /* 72 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jb", OP_DESC("Jump short if below/carry (CF=1)")} },
+            /* 73 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jnb", OP_DESC("Jump short if not below/carry (if above or equal) (CF=0)")} },
+            /* 74 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "je", OP_DESC("Jump short if equal/zero (ZF=1)")} },
+            /* 75 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jne", OP_DESC("Jump short if not equal/zero (ZF=0)")} },
+            /* 76 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jna", OP_DESC("Jump short if below or equal (if not above) (CF=1 or ZF=1)")} },
+            /* 77 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "ja", OP_DESC("Jump short if above (CF=0 and ZF=0)")} },
+            /* 78 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "js", OP_DESC("Jump short if sign (SF=1)")} },
+            /* 79 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jns", OP_DESC("Jump short if not sign (SF=0)")} },
+            /* 7A */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jp", OP_DESC("Jump short if parity (PF=1)")} },
+            /* 7B */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jpo", OP_DESC("Jump short if parity odd (PF=0)")} },
+            /* 7C */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jl", OP_DESC("Jump short if less (not greater or equal) (SF<>OF)")} },
+            /* 7D */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jnl", OP_DESC("Jump short if not less (if greater or equal) (SF=OF)")} },
+            /* 7E */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jng", OP_DESC("Jump short if not greater (if less or equal) (ZF=1 or SF<>OF)")} },
+            /* 7F */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jg", OP_DESC("Jump short if greater (ZF=0 and SF=OF)")} },
+            /* 80 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "add", OP_DESC("Add imm8 to rm8")},
+            /* 80 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "or", OP_DESC("rm8 OR imm8")},
+            /* 80 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "adc", OP_DESC("Add with carry imm8 to rm8")},
+            /* 80 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sbb", OP_DESC("Subtract with borrow imm8 from rm8")},
+            /* 80 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "and", OP_DESC("rm8 AND imm8")},
+            /* 80 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sub", OP_DESC("Subtract imm8 from rm8")},
+            /* 80 */  {{{}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "xor", OP_DESC("rm8 XOR imm8")},
+            /* 80 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "cmp", OP_DESC("Compare imm8 with rm8")}},
+            /* 81 */ {{{{}, {OpEncoding::m0, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "add", OP_DESC("Add imm32 to rm32")},
+            /* 81 */  {{{}, {OpEncoding::m1, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "or", OP_DESC("rm32 OR imm32")},
+            /* 81 */  {{{}, {OpEncoding::m2, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "adc", OP_DESC("Add with carry imm32 to rm32")},
+            /* 81 */  {{{}, {OpEncoding::m3, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "sbb", OP_DESC("Subtract with borrow imm32 from rm32")},
+            /* 81 */  {{{}, {OpEncoding::m4, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "and", OP_DESC("rm32 AND imm32")}, // ***
+            /* 81 */  {{{}, {OpEncoding::m5, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "sub", OP_DESC("Subtract imm32 from rm32")},
+            /* 81 */  {{{}, {OpEncoding::m6, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "xor", OP_DESC("rm32 XOR imm32")},
+            /* 81 */  {{{}, {OpEncoding::m7, OpEncoding::id}, {Symbols::rm32, Symbols::imm32}}, "cmp", OP_DESC("Compare imm32 with rm32")}},
+            /* 82 */ {{{{}, {}, {}}, "???", OP_DESC("Unregistered opcode")}},
+            /* 83 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "add", OP_DESC("Add sign-extended imm8 to rm32")},
+            /* 83 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "or", OP_DESC("rm32 OR imm8 (sign-extended)")},
+            /* 83 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "adc", OP_DESC("Add with CF sign-extended imm8 into rm32")},
+            /* 83 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sbb", OP_DESC("Subtract with borrow sign-extended imm8 from rm32")},
+            /* 83 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "and", OP_DESC("rm32 AND imm8 (sign-extended)")},
+            /* 83 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sub", OP_DESC("Subtract sign-extended imm8 from rm32")},
+            /* 83 */  {{{}, {OpEncoding::m6, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "xor", OP_DESC("rm32 XOR imm8 (sign-extended)")},
+            /* 83 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "cmp", OP_DESC("Compare imm8 with rm32")} },
+            /* 84 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "test", OP_DESC("AND r8 with rm8; set SF, ZF, PF according to result")}},
+            /* 85 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "test", OP_DESC("AND r16 with rm16; set SF, ZF, PF according to result")},
+            /* 85 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "test", OP_DESC("AND r32 with rm32; set SF, ZF, PF according to result")}},
+            /* 86 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "xchg", OP_DESC("Exchange r8 (byte register) with byte from rm8")},
+            /* 86 */  {{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "xchg", OP_DESC("Exchange byte from rm8 with r8 (byte register)")}},
+            /* 87 */ {{{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "xchg", OP_DESC("Exchange r32 with doubleword from rm32")},
+            /* 87 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "xchg", OP_DESC("Exchange doubleword from rm32 with r32")}},
+            /* 88 */ {{{{}, {OpEncoding::r}, {Symbols::rm8, Symbols::r8}}, "mov", OP_DESC("Move r8 to rm8")}},
+            /* 89 */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::r16}, BaseSet_x86_64::OPS_16MODE}, "mov", OP_DESC("Move r16 to rm16")},
+            /* 89 */  {{{}, {OpEncoding::r}, {Symbols::rm32, Symbols::r32}}, "mov", OP_DESC("Move r32 to rm32")}},
+            /* 8A */ {{{{}, {OpEncoding::r}, {Symbols::r8, Symbols::rm8}}, "mov", OP_DESC("Move rm8 to r8")}},
+            /* 8B */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "mov", OP_DESC("Move rm16 to r16")},
+            /* 8B */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "mov", OP_DESC("Move rm32 to r32")}},
+            /* 8C */ {{{{}, {OpEncoding::r}, {Symbols::rm16, Symbols::sreg}}, "mov", OP_DESC("Move segment register to rm16")}},
+            /* 8D */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "lea", OP_DESC("Store effective address for m in register r16")},
+            /* 8D */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "lea", OP_DESC("Store effective address for m in register r32")}},
+            /* 8E */ {{{{}, {OpEncoding::r}, {Symbols::sreg, Symbols::rm16}}, "mov", OP_DESC("Move rm16 to segment register")}},
+            /* 8F */ {{{{}, {OpEncoding::m0}, {Symbols::m16}, BaseSet_x86_64::OPS_16MODE}, "pop", OP_DESC("Pop top of stack into m16; increment stack pointer")},
+            /* 8F */  {{{}, {OpEncoding::m0}, {Symbols::m32}}, "pop", OP_DESC("Pop top of stack into m32; increment stack pointer")}},
+            /* 90 */ {{{{}, {}, {}}, "nop", OP_DESC("No operation")}},
+            /* 91 */ {{{{}, {}, {Symbols::eax, Symbols::ecx}}, "xchg", OP_DESC("Exchange r32 with EAX")}},
+            /* 92 */ {{{{}, {}, {Symbols::eax, Symbols::edx}}, "xchg", OP_DESC("Exchange r32 with EAX")}},
+            /* 93 */ {{{{}, {}, {Symbols::eax, Symbols::ebx}}, "xchg", OP_DESC("Exchange r32 with EAX")}},
+            /* 94 */ {{{{}, {}, {Symbols::eax, Symbols::esp}}, "xchg", OP_DESC("Exchange r32 with EAX")}},
+            /* 95 */ {{{{}, {}, {Symbols::eax, Symbols::ebp}}, "xchg", OP_DESC("Exchange r32 with EAX")}},
+            /* 96 */ {{{{}, {}, {Symbols::eax, Symbols::esi}}, "xchg", OP_DESC("Exchange r32 with EAX")}},
+            /* 97 */ {{{{}, {}, {Symbols::eax, Symbols::edi}}, "xchg", OP_DESC("Exchange r32 with EAX")}},
+            /* 98 */ {{{{}, {}, {}}, "cwde", OP_DESC("EAX <- sign-extend of AX")}},
+            /* 99 */ {{{{}, {}, {}}, "cdq", OP_DESC("EDX:EAX <- sign-extend of EAX")}},
+            /* 9A */ {{{{}, {OpEncoding::cd}, {Symbols::ptr16_16}}, "call", OP_DESC("Call far, absolute, address given in operand")},
+            /* 9A */  {{{}, {OpEncoding::cp}, {Symbols::ptr16_32}}, "call", OP_DESC("Call far, absolute, address given in operand")}},
+            /* 9B */ {{{{0xD9}, {OpEncoding::m6}, {Symbols::m14_28byte}}, "fstenv", OP_DESC("Store FPU environment to m14byte or m28byte after checking for pending unmasked floating-point exceptions. Then mask all floating-point exceptions")},
+            /* 9B */  {{{0xD9}, {OpEncoding::m7}, {Symbols::m2byte}}, "fstcw", OP_DESC("Store FPU control word to m2byte after checking for pending unmasked floating-point exceptions")},
+            /* 9B */  {{{0xDB, 0xE2}, {}, {}}, "fclex", OP_DESC("Clear floating-point exception flags after checking forpending unmasked floating-point exceptions")},
+            /* 9B */  {{{0xDB, 0xE3}, {}, {}}, "finit", OP_DESC("Initialize FPU after checking for pending unmasked floating-point exceptions")},
+            /* 9B */  {{{0xDD}, {OpEncoding::m6}, {Symbols::m94_108byte}}, "fsave", OP_DESC("Store FPU state to m94byte or m108byte after checking for pending unmasked floating-point exceptions. Then re- initialize the FPU")},
+            /* 9B */  {{{0xDD}, {OpEncoding::m7}, {Symbols::m2byte}}, "fstsw", OP_DESC("Store FPU status word at m2byte after checking for pending unmasked floating-point exceptions")},
+            /* 9B */  {{{0xDF, 0xE0}, {}, {Symbols::ax}}, "fstsw", OP_DESC("Store FPU status word in AX register after checking for pending unmasked floating-point exceptions")},
+            /* 9B */  {{{}, {}, {}}, "fwait", OP_DESC("Check pending unmasked floating-point exceptions")}},
+            /* 9C */ {{{{}, {}, {}}, "pushfd", OP_DESC("Push EFLAGS")}},
+            /* 9D */ {{{{}, {}, {}}, "popfd", OP_DESC("Pop top of stack into EFLAGS")}},
+            /* 9E */ {{{{}, {}, {}}, "sahf", OP_DESC("Loads SF, ZF, AF, PF, and CF from AH into EFLAGS register")}},
+            /* 9F */ {{{{}, {}, {}}, "lahf", OP_DESC("Load: AH = EFLAGS(SF:ZF:0:AF:0:PF:1:CF)")}},
+            /* A0 */ {{{{}, {}, {Symbols::al, Symbols::moffs8}}, "mov", OP_DESC("Move byte at (seg:offset) to AL")}},
+            /* A1 */ {{{{}, {}, {Symbols::ax, Symbols::moffs16}}, "mov", OP_DESC("Move word at (seg:offset) to AX")},
+            /* A1 */  {{{}, {}, {Symbols::eax, Symbols::moffs32}}, "mov", OP_DESC("Move doubleword at (seg:offset) to EAX")}},
+            /* A2 */ {{{{}, {}, {Symbols::moffs8, Symbols::al}}, "mov", OP_DESC("Move AL to (seg:offset)")}},
+            /* A3 */ {{{{}, {}, {Symbols::moffs16, Symbols::ax}}, "mov", OP_DESC("Move AX to (seg:offset)")},
+            /* A3 */  {{{}, {}, {Symbols::moffs32, Symbols::eax}}, "mov", OP_DESC("Move EAX to (seg:offset)")}},
+            /* A4 */ {{{{}, {}, {}}, "movsb", OP_DESC("Move byte at address DS:(E)SI to address ES:(E)DI")}},
+            /* A5 */ {{{{}, {}, {}}, "movsd", OP_DESC("Move doubleword at address DS:(E)SI to address ES:(E)DI")}},
+            /* A6 */ {{{{}, {}, {}}, "cmpsb", OP_DESC("Compares byte at address DS:(E)SI with byte at address ES:(E)DI and sets the status flags accordingly")}},
+            /* A7 */ {{{{}, {}, {}}, "cmpsd", OP_DESC("Compares doubleword at address DS:(E)SI with doubleword at address ES:(E)DI and sets the status flags accordingly")}},
+            /* A8 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "test", OP_DESC("AND imm8 with AL; set SF, ZF, PF according to result")}},
+            /* A9 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}}, "test", OP_DESC("AND imm16 with AX; set SF, ZF, PF according to result")},
+            /* A9 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "test", OP_DESC("AND imm32 with EAX; set SF, ZF, PF according to result")}},
+            /* AA */ {{{{}, {}, {}}, "stosb", OP_DESC("Store AL at address ES:(E)DI")}},
+            /* AB */ {{{{}, {}, {}}, "stosd", OP_DESC("Store EAX at address ES:(E)DI")}},
+            /* AC */ {{{{}, {}, {}}, "lodsb", OP_DESC("Load byte at address DS:(E)SI into AL")}},
+            /* AD */ {{{{}, {}, {}}, "lodsd", OP_DESC("Load doubleword at address DS:(E)SI into EAX")}},
+            /* AE */ {{{{}, {}, {}}, "scasb", OP_DESC("Compare AL with byte at ES:(E)DI and set status flags")}},
+            /* AF */ {{{{}, {}, {}}, "scasd", OP_DESC("Compare EAX with doubleword at ES:(E)DI and set status flags")}},
+            /* B0 */ {{{{}, {}, {Symbols::al, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
+            /* B1 */ {{{{}, {}, {Symbols::bl, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
+            /* B2 */ {{{{}, {}, {Symbols::cl, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
+            /* B3 */ {{{{}, {}, {Symbols::dl, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
+            /* B4 */ {{{{}, {}, {Symbols::ah, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
+            /* B5 */ {{{{}, {}, {Symbols::bh, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
+            /* B6 */ {{{{}, {}, {Symbols::ch, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
+            /* B7 */ {{{{}, {}, {Symbols::dh, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
+            /* B8 */ {{{{}, {}, {Symbols::eax, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* B9 */ {{{{}, {}, {Symbols::ecx, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BA */ {{{{}, {}, {Symbols::edx, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BB */ {{{{}, {}, {Symbols::ebx, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BC */ {{{{}, {}, {Symbols::esp, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BD */ {{{{}, {}, {Symbols::ebp, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BE */ {{{{}, {}, {Symbols::esi, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BF */ {{{{}, {}, {Symbols::edi, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* C0 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rol", OP_DESC("Rotate eight bits rm8 left imm8 times")},
+            /* C0 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "ror", OP_DESC("Rotate eight bits rm16 right imm8 times")},
+            /* C0 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rcl", OP_DESC("Rotate nine bits (CF, rm8) left imm8 times")},
+            /* C0 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rcr", OP_DESC("Rotate nine bits (CF, rm8) right imm8 times")},
+            /* C0 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sal", OP_DESC("Multiply rm8 by 2, imm8 times")},
+            /* C0 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "shr", OP_DESC("Unsigned divide rm8 by 2, imm8 times")},
+            /* C0 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sar", OP_DESC("Signed divide* rm8 by 2, imm8 times")}},
+            /* C1 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm16, Symbols::imm8}}, "rol", OP_DESC("Rotate 16 bits rm16 left imm8 times")},
+            /* C1 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "ror", OP_DESC("Rotate 32 bits rm32 right imm8 times")},
+            /* C1 */  {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "rcl", OP_DESC("Rotate 17 bits (CF, rm16) left imm8 times")},
+            /* C1 */  {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "rcr", OP_DESC("Rotate 33 bits (CF, rm32) right imm8 times")},
+            /* C1 */  {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sal", OP_DESC("Multiply rm32 by 2, imm8 times")},
+            /* C1 */  {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "shr", OP_DESC("Unsigned divide rm32 by 2, imm8 times")},
+            /* C1 */  {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sar", OP_DESC("Signed divide* rm32 by 2, imm8 times")}},
+            /* C2 */ {{{{}, {OpEncoding::iw}, {Symbols::imm16}}, "ret", OP_DESC("Near return to calling procedure and pop imm16 bytes from stack")}},
+            /* C3 */ {{{{}, {}, {}}, "retn", OP_DESC("Near return to calling procedure")}},
+            /* C4 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::m16_16}}, "les", OP_DESC("Load ES: r16 with far pointer from memory")},
+            /* C4 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::m16_32}}, "les", OP_DESC("Load ES: r32 with far pointer from memory")}},
+            /* C5 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::m16_16}}, "lds", OP_DESC("Load DS: r16 with far pointer from memory")},
+            /* C5 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::m16_32}}, "lds", OP_DESC("Load DS: r32 with far pointer from memory")}},
+            /* C6 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to rm8")}},
+            /* C7 */ {{{{}, {OpEncoding::m0}, {Symbols::rm16, Symbols::imm16}}, "mov", OP_DESC("Move imm16 to rm16")},
+            /* C7 */  {{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to rm32")}},
+            /* C8 */ {{{{}, {OpEncoding::iw, OpEncoding::ib}, {Symbols::imm16, Symbols::imm8}}, "enter", OP_DESC("Create a nested (if imm8 > 0) stack frame for a procedure")}},
+            /* C9 */ {{{{}, {}, {}}, "leave", OP_DESC("Set ESP to EBP, then pop EBP")}},
+            /* CA */ {{{{}, {OpEncoding::iw}, {Symbols::imm16}}, "ret", OP_DESC("Far return to calling procedure and pop imm16 bytes from stack")}},
+            /* CB */ {{{{}, {}, {}}, "ret", OP_DESC("Far return to calling procedure")}},
+            /* CC */ {{{{}, {}, {}}, "int 3", OP_DESC("Interrupt 3—trap to debugger")}},
+            /* CD */ {{{{}, {OpEncoding::ib}, {Symbols::imm8}}, "int", OP_DESC("Interrupt vector number specified by immediate byte")}},
+            /* CE */ {{{{}, {}, {}}, "into", OP_DESC("Interrupt 4—if overflow flag is 1")}},
+            /* CF */ {{{{}, {}, {}}, "iretd", OP_DESC("Interrupt return (32-bit operand size)")}},
+            /* D0 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::one}}, "rol", OP_DESC("Rotate eight bits rm8 left once")},
+            /* D0 */  {{{}, {OpEncoding::m1}, {Symbols::rm8, Symbols::one}}, "ror", OP_DESC("Rotate eight bits rm8 right once")},
+            /* D0 */  {{{}, {OpEncoding::m2}, {Symbols::rm8, Symbols::one}}, "rcl", OP_DESC("Rotate nine bits (CF, rm8) left once")},
+            /* D0 */  {{{}, {OpEncoding::m3}, {Symbols::rm8, Symbols::one}}, "rcr", OP_DESC("Rotate nine bits (CF, rm8) right once")},
+            /* D0 */  {{{}, {OpEncoding::m4}, {Symbols::rm8, Symbols::one}}, "sal", OP_DESC("Multiply rm8 by 2, once")},
+            /* D0 */  {{{}, {OpEncoding::m5}, {Symbols::rm8, Symbols::one}}, "shr", OP_DESC("Unsigned divide rm8 by 2, once")},
+            /* D0 */  {{{}, {OpEncoding::m7}, {Symbols::rm8, Symbols::one}}, "sar", OP_DESC("Signed divide* rm8 by 2, once")}},
+            /* D1 */ {{{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::one}}, "rol", OP_DESC("Rotate 32 bits rm32 left once")},
+            /* D1 */  {{{}, {OpEncoding::m1}, {Symbols::rm32, Symbols::one}}, "ror", OP_DESC("Rotate 32 bits rm32 right once")},
+            /* D1 */  {{{}, {OpEncoding::m2}, {Symbols::rm32, Symbols::one}}, "rcl", OP_DESC("Rotate 33 bits (CF, rm32) left once")},
+            /* D1 */  {{{}, {OpEncoding::m3}, {Symbols::rm32, Symbols::one}}, "rcr", OP_DESC("Rotate 33 bits (CF, rm32) right once")},
+            /* D1 */  {{{}, {OpEncoding::m4}, {Symbols::rm32, Symbols::one}}, "shl", OP_DESC("Multiply rm16 by 2, once")},
+            /* D1 */  {{{}, {OpEncoding::m5}, {Symbols::rm32, Symbols::one}}, "shr", OP_DESC("Unsigned divide rm16 by 2, once")},
+            /* D1 */  {{{}, {OpEncoding::m7}, {Symbols::rm32, Symbols::one}}, "sar", OP_DESC("Signed divide* rm16 by 2, once")}},
+            /* D2 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::cl}}, "rol", OP_DESC("Rotate eight bits rm8 left CL times")},
+            /* D2 */  {{{}, {OpEncoding::m1}, {Symbols::rm8, Symbols::cl}}, "ror", OP_DESC("Rotate eight bits rm8 right CL times")},
+            /* D2 */  {{{}, {OpEncoding::m2}, {Symbols::rm8, Symbols::cl}}, "rcl", OP_DESC("Rotate nine bits (CF, rm8) left CL times")},
+            /* D2 */  {{{}, {OpEncoding::m3}, {Symbols::rm8, Symbols::cl}}, "rcr", OP_DESC("Rotate nine bits (CF, rm8) right CL times")},
+            /* D2 */  {{{}, {OpEncoding::m4}, {Symbols::rm8, Symbols::cl}}, "shl", OP_DESC("Multiply rm8 by 2, CL times")},
+            /* D2 */  {{{}, {OpEncoding::m5}, {Symbols::rm8, Symbols::cl}}, "shr", OP_DESC("Unsigned divide rm8 by 2, CL times")},
+            /* D2 */  {{{}, {OpEncoding::m7}, {Symbols::rm8, Symbols::cl}}, "sar", OP_DESC("Signed divide* rm8 by 2, CL times")}},
+            /* D3 */ {{{{}, {OpEncoding::m0}, {Symbols::rm16, Symbols::cl}}, "rol", OP_DESC("Rotate 16 bits rm16 left CL times")},
+            /* D3 */  {{{}, {OpEncoding::m1}, {Symbols::rm16, Symbols::cl}}, "ror", OP_DESC("Rotate 16 bits rm16 right CL times")},
+            /* D3 */  {{{}, {OpEncoding::m2}, {Symbols::rm32, Symbols::cl}}, "rcl", OP_DESC("Rotate 33 bits (CF, rm32) left CL times")},
+            /* D3 */  {{{}, {OpEncoding::m3}, {Symbols::rm32, Symbols::cl}}, "rcr", OP_DESC("Rotate 33 bits (CF, rm32) right CL times")},
+            /* D3 */  {{{}, {OpEncoding::m4}, {Symbols::rm16, Symbols::cl}}, "shl", OP_DESC("Multiply rm16 by 2, CL times")},
+            /* D3 */  {{{}, {OpEncoding::m5}, {Symbols::rm16, Symbols::cl}}, "shr", OP_DESC("Unsigned divide rm16 by 2, CL times")},
+            /* D3 */  {{{}, {OpEncoding::m7}, {Symbols::rm16, Symbols::cl}}, "sar", OP_DESC("Signed divide* rm16 by 2, CL times")}},
+            /* D4 */ {{{{0x0A}, {}, {}}, "aam", OP_DESC("ASCII adjust AX after multiply")}},
+            /* D5 */ {{{{0x0A}, {}, {}}, "aad", OP_DESC("ASCII adjust AX before division")}},
+            /* D6 */ {{{{}, {}, {}}, "???", OP_DESC("Unrecognized opcode")}},
+            /* D7 */ {{{{}, {}, {}}, "xlatb", OP_DESC("Set AL to memory byte DS:[(E)BX + unsigned AL]")}},
+            /* D8 */ {{{{0xC0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fadd", OP_DESC("Add ST(0) to ST(i) and store result in ST(0)")},
+            /* D8 */  {{{0xC8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fmul", OP_DESC("Multiply ST(0) by ST(i) and store result in ST(0)")},
+            /* D8 */  {{{0xD0}, {OpEncoding::i}, {Symbols::sti}}, "fcom", OP_DESC("Compare ST(0) with ST(i)")},
+            /* D8 */  {{{0xD8}, {OpEncoding::i}, {Symbols::sti}}, "fcomp", OP_DESC("Compare ST(0) with ST(i) and pop register stack")},
+            /* D8 */  {{{0xE0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fsub", OP_DESC("Subtract ST(i) from ST(0) and store result in ST(0)")},
+            /* D8 */  {{{0xE8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fsubr", OP_DESC("Subtract ST(0) from ST(i) and store result in ST(0)")},
+            /* D8 */  {{{0xF0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fdiv", OP_DESC("Divide ST(0) by ST(i) and store result in ST(0)")},
+            /* D8 */  {{{0xF8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fdivr", OP_DESC("Divide ST(i) by ST(0) and store result in ST(0)")},
+            /* D8 */  {{{}, {OpEncoding::m0}, {Symbols::m32real}}, "fadd", OP_DESC("Add m32real to ST(0) and store result in ST(0)")},
+            /* D8 */  {{{}, {OpEncoding::m1}, {Symbols::m32real}}, "fmul", OP_DESC("Multiply ST(0) by m32real and store result in ST(0)")},
+            /* D8 */  {{{}, {OpEncoding::m2}, {Symbols::m32real}}, "fcom", OP_DESC("Compare ST(0) with m32real")},
+            /* D8 */  {{{}, {OpEncoding::m3}, {Symbols::m32real}}, "fcomp", OP_DESC("Compare ST(0) with m32real and pop register stack")},
+            /* D8 */  {{{}, {OpEncoding::m4}, {Symbols::m32real}}, "fsub", OP_DESC("Subtract m32real from ST(0) and store result in ST(0)")},
+            /* D8 */  {{{}, {OpEncoding::m5}, {Symbols::m32real}}, "fsubr", OP_DESC("Subtract ST(0) from m32real and store result in ST(0)")},
+            /* D8 */  {{{}, {OpEncoding::m6}, {Symbols::m32real}}, "fdiv", OP_DESC("Divide ST(0) by m32real and store result in ST(0)")},
+            /* D8 */  {{{}, {OpEncoding::m7}, {Symbols::m32real}}, "fdivr", OP_DESC("Divide m32real by ST(0) and store result in ST(0)")}},
+            /* D9 */ {{{{0xC0}, {OpEncoding::i}, {Symbols::sti}}, "fld", OP_DESC("Push ST(i) onto the FPU register stack")},
+            /* D9 */  {{{0xC8}, {OpEncoding::i}, {Symbols::sti}}, "fxch", OP_DESC("Exchange the contents of ST(0) and ST(i)")},
+            /* D9 */  {{{0xC9}, {}, {}}, "fxch", OP_DESC("Exchange the contents of ST(0) and ST(1)")},
+            /* D9 */  {{{0xD0}, {}, {}}, "fnop", OP_DESC("No operation is performed")},
+            /* D9 */  {{{0xE0}, {}, {}}, "fchs", OP_DESC("Complements sign of ST(0)")},
+            /* D9 */  {{{0xE1}, {}, {}}, "fabs", OP_DESC("Replace ST with its absolute value")},
+            /* D9 */  {{{0xE4}, {}, {}}, "ftst", OP_DESC("Compare ST(0) with 0.0")},
+            /* D9 */  {{{0xE5}, {}, {}}, "fxam", OP_DESC("Classify value or number in ST(0)")},
+            /* D9 */  {{{0xE8}, {}, {}}, "fld1", OP_DESC("Push +1.0 onto the FPU register stack")},
+            /* D9 */  {{{0xE9}, {}, {}}, "fldl2t", OP_DESC("Push log 210 onto the FPU register stack")},
+            /* D9 */  {{{0xEA}, {}, {}}, "fltl2e", OP_DESC("Push log 2e onto the FPU register stack")},
+            /* D9 */  {{{0xEB}, {}, {}}, "fldpi", OP_DESC("Push PI onto the FPU register stack")},
+            /* D9 */  {{{0xEC}, {}, {}}, "fldlg2", OP_DESC("Push log 102 onto the FPU register stack")},
+            /* D9 */  {{{0xED}, {}, {}}, "fldln2", OP_DESC("Push log e2 onto the FPU register stack")},
+            /* D9 */  {{{0xEE}, {}, {}}, "fldz", OP_DESC("Push +0.0 onto the FPU register stack")},
+            /* D9 */  {{{0xF0}, {}, {}}, "f2xm1", OP_DESC("Replace ST(0) with (2 ST(0) – 1)")},
+            /* D9 */  {{{0xF1}, {}, {}}, "fyl2x", OP_DESC("Replace ST(1) with (ST(1) * log 2ST(0)) and pop the register stack")},
+            /* D9 */  {{{0xF2}, {}, {}}, "fptan", OP_DESC("Replace ST(0) with its tangent and push 1 onto the FPU stack")},
+            /* D9 */  {{{0xF3}, {}, {}}, "fpatan", OP_DESC("Replace ST(1) with arctan(ST(1)/ST(0)) and pop the register stack")},
+            /* D9 */  {{{0xF4}, {}, {}}, "fxtract", OP_DESC("Separate value in ST(0) into exponent and significand, store exponent in ST(0), and push the significand onto the register stack")},
+            /* D9 */  {{{0xF5}, {}, {}}, "fprem1", OP_DESC("Replace ST(0) with the IEEE remainder obtained from dividing ST(0) by ST(1)")},
+            /* D9 */  {{{0xF6}, {}, {}}, "fdecstp", OP_DESC("Decrement TOP field in FPU status word")},
+            /* D9 */  {{{0xF7}, {}, {}}, "fincstp", OP_DESC("Increment the TOP field in the FPU status register")},
+            /* D9 */  {{{0xF8}, {}, {}}, "fprem", OP_DESC("Replace ST(0) with the remainder obtained from dividing ST(0) by ST(1)")},
+            /* D9 */  {{{0xF9}, {}, {}}, "fyl2xp1", OP_DESC("Replace ST(1) with ST(1) * log 2 (ST(0) + 1.0) and pop the register stack")},
+            /* D9 */  {{{0xFA}, {}, {}}, "fsqrt", OP_DESC("Calculates square root of ST(0) and stores the result in ST(0)")},
+            /* D9 */  {{{0xFB}, {}, {}}, "fsincos", OP_DESC("Compute the sine and cosine of ST(0); replace ST(0) with the sine, and push the cosine onto the register stack")},
+            /* D9 */  {{{0xFC}, {}, {}}, "frndint", OP_DESC("Round ST(0) to an integer")},
+            /* D9 */  {{{0xFD}, {}, {}}, "fscale", OP_DESC("Scale ST(0) by ST(1)")},
+            /* D9 */  {{{0xFE}, {}, {}}, "fsin", OP_DESC("Replace ST(0) with its sine")},
+            /* D9 */  {{{0xFF}, {}, {}}, "fcos", OP_DESC("Replace ST(0) with its cosine")},
+            /* D9 */  {{{}, {OpEncoding::m0}, {Symbols::m32real}}, "fld", OP_DESC("Push m32real onto the FPU register stack")},
+            /* D9 */  {{{}, {OpEncoding::m2}, {Symbols::m32real}}, "fst", OP_DESC("Copy ST(0) to m32real")},
+            /* D9 */  {{{}, {OpEncoding::m3}, {Symbols::m32real}}, "fstp", OP_DESC("Copy ST(0) to m32real and pop register stack")},
+            /* D9 */  {{{}, {OpEncoding::m4}, {Symbols::m14_28byte}}, "fldenv", OP_DESC("Load FPU environment from m14byte or m28byte")},
+            /* D9 */  {{{}, {OpEncoding::m5}, {Symbols::m2byte}}, "fldcw", OP_DESC("Load FPU control word from m2byte")},
+            /* D9 */  {{{}, {OpEncoding::m6}, {Symbols::m14_28byte}}, "fnstenv", OP_DESC("Store FPU environment to m14byte or m28byte without checking for pending unmasked floating-point exceptions. Then mask all floating-point exceptions")},
+            /* D9 */  {{{}, {OpEncoding::m7}, {Symbols::m2byte}}, "fnstcw", OP_DESC("Store FPU control word to m2byte without checking for pending unmasked floating-point exceptions")}},
+            /* DA */ {{{{0xC0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovb", OP_DESC("Move if below (CF=1)")},
+            /* DA */  {{{0xC8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmove", OP_DESC("Move if equal (ZF=1)")},
+            /* DA */  {{{0xD0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovbe", OP_DESC("Move if below or equal (CF=1 or ZF=1)")},
+            /* DA */  {{{0xD8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovu", OP_DESC("Move if unordered (PF=1)")},
+            /* DA */  {{{0xE9}, {}, {}}, "fucompp", OP_DESC("Compare ST(0) with ST(1) and pop register stack twice")},
+            /* DA */  {{{}, {OpEncoding::m0}, {Symbols::m32int}}, "fiadd", OP_DESC("Add m32int to ST(0) and store result in ST(0)")},
+            /* DA */  {{{}, {OpEncoding::m1}, {Symbols::m32int}}, "fimul", OP_DESC("Multiply ST(0) by m32int and store result in ST(0)")},
+            /* DA */  {{{}, {OpEncoding::m2}, {Symbols::m32int}}, "ficom", OP_DESC("Compare ST(0) with m32int")},
+            /* DA */  {{{}, {OpEncoding::m3}, {Symbols::m32int}}, "ficomp", OP_DESC("Compare ST(0) with m32int and pop register stack")},
+            /* DA */  {{{}, {OpEncoding::m4}, {Symbols::m32int}}, "fisub", OP_DESC("Subtract m32int from ST(0) and store result in ST(0)")},
+            /* DA */  {{{}, {OpEncoding::m5}, {Symbols::m32int}}, "fisubr", OP_DESC("Subtract ST(0) from m32int and store result in ST(0)")},
+            /* DA */  {{{}, {OpEncoding::m6}, {Symbols::m32int}}, "fidiv", OP_DESC("Divide ST(0) by m32int and store result in ST(0)")},
+            /* DA */  {{{}, {OpEncoding::m7}, {Symbols::m32int}}, "fidivr", OP_DESC("Divide m32int by ST(0) and store result in ST(0)")}},
+            /* DB */ {{{{0xC0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovnb", OP_DESC("Move if not below (CF=0)")},
+            /* DB */  {{{0xC8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovne", OP_DESC("Move if not equal (ZF=0)")},
+            /* DB */  {{{0xD0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovnbe", OP_DESC("Move if not below or equal (CF=0 and ZF=0)")},
+            /* DB */  {{{0xD8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcmovnu", OP_DESC("Move if not unordered (PF=0)")},
+            /* DB */  {{{0xE2}, {}, {}}, "fnclex", OP_DESC("Clear floating-point exception flags without checking for pending unmasked floating-point exceptions")},
+            /* DB */  {{{0xE3}, {}, {}}, "fninit", OP_DESC("Initialize FPU without checking for pending unmasked floating-point exceptions")},
+            /* DB */  {{{0xE8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fucomi", OP_DESC("Compare ST(0) with ST(i), check for ordered values, and set status flags accordingly")},
+            /* DB */  {{{0xF0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcomi", OP_DESC("Compare ST(0) with ST(i) and set status flags accordingly")},
+            /* DB */  {{{}, {OpEncoding::m0}, {Symbols::m32int}}, "fild", OP_DESC("Push m32int onto the FPU register stack")},
+            /* DB */  {{{}, {OpEncoding::m2}, {Symbols::m32int}}, "fist", OP_DESC("Store ST(0) in m32int")},
+            /* DB */  {{{}, {OpEncoding::m3}, {Symbols::m32int}}, "fistp", OP_DESC("Store ST(0) in m32int and pop register stack")},
+            /* DB */  {{{}, {OpEncoding::m5}, {Symbols::m80real}}, "fld", OP_DESC("Push m80real onto the FPU register stack")},
+            /* DB */  {{{}, {OpEncoding::m7}, {Symbols::m80real}}, "fstp", OP_DESC("Copy ST(0) to m80real and pop register stack")}},
+            /* DC */ {{{{0xC0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fadd", OP_DESC("Add ST(i) to ST(0) and store result in ST(i)")},
+            /* DC */  {{{0xC8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fmul", OP_DESC("Multiply ST(i) by ST(0) and store result in ST(i)")},
+            /* DC */  {{{0xE0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fsub", OP_DESC("Subtract ST(0) from ST(i) and store result in ST(i)")},
+            /* DC */  {{{0xE8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fsubr", OP_DESC("Subtract ST(0) from ST(i) and store result in ST(i)")},
+            /* DC */  {{{0xF0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fdiv", OP_DESC("Divide ST(0) by ST(i) and store result in ST(i)")},
+            /* DC */  {{{0xF8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fdivr", OP_DESC("Divide ST(i) by ST(0) and store result in ST(i)")},
+            /* DC */  {{{}, {OpEncoding::m0}, {Symbols::m64real}}, "fadd", OP_DESC("Add m64real to ST(0) and store result in ST(0)")},
+            /* DC */  {{{}, {OpEncoding::m1}, {Symbols::m64real}}, "fmul", OP_DESC("Multiply ST(0) by m64real and store result in ST(0)")},
+            /* DC */  {{{}, {OpEncoding::m2}, {Symbols::m64real}}, "fcom", OP_DESC("Compare ST(0) with m64real")},
+            /* DC */  {{{}, {OpEncoding::m3}, {Symbols::m64real}}, "fcomp", OP_DESC("Compare ST(0) with m64real and pop register stack")},
+            /* DC */  {{{}, {OpEncoding::m4}, {Symbols::m64real}}, "fsub", OP_DESC("Subtract m64real from ST(0) and store result in ST(0)")},
+            /* DC */  {{{}, {OpEncoding::m5}, {Symbols::m64real}}, "fsubr", OP_DESC("Subtract ST(0) from m64real and store result in ST(0)")},
+            /* DC */  {{{}, {OpEncoding::m6}, {Symbols::m64real}}, "fdiv", OP_DESC("Divide ST(0) by m64real and store result in ST(0)")},
+            /* DC */  {{{}, {OpEncoding::m7}, {Symbols::m64real}}, "fdivr", OP_DESC("Divide m64real by ST(0) and store result in ST(0)")}},
+            /* DD */ {{{{0xC0}, {OpEncoding::i}, {Symbols::sti}}, "ffree", OP_DESC("Sets tag for ST(i) to empty")},
+            /* DD */  {{{0xD0}, {OpEncoding::i}, {Symbols::sti}}, "fst", OP_DESC("Copy ST(0) to ST(i)")},
+            /* DD */  {{{0xD8}, {OpEncoding::i}, {Symbols::sti}}, "fstp", OP_DESC("Copy ST(0) to ST(i) and pop register stack")},
+            /* DD */  {{{0xE0}, {OpEncoding::i}, {Symbols::sti}}, "fucom", OP_DESC("Compare ST(0) with ST(1)")},
+            /* DD */  {{{0xE8}, {OpEncoding::i}, {Symbols::sti}}, "fucomp", OP_DESC("Compare ST(0) with ST(i) and pop register stack")},
+            /* DD */  {{{}, {OpEncoding::m0}, {Symbols::m64real}}, "fld", OP_DESC("Push m64real onto the FPU register stack")},
+            /* DD */  {{{}, {OpEncoding::m2}, {Symbols::m64real}}, "fst", OP_DESC("Copy ST(0) to m64real")},
+            /* DD */  {{{}, {OpEncoding::m3}, {Symbols::m64real}}, "fstp", OP_DESC("Copy ST(0) to m64real and pop register stack")},
+            /* DD */  {{{}, {OpEncoding::m4}, {Symbols::m94_108byte}}, "frstor", OP_DESC("Load FPU state from m94byte or m108byte")},
+            /* DD */  {{{}, {OpEncoding::m6}, {Symbols::m94_108byte}}, "fnsave", OP_DESC("Store FPU environment to m94byte or m108byte without checking for pending unmasked floating-point exceptions. Then re-initialize the FPU")},
+            /* DD */  {{{}, {OpEncoding::m7}, {Symbols::m2byte}}, "fnstsw", OP_DESC("Store FPU status word at m2byte without checking for pending unmasked floating-point exceptions")}},
+            /* DE */ {{{{0xC0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "faddp", OP_DESC("Add ST(0) to ST(i), store result in ST(i), and pop the register stack")},
+            /* DE */  {{{0xC8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fmulp", OP_DESC("Multiply ST(i) by ST(0), store result in ST(i), and pop the register stack")},
+            /* DE */  {{{0xD0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fcomprp", OP_DESC("Compare ST(0) with ST(1) and pop register stack twice")},
+            /* DE */  {{{0xD8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fcompp", OP_DESC("Compare ST(0) with ST(1) and pop register stack twice")},
+            /* DE */  {{{0xE0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fsubrp", OP_DESC("Subtract ST(i) from ST(0), store result in ST(i), and pop register stack")},
+            /* DE */  {{{0xE8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fsubp", OP_DESC("Subtract ST(0) from ST(i), store result in ST(i), and pop register stack")},
+            /* DE */  {{{0xF0}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fdivrp", OP_DESC("Divide ST(0) by ST(i), store result in ST(i), and pop the register stack")},
+            /* DE */  {{{0xF8}, {OpEncoding::i}, {Symbols::sti, Symbols::st0}}, "fdivp", OP_DESC("Divide ST(i) by ST(0), store result in ST(i), and pop the register stack")},
+            /* DE */  {{{}, {OpEncoding::m0}, {Symbols::m16int}}, "fiadd", OP_DESC("Add m16int to ST(0) and store result in ST(0)")},
+            /* DE */  {{{}, {OpEncoding::m1}, {Symbols::m16int}}, "fimul", OP_DESC("Multiply ST(0) by m16int and store result in ST(0)")},
+            /* DE */  {{{}, {OpEncoding::m2}, {Symbols::m16int}}, "ficom", OP_DESC("Compare ST(0) with m16int")},
+            /* DE */  {{{}, {OpEncoding::m3}, {Symbols::m16int}}, "ficomp", OP_DESC("Compare ST(0) with m16int and pop register stack")},
+            /* DE */  {{{}, {OpEncoding::m4}, {Symbols::m16int}}, "fisub", OP_DESC("Subtract m16int from ST(0) and store result in ST(0)")},
+            /* DE */  {{{}, {OpEncoding::m5}, {Symbols::m16int}}, "fisubr", OP_DESC("Subtract ST(0) from m16int and store result in ST(0)")},
+            /* DE */  {{{}, {OpEncoding::m6}, {Symbols::m16int}}, "fidiv", OP_DESC("Divide ST(0) by m16int and store result in ST(0)")},
+            /* DE */  {{{}, {OpEncoding::m7}, {Symbols::m16int}}, "fidivr", OP_DESC("Divide m16int by ST(0) and store result in ST(0)")}},
+            /* DF */ {{{{0xE0}, {}, {Symbols::ax}}, "fnstsw", OP_DESC("Store FPU status word in AX register without checking for pending unmasked floating-point exceptions")},
+            /* DF */  {{{0xE8}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fucomip", OP_DESC("Compare ST(0) with ST(i), check for ordered values, set status flags accordingly, and pop register stack")},
+            /* DF */  {{{0xF0}, {OpEncoding::i}, {Symbols::st0, Symbols::sti}}, "fcomip", OP_DESC("Compare ST(0) with ST(i), set status flags accordingly, and pop register stack")},
+            /* DF */  {{{}, {OpEncoding::m0}, {Symbols::m16int}}, "fild", OP_DESC("Push m16int onto the FPU register stack")},
+            /* DF */  {{{}, {OpEncoding::m2}, {Symbols::m16int}}, "fist", OP_DESC("Store ST(0) in m16int")},
+            /* DF */  {{{}, {OpEncoding::m3}, {Symbols::m16int}}, "fistp", OP_DESC("Store ST(0) in m16int and pop register stack")},
+            /* DF */  {{{}, {OpEncoding::m4}, {Symbols::m80dec}}, "fbld", OP_DESC("Convert BCD value to real and push onto the FPU stack")},
+            /* DF */  {{{}, {OpEncoding::m5}, {Symbols::m64int}}, "fild", OP_DESC("Push m64int onto the FPU register stack")},
+            /* DF */  {{{}, {OpEncoding::m6}, {Symbols::m80bcd}}, "fbstp", OP_DESC("Store ST(0) in m80bcd and pop ST(0)")},
+            /* DF */  {{{}, {OpEncoding::m7}, {Symbols::m64int}}, "fistp", OP_DESC("Store ST(0) in m64int and pop register stack")}},
+            /* E0 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "loopne", OP_DESC("Decrement count; jump short if count != 0 and ZF=0")}},
+            /* E1 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "loope", OP_DESC("Decrement count; jump short if count != 0 and ZF=1")}},
+            /* E2 */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "loop", OP_DESC("Decrement count; jump short if count != 0")}},
+            /* E3 */ {{{{}, {}, {}}, "???", OP_DESC("Unrecognized opcode")}},
+            /* E4 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "in", OP_DESC("Input byte from imm8 I/O port address into AL")}},
+            /* E5 */ {{{{}, {OpEncoding::ib}, {Symbols::ax, Symbols::imm8}, BaseSet_x86_64::OPS_16MODE}, "in", OP_DESC("Input byte from imm8 I/O port address into AX")},
+            /* E5 */  {{{}, {OpEncoding::ib}, {Symbols::eax, Symbols::imm8}}, "in", OP_DESC("Input byte from imm8 I/O port address into EAX")}},
+            /* E6 */ {{{{}, {OpEncoding::ib}, {Symbols::imm8, Symbols::al}}, "out", OP_DESC("Output byte in AL to I/O port address imm8")}},
+            /* E7 */ {{{{}, {OpEncoding::ib}, {Symbols::imm8, Symbols::ax}, BaseSet_x86_64::OPS_16MODE}, "out", OP_DESC("Output byte in AX to I/O port address imm8")},
+            /* E7 */  {{{}, {OpEncoding::ib}, {Symbols::imm8, Symbols::eax}}, "out", OP_DESC("Output byte in EAX to I/O port address imm8")}},
+            /* E8 */ {{{{}, {OpEncoding::cd}, {Symbols::rel32}}, "call", OP_DESC("Call near, relative, displacement relative to next instruction")}},
+            /* E9 */ {{{{}, {OpEncoding::cd}, {Symbols::rel32}}, "jmp", OP_DESC("Jump near, relative, displacement relative to next instruction")}},
+            /* EA */ {{{{}, {OpEncoding::cp}, {Symbols::ptr16_32}}, "jmp", OP_DESC("Jump far, absolute, address given in operand")}},
+            /* EB */ {{{{}, {OpEncoding::cb}, {Symbols::rel8}}, "jmp", OP_DESC("Jump short, relative, displacement relative to next instruction")}},
+            /* EC */ {{{{}, {}, {Symbols::al, Symbols::dx}}, "in", OP_DESC("Input byte from I/O port in DX into AL")}},
+            /* ED */ {{{{}, {}, {Symbols::ax, Symbols::dx}, BaseSet_x86_64::OPS_16MODE}, "in", OP_DESC("Input doubleword from I/O port in DX into AX")},
+            /* ED */  {{{}, {}, {Symbols::eax, Symbols::dx}}, "in", OP_DESC("Input doubleword from I/O port in DX into EAX")}},
+            /* EE */ {{{{}, {}, {Symbols::dx, Symbols::al}}, "out", OP_DESC("Output byte in AL to I/O port address in DX")}},
+            /* EF */ {{{{}, {}, {Symbols::dx, Symbols::ax}, BaseSet_x86_64::OPS_16MODE}, "out", OP_DESC("Output doubleword in AX to I/O port address in DX")},
+            /* EF */  {{{}, {}, {Symbols::dx, Symbols::eax}}, "out", OP_DESC("Output doubleword in EAX to I/O port address in DX")}},
+            /* F0 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "lock", OP_DESC("Asserts LOCK# signal for duration of the accompanying instruction")}},
+            /* F1 */ {{{{}, {}, {}}, "???", OP_DESC("Unrecognized opcode")}},
+            /* F2 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "repne", OP_DESC("Prefix")}},
+            /* F3 */ {{{{}, {}, {}, BaseSet_x86_64::OPS_IS_PREFIX}, "repe", OP_DESC("Prefix")}},
+            /* F4 */ {{{{}, {}, {}}, "hlt", OP_DESC("Halt")}},
+            /* F5 */ {{{{}, {}, {}}, "cmc", OP_DESC("Complement CF flag")}},
+            /* F6 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::imm8}}, "test", OP_DESC("AND imm8 with rm8; set SF, ZF, PF according to result")},
+            /* F6 */  {{{}, {OpEncoding::m2}, {Symbols::rm8}}, "not", OP_DESC("Reverse each bit of rm8")},
+            /* F6 */  {{{}, {OpEncoding::m3}, {Symbols::rm8}}, "neg", OP_DESC("Two’s complement negate rm8")},
+            /* F6 */  {{{}, {OpEncoding::m4}, {Symbols::rm8}}, "mul", OP_DESC("Unsigned multiply (AX <- AL * rm8)")},
+            /* F6 */  {{{}, {OpEncoding::m5}, {Symbols::rm8}}, "imul", OP_DESC("AX <- AL * rm byte")},
+            /* F6 */  {{{}, {OpEncoding::m6}, {Symbols::rm8}}, "div", OP_DESC("Unsigned divide AX by rm8; AL <- Quotient, AH <- Remainder")},
+            /* F6 */  {{{}, {OpEncoding::m7}, {Symbols::rm8}}, "idiv", OP_DESC("Signed divide AX (where AH must contain sign-extension of AL) by rm byte. (Results: AL=Quotient, AH=Remainder)")}},
+            /* F7 */ {{{{}, {OpEncoding::m0}, {Symbols::rm16, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "test", OP_DESC("AND imm16 with rm16; set SF, ZF, PF according to resul")},
+            /* F7 */  {{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::imm32}}, "test", OP_DESC("AND imm32 with rm32; set SF, ZF, PF according to result")},
+            /* F7 */  {{{}, {OpEncoding::m2}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "not", OP_DESC("Reverse each bit of rm16")},
+            /* F7 */  {{{}, {OpEncoding::m2}, {Symbols::rm32}}, "not", OP_DESC("Reverse each bit of rm32")},
+            /* F7 */  {{{}, {OpEncoding::m3}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "neg", OP_DESC("Two’s complement negate rm16")},
+            /* F7 */  {{{}, {OpEncoding::m3}, {Symbols::rm32}}, "neg", OP_DESC("Two’s complement negate rm32")},
+            /* F7 */  {{{}, {OpEncoding::m4}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "mul", OP_DESC("Unsigned multiply (DX:AX <- AX * rm16)")},
+            /* F7 */  {{{}, {OpEncoding::m4}, {Symbols::rm32}}, "mul", OP_DESC("Unsigned multiply (EDX:EAX <- EAX * rm32)")},
+            /* F7 */  {{{}, {OpEncoding::m5}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "imul", OP_DESC("DX:AX <- AX * rm word")},
+            /* F7 */  {{{}, {OpEncoding::m5}, {Symbols::rm32}}, "imul", OP_DESC("EDX:EAX <- EAX * rm doubleword")},
+            /* F7 */  {{{}, {OpEncoding::m6}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "div", OP_DESC("Unsigned divide DX:AX by rm16; AX <- Quotient, DX <- Remainder")},
+            /* F7 */  {{{}, {OpEncoding::m6}, {Symbols::rm32}}, "div", OP_DESC("Unsigned divide EDX:EAX by rm32 doubleword; EAX <- Quotient, EDX <- Remainder")},
+            /* F7 */  {{{}, {OpEncoding::m7}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "idiv", OP_DESC("Signed divide DX:AX (where DX must contain sign- extension of AX) by rm word. (Results: AX=Quotient, DX=Remainder)")},
+            /* F7 */  {{{}, {OpEncoding::m7}, {Symbols::rm32}}, "idiv", OP_DESC("Signed divide EDX:EAX (where EDX must contain sign-extension of EAX) by rm doubleword. (Results: EAX=Quotient, EDX=Remainder)")}},
+            /* F8 */ {{{{}, {}, {}}, "clc", OP_DESC("Clear CF flag")}},
+            /* F9 */ {{{{}, {}, {}}, "stc", OP_DESC("Set CF flag")}},
+            /* FA */ {{{{}, {}, {}}, "cli", OP_DESC("Clear interrupt flag; interrupts disabled when interrupt flag cleared")}},
+            /* FB */ {{{{}, {}, {}}, "sti", OP_DESC("Set interrupt flag; external, maskable interrupts enabled at the end of the next instruction")}},
+            /* FC */ {{{{}, {}, {}}, "cld", OP_DESC("Clear DF flag")}},
+            /* FD */ {{{{}, {}, {}}, "std", OP_DESC("Set DF flag")}},
+            /* FE */ {{{{}, {OpEncoding::m0}, {Symbols::rm8}}, "inc", OP_DESC("Increment rm byte by 1")},
+            /* FE */  {{{}, {OpEncoding::m1}, {Symbols::rm8}}, "dec", OP_DESC("Decrement rm byte by 1")}},
+            /* FF */ {{{{}, {OpEncoding::m0}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "inc", OP_DESC("Increment rm word by 1")},
+            /* FF */  {{{}, {OpEncoding::m0}, {Symbols::rm32}}, "inc", OP_DESC("Increment rm doubleword by 1")},
+            /* FF */  {{{}, {OpEncoding::m1}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "dec", OP_DESC("Decrement rm word by 1")},
+            /* FF */  {{{}, {OpEncoding::m1}, {Symbols::rm32}}, "dec", OP_DESC("Decrement rm doubleword by 1")},
+            /* FF */  {{{}, {OpEncoding::m2}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "call", OP_DESC("Call near, absolute indirect, address given in rm16")},
+            /* FF */  {{{}, {OpEncoding::m2}, {Symbols::rm32}}, "call", OP_DESC("Call near, absolute indirect, address given in rm32")},
+            /* FF */  {{{}, {OpEncoding::m3}, {Symbols::m16_16}, BaseSet_x86_64::OPS_16MODE}, "call", OP_DESC("Call far, absolute indirect, address given in m16:16")},
+            /* FF */  {{{}, {OpEncoding::m3}, {Symbols::m16_32}}, "call", OP_DESC("Call far, absolute indirect, address given in m16:32")},
+            /* FF */  {{{}, {OpEncoding::m4}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "jmp", OP_DESC("Jump near, absolute indirect, address given in rm16")},
+            /* FF */  {{{}, {OpEncoding::m4}, {Symbols::rm32}}, "jmp", OP_DESC("Jump near, absolute indirect, address given in rm32")},
+            /* FF */  {{{}, {OpEncoding::m5}, {Symbols::m16_16}, BaseSet_x86_64::OPS_16MODE}, "jmp", OP_DESC("Jump far, absolute indirect, address given in m16:16")},
+            /* FF */  {{{}, {OpEncoding::m5}, {Symbols::m16_32}}, "jmp", OP_DESC("Jump far, absolute indirect, address given in m16:32")},
+            /* FF */  {{{}, {OpEncoding::m6}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "push", OP_DESC("Push rm16")},
+            /* FF */  {{{}, {OpEncoding::m6}, {Symbols::rm32}}, "push", OP_DESC("Push rm32")}}
         };
     }
         
@@ -2337,6 +2615,8 @@ namespace Seraph
         constexpr const uint8_t PRE_REPNE   = 0xF2;
         constexpr const uint8_t PRE_REPE    = 0xF3;
 
+        size_t streamStartIndex = stream.size();
+
         Opcode opcode = { 0 };
         uint8_t cur = stream.next();
         
@@ -2362,64 +2642,67 @@ namespace Seraph
         //
         for (int i = 0; i < 4; i++)
         {
-            for (const auto ref : oplookup_x86_64[cur])
+            switch (cur)
             {
-                if (ref.extData.settings & BaseSet_x86_64::OPS_IS_PREFIX)
+            case PRE_CS:
+                opcode.prefix |= BaseSet_x86_64::PRE_SEG_CS;
+                cur = stream.next();
+                break;
+            case PRE_SS:
+                opcode.prefix |= BaseSet_x86_64::PRE_SEG_SS;
+                cur = stream.next();
+                break;
+            case PRE_DS:
+                opcode.prefix |= BaseSet_x86_64::PRE_SEG_DS;
+                cur = stream.next();
+                break;
+            case PRE_ES:
+                opcode.prefix |= BaseSet_x86_64::PRE_SEG_ES;
+                cur = stream.next();
+                break;
+            case PRE_FS:
+                opcode.prefix |= BaseSet_x86_64::PRE_SEG_FS;
+                cur = stream.next();
+                break;
+            case PRE_GS:
+                opcode.prefix |= BaseSet_x86_64::PRE_SEG_GS;
+                cur = stream.next();
+                break;
+            case PRE_LOCK:
+                opcode.prefix |= BaseSet_x86_64::PRE_LOCK;
+                opcode.text += "lock ";
+                cur = stream.next();
+                break;
+            case PRE_REPNE:
+                opcode.prefix |= BaseSet_x86_64::PRE_REPNE;
+                opcode.text += "repne ";
+                cur = stream.next();
+                break;
+            case PRE_REPE:
+                opcode.prefix |= BaseSet_x86_64::PRE_REPE;
+                opcode.text += "repe ";
+                cur = stream.next();
+                break;
+            case PRE_OPSOR1:
+                opcode.prefix |= BaseSet_x86_64::PRE_OPSOR1;
+                cur = stream.next();
+                break;
+            case PRE_OPSOR2:
+                opcode.prefix |= BaseSet_x86_64::PRE_OPSOR2;
+                cur = stream.next();
+                break;
+            default:
+                if (is64mode)
                 {
-                    switch (cur)
+                    if (cur >= 0x40 && cur <= 0x4F)
                     {
-                    case PRE_CS:
-                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_CS;
-                        break;
-                    case PRE_SS:
-                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_SS;
-                        break;
-                    case PRE_DS:
-                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_DS;
-                        break;
-                    case PRE_ES:
-                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_ES;
-                        break;
-                    case PRE_FS:
-                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_FS;
-                        break;
-                    case PRE_GS:
-                        opcode.prefix |= BaseSet_x86_64::PRE_SEG_GS;
-                        break;
-                    case PRE_LOCK:
-                        opcode.prefix |= BaseSet_x86_64::PRE_LOCK;
-                        opcode.text += "lock ";
-                        break;
-                    case PRE_REPNE:
-                        opcode.prefix |= BaseSet_x86_64::PRE_REPNE;
-                        opcode.text += "repne ";
-                        break;
-                    case PRE_REPE:
-                        opcode.prefix |= BaseSet_x86_64::PRE_REPE;
-                        opcode.text += "repe ";
-                        break;
-                    case PRE_OPSOR1:
-                        opcode.prefix |= BaseSet_x86_64::PRE_OPSOR1;
-                        break;
-                    case PRE_OPSOR2:
-                        opcode.prefix |= BaseSet_x86_64::PRE_OPSOR2;
-                        break;
+                        rexEnc = cur;
+                        hasRex = true;
+                        opcode.prefix |= BaseSet_x86_64::PRE_REX;
+                        cur = stream.next();
                     }
-
-                    cur = stream.next();
-                    break;
                 }
-            }
-
-            if (is64mode)
-            {
-                if (cur >= 0x40 && cur <= 0x4F)
-                {
-                    rexEnc = cur;
-                    hasRex = true;
-                    opcode.prefix |= BaseSet_x86_64::PRE_REX;
-                    cur = stream.next();
-                }
+                break;
             }
         }
 
@@ -2528,6 +2811,7 @@ namespace Seraph
 
         const auto nOperands = opRef.extData.symbols.size();
 
+        opcode.desc = opRef.opCodeDescription;
         opcode.text += opRef.opCodeName;
         opcode.text += " ";
         opcode.operands.resize(nOperands);
@@ -2576,6 +2860,66 @@ namespace Seraph
             case Symbols::one:
                 opcode.text += "1";
                 break;
+            case Symbols::rel8:
+            {
+                if (!is64mode)
+                {
+                    cop.rel8 = stream.current();
+                    stream.skip(sizeof(uint8_t));
+                    char s[18];
+                    sprintf(s, "%08Xh", offset + stream.getpos() + cop.rel8);
+                    opcode.text += s;
+                }
+                else
+                {
+                    cop.rel8 = stream.current();
+                    stream.skip(sizeof(uint8_t));
+                    char s[18];
+                    sprintf(s, "%016llXh", offset + stream.getpos() + cop.rel8);
+                    opcode.text += s;
+                }
+                break;
+            }
+            case Symbols::rel16:
+            {
+                if (!is64mode)
+                {
+                    memcpy(&cop.rel16, stream.pcurrent(), sizeof(uint16_t));
+                    stream.skip(sizeof(uint16_t));
+                    char s[18];
+                    sprintf(s, "%08Xh", offset + stream.getpos() + cop.rel16);
+                    opcode.text += s;
+                }
+                else
+                {
+                    memcpy(&cop.rel16, stream.pcurrent(), sizeof(uint16_t));
+                    stream.skip(sizeof(uint16_t));
+                    char s[18];
+                    sprintf(s, "%016llXh", offset + stream.getpos() + cop.rel16);
+                    opcode.text += s;
+                }
+                break;
+            }
+            case Symbols::rel32:
+            {
+                if (!is64mode)
+                {
+                    memcpy(&cop.rel32, stream.pcurrent(), sizeof(uint32_t));
+                    stream.skip(sizeof(uint32_t));
+                    char s[18];
+                    sprintf(s, "%08Xh", offset + stream.getpos() + cop.rel32);
+                    opcode.text += s;
+                }
+                else
+                {
+                    memcpy(&cop.rel32, stream.pcurrent(), sizeof(uint32_t));
+                    stream.skip(sizeof(uint32_t));
+                    char s[18];
+                    sprintf(s, "%016llXh", offset + stream.getpos() + cop.rel32);
+                    opcode.text += s;
+                }
+                break;
+            }
             case Symbols::imm8:
             case Symbols::moffs8:
             {
@@ -2880,19 +3224,19 @@ namespace Seraph
                 }
                 else
                 {
-                    bool isLargeOp = (rexEnc & (1 << 3));
+                    //bool isLargeOp = (rexEnc & (1 << 3));
                     bool isRegExt = (rexEnc & (1 << 2));
 
-                    if (isLargeOp)
-                    {
+                    //if (isLargeOp)
+                    //{
                         cop.bitSize = 128;
                         opcode.text += isRegExt ? Mnemonics::MMext[cop.regs.back()] : Mnemonics::MM[cop.regs.back()];
-                    }
-                    else
-                    {
-                        cop.bitSize = 128;
-                        opcode.text += isRegExt ? Mnemonics::MMext[cop.regs.back()] : Mnemonics::MM[cop.regs.back()];
-                    }
+                    //}
+                    //else
+                    //{
+                    //    cop.bitSize = 128;
+                    //    opcode.text += isRegExt ? Mnemonics::MMext[cop.regs.back()] : Mnemonics::MM[cop.regs.back()];
+                    //}
                 }
                 break;
             }
@@ -2910,19 +3254,19 @@ namespace Seraph
                 }
                 else
                 {
-                    bool isLargeOp = (rexEnc & (1 << 3));
+                    //bool isLargeOp = (rexEnc & (1 << 3));
                     bool isRegExt = (rexEnc & (1 << 2));
 
-                    if (isLargeOp)
-                    {
+                    //if (isLargeOp)
+                    //{
                         cop.bitSize = 128;
                         opcode.text += isRegExt ? Mnemonics::XMMext[cop.regs.back()] : Mnemonics::XMM[cop.regs.back()];
-                    }
-                    else
-                    {
-                        cop.bitSize = 128;
-                        opcode.text += isRegExt ? Mnemonics::XMMext[cop.regs.back()] : Mnemonics::XMM[cop.regs.back()];
-                    }
+                    //}
+                    //else
+                    //{
+                    //    cop.bitSize = 128;
+                    //    opcode.text += isRegExt ? Mnemonics::XMMext[cop.regs.back()] : Mnemonics::XMM[cop.regs.back()];
+                    //}
                 }
                 break;
             }
@@ -3060,9 +3404,9 @@ namespace Seraph
                                 opcode.text += s;
                             }
                         }
-                    }
 
-                    stream.skip(1);
+                        stream.skip(1);
+                    }
 
                     opcode.text += "]";
                     break;
@@ -3201,7 +3545,26 @@ namespace Seraph
                     cop.regs.push_back(r2);
 
                     if (!hasRex)
-                        opcode.text += Mnemonics::R32[cop.regs.back()];
+                    {
+                        switch (symbol)
+                        {
+                        case Symbols::mm_m32:
+                        case Symbols::mm_m64:
+                            cop.bitSize = 64;
+                            opcode.text += Mnemonics::MM[cop.regs.back()];
+                            break;
+                        case Symbols::xmm_m32:
+                        case Symbols::xmm_m64:
+                        case Symbols::xmm_m128:
+                            cop.bitSize = 128;
+                            opcode.text += Mnemonics::XMM[cop.regs.back()];
+                            break;
+                        default:
+                            cop.bitSize = 32;
+                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                            break;
+                        }
+                    }
                     else
                     {
                         bool isLargeOp = (rexEnc & (1 << 3));
@@ -3209,13 +3572,45 @@ namespace Seraph
 
                         if (isLargeOp)
                         {
-                            cop.bitSize = 64;
-                            opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                            switch (symbol)
+                            {
+                            case Symbols::mm_m32:
+                            case Symbols::mm_m64:
+                                cop.bitSize = 64;
+                                opcode.text += isRegExt ? Mnemonics::MMext[cop.regs.back()] : Mnemonics::MM[cop.regs.back()];
+                                break;
+                            case Symbols::xmm_m32:
+                            case Symbols::xmm_m64:
+                            case Symbols::xmm_m128:
+                                cop.bitSize = 128;
+                                opcode.text += isRegExt ? Mnemonics::XMMext[cop.regs.back()] : Mnemonics::XMM[cop.regs.back()];
+                                break;
+                            default:
+                                cop.bitSize = 64;
+                                opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                                break;
+                            }
                         }
                         else
                         {
-                            cop.bitSize = 32;
-                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                            switch (symbol)
+                            {
+                            case Symbols::mm_m32:
+                            case Symbols::mm_m64:
+                                cop.bitSize = 64;
+                                opcode.text += Mnemonics::MM[cop.regs.back()];
+                                break;
+                            case Symbols::xmm_m32:
+                            case Symbols::xmm_m64:
+                            case Symbols::xmm_m128:
+                                cop.bitSize = 128;
+                                opcode.text += Mnemonics::XMM[cop.regs.back()];
+                                break;
+                            default:
+                                cop.bitSize = 32;
+                                opcode.text += Mnemonics::R32[cop.regs.back()];
+                                break;
+                            }
                         }
                     }
 
@@ -3238,6 +3633,10 @@ namespace Seraph
                 break;
             }
         }
+
+        // Copy the stream bytes into the opcode, for size reference
+        opcode.bytes.resize(stream.size() - streamStartIndex);
+        memcpy(&opcode.bytes[0], &stream.data()[streamStartIndex], stream.size() - streamStartIndex);
 
         return opcode;
     }
@@ -4390,6 +4789,10 @@ namespace Seraph
                             // Add prefix flags
                             for (const uint8_t pre : node.prefixes)
                                 stream.add(pre);
+
+                            // ### streamStartIndex is only used to mark where we put
+                            // the REX prefix, but that comes after the other prefixes
+                            streamStartIndex = stream.size();
 
                             const auto noperands = userOperands.size();
                             auto insCode = opvariant.code;
