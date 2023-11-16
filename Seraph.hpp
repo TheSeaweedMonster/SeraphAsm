@@ -404,6 +404,7 @@ namespace Seraph
         static const uint32_t OPS_REMOVED_X64 = 0x00000002;
         static const uint32_t OPS_IS_PREFIX = 0x00000004;
         static const uint32_t OPS_16MODE = 0x00000008;
+        static const uint32_t OPS_PRE_F3 = 0x00000010;
 
         struct OpData
         {
