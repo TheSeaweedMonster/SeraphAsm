@@ -43,10 +43,9 @@ This isnt much of a problem if you aren't concerned about project size or compil
 
 # Documentation (x86)
 
-Here we'll go over some examples of this API's usage.<br>
-First, let's cover the assembler.<br>
-
-Take the following code:<br>
+I'll show some brief examples of this API's usage.<br>
+First, to demonstrate assembling:<br>
+<br>
 
 ```cpp
 #include "SeraphAsm/Seraph.hpp"
