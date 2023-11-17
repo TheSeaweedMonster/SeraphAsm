@@ -1,11 +1,12 @@
+#include <Windows.h>
 #include "MemView.hpp"
 #include "MemUtil.hpp"
+#include "../Seraph.hpp"
 #include <conio.h>
 #include <Psapi.h>
 #include <iostream>
 #include <codecvt>
 #include <winternl.h>
-#include <Windows.h>
 
 std::pair<std::wstring, uintptr_t> getAssociatedModule(const uintptr_t location)
 {
@@ -35,8 +36,8 @@ std::pair<std::wstring, uintptr_t> getAssociatedModule(const uintptr_t location)
 
 std::pair<std::string, std::vector<uint8_t>> aobstring(const std::string& str)
 {
-	std::string mask;
-	std::vector<uint8_t> bytes;
+	std::string mask = "";
+	std::vector<uint8_t> bytes = {};
 	uint8_t sh = 0, b = 0;
 	for (char c : str)
 	{
@@ -49,7 +50,7 @@ std::pair<std::string, std::vector<uint8_t>> aobstring(const std::string& str)
 				bytes.push_back(0);
 				sh = 0;
 			}
-			break;
+			continue;
 		}
 		if (c >= 0x61 && c <= 0x66)
 			c -= 0x20;
@@ -78,7 +79,14 @@ namespace Seraph
 		{
 			auto mode = (locations.empty()) ? MAINMENU_MODE : SELECTION_MODE;
 			auto scanMode = 0;
+			bool hexView = true;
 			bool refresh = true;
+
+			uint8_t* buffer = nullptr;
+			size_t bufferIndex = 0;
+
+			Disassembler<TargetArchitecture::x64> dis64;
+			BaseSet_x86_64::Opcode firstOpcode = { 0 };
 
 			std::pair<std::string, std::vector<uint8_t>> aobmask = { std::string(), { } };
 
@@ -356,13 +364,13 @@ namespace Seraph
 					SYSTEM_INFO info = { 0 };
 					GetSystemInfo(&info);
 
-					printf("Scanning...\n");
+					printf("Scanning...");
 
-					for (uintptr_t at = 0; at < reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress); at += (page.RegionSize) ? page.RegionSize : 0x1000)
+					for (uintptr_t at = reinterpret_cast<uintptr_t>(info.lpMinimumApplicationAddress); at < reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress); at += page.RegionSize)
 					{
 						VirtualQueryEx(hProcess, reinterpret_cast<void*>(at), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
 
-						bool condition;
+						bool condition = false;
 
 						switch (scanMode)
 						{
@@ -396,6 +404,9 @@ namespace Seraph
 									results.push_back(at + i);
 							}
 						}
+
+						if (!page.RegionSize)
+							page.RegionSize = 0x1000;
 					}
 
 					printf("Scan finished\nResults: %i\n", results.size());
@@ -642,6 +653,16 @@ namespace Seraph
 					{
 					case 'z':
 					case VK_LEFT:
+						if (!hexView)
+						{
+							if (bufferIndex > 0)
+							{
+								bufferIndex--;
+								//viewing--;
+							}
+							break;
+						}
+
 						if (editSlotIndex == 1)
 							editSlotIndex--;
 						else
@@ -658,6 +679,13 @@ namespace Seraph
 						break;
 					case 'x':
 					case VK_RIGHT:
+						if (!hexView)
+						{
+							bufferIndex += firstOpcode.len;
+							//viewing++;
+							break;
+						}
+
 						if (editSlotIndex == 0)
 							editSlotIndex++;
 						else
@@ -669,11 +697,19 @@ namespace Seraph
 
 							editSlotIndex = 0;
 						}
+
 						
 						//editSlotIndex = 0;
 						break;
 					case 's':
 					case VK_DOWN:
+						if (!hexView)
+						{
+							bufferIndex += maxCols;
+							//viewing += maxCols;
+							break;
+						}
+
 						if (viewIndex < (maxRows * maxCols) - (maxCols + 1))
 							viewIndex += maxCols;
 						else
@@ -683,6 +719,16 @@ namespace Seraph
 						break;
 					case 'w':
 					case VK_UP:
+						if (!hexView)
+						{
+							if (bufferIndex >= maxCols)
+							{
+								bufferIndex -= maxCols;
+								//viewing -= maxCols;
+							}
+							break;
+						}
+
 						if (viewIndex >= maxCols)
 							viewIndex -= maxCols;
 						else
@@ -691,120 +737,188 @@ namespace Seraph
 						editSlotIndex = 0;
 						break;
 					case '\b':
+						if (buffer) delete[] buffer;
+						buffer = nullptr;
+
 						refresh = true;
 						viewing = 0;
 						editSlotIndex = 0;
 						mode = SELECTION_MODE;
 						break;
 					case 'g':
+						if (buffer) delete[] buffer;
+						buffer = nullptr;
+
 						mode = GOTO_MODE;
 						refresh = true;
+						break;
+					case 'v':
+						if (buffer) delete[] buffer;
+						buffer = nullptr;
+
+						hexView = !hexView;
+						refresh = true;
+						Sleep(500);
 						break;
 					}
 
 					if (mode != HEXVIEW_MODE)
 						break;
 
-					uint8_t* buffer = new uint8_t[maxRows * maxCols];
-					memset(buffer, '\0', maxRows * maxCols);
+					if (hexView)
+					{
+						buffer = new uint8_t[maxRows * maxCols];
+						memset(buffer, '\0', maxRows * maxCols);
 
-					MEMORY_BASIC_INFORMATION64 page = { 0 };
-					VirtualQueryEx(hProcess, reinterpret_cast<void*>(viewing), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
+						MEMORY_BASIC_INFORMATION64 page = { 0 };
+						VirtualQueryEx(hProcess, reinterpret_cast<void*>(viewing), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
 					
-					if ((page.State & MEM_COMMIT) && (page.Protect & MemUtil::READABLE_MEMORY))
-						ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing), buffer, maxRows * maxCols, nullptr);
-					else
-						printf("UNREADABLE MEMORY\n");
+						if ((page.State & MEM_COMMIT) && (page.Protect & MemUtil::READABLE_MEMORY))
+							ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing), buffer, maxRows * maxCols, nullptr);
+						else
+							printf("UNREADABLE MEMORY\n");
 
-					bool doingEdit = false;
-					char editValue = 0;
+						bool doingEdit = false;
+						char editValue = 0;
 
-					if (key >= 0x30 && key <= 0x39)
-					{
-						doingEdit = true;
-						editValue = (key - 0x30);
-					}
-					else if (key >= 0x41 && key <= 0x46)
-					{
-						doingEdit = true;
-						editValue = (key - (0x41 - 10));
-					}
-					else if (key >= 0x61 && key <= 0x66)
-					{
-						doingEdit = true;
-						editValue = (key - (0x61 - 10));
-					}
-
-					if (doingEdit)
-					{
-						switch (editSlotIndex)
+						if (key >= 0x30 && key <= 0x39)
 						{
-						case 0:
-						{
-							editSlotIndex++;
-							const auto base = ((buffer[viewIndex] >> 4) << 4);
-							const auto rem = buffer[viewIndex] - base;
-							buffer[viewIndex] = (editValue << 4) | rem;
-							mwrite<uint8_t>(viewing + viewIndex, buffer[viewIndex]);
-							break;
+							doingEdit = true;
+							editValue = (key - 0x30);
 						}
-						case 1:
+						else if (key >= 0x41 && key <= 0x46)
 						{
-							editSlotIndex = 0;
-							const auto base = ((buffer[viewIndex] >> 4) << 4);
-							buffer[viewIndex] = ((buffer[viewIndex] >> 4) << 4) | editValue;
-							mwrite<uint8_t>(viewing + viewIndex, buffer[viewIndex]);
-							viewIndex++;
-							break;
+							doingEdit = true;
+							editValue = (key - (0x41 - 10));
 						}
-						}
-					}
-
-					const auto closestModule = getAssociatedModule(viewing);
-
-					if (closestModule.first.empty())
-						printf("%p:\n\n", viewing);
-					else
-						wprintf(L"%s+%p:\n\n", closestModule.first.c_str(), (viewing - closestModule.second));
-					
-					for (size_t i = 0; i < maxRows * maxCols; i++)
-					{
-						if ((i / maxCols) && i % maxCols == 0)
+						else if (key >= 0x61 && key <= 0x66)
 						{
-							printf(" -- [");
-							for (size_t j = 0; j < maxCols; j++)
-								printf("%c", isalpha(buffer[(i - maxCols) + j]) ? static_cast<char>(buffer[(i - maxCols) + j]) : '.');
-							printf("]\n");
+							doingEdit = true;
+							editValue = (key - (0x61 - 10));
 						}
 
-						if (i == viewIndex)
+						if (doingEdit)
 						{
-							if (editSlotIndex == 0)
-								printf("*%02X", buffer[i]);
-							else
+							switch (editSlotIndex)
 							{
-								const auto b1 = buffer[i] >> 4;
-								const auto b2 = buffer[i] - ((buffer[i] >> 4) << 4);
-								printf(" %c*%c", static_cast<char>((b1 < 10) ? 0x30 + b1 : 0x41 + (b1 - 10)), static_cast<char>((b2 < 10) ? 0x30 + b2 : 0x41 + (b2 - 10)));
+							case 0:
+							{
+								editSlotIndex++;
+								const auto base = ((buffer[viewIndex] >> 4) << 4);
+								const auto rem = buffer[viewIndex] - base;
+								buffer[viewIndex] = (editValue << 4) | rem;
+								mwrite<uint8_t>(viewing + viewIndex, buffer[viewIndex]);
+								break;
+							}
+							case 1:
+							{
+								editSlotIndex = 0;
+								const auto base = ((buffer[viewIndex] >> 4) << 4);
+								buffer[viewIndex] = ((buffer[viewIndex] >> 4) << 4) | editValue;
+								mwrite<uint8_t>(viewing + viewIndex, buffer[viewIndex]);
+								viewIndex++;
+								break;
+							}
 							}
 						}
-						else
+
+						//const auto closestModule = getAssociatedModule(viewing);
+						//
+						//if (closestModule.first.empty())
+						//	printf("%p:\n\n", viewing);
+						//else
+						//	wprintf(L"%s+%p:\n\n", closestModule.first.c_str(), (viewing - closestModule.second));
+					
+						printf("%p: ", viewing);
+						for (size_t i = 0; i < maxRows * maxCols; i++)
 						{
-							printf(" %02X", buffer[i]);
+							if ((i / maxCols) && i % maxCols == 0)
+							{
+								printf(" -- [");
+								for (size_t j = 0; j < maxCols; j++)
+									printf("%c", isalpha(buffer[(i - maxCols) + j]) ? static_cast<char>(buffer[(i - maxCols) + j]) : '.');
+								printf("]\n%p: ", viewing + i);
+							}
+
+							if (i == viewIndex)
+							{
+								if (editSlotIndex == 0)
+									printf("*%02X", buffer[i]);
+								else
+								{
+									const auto b1 = buffer[i] >> 4;
+									const auto b2 = buffer[i] - ((buffer[i] >> 4) << 4);
+									printf(" %c*%c", static_cast<char>((b1 < 10) ? 0x30 + b1 : 0x41 + (b1 - 10)), static_cast<char>((b2 < 10) ? 0x30 + b2 : 0x41 + (b2 - 10)));
+								}
+							}
+							else
+							{
+								printf(" %02X", buffer[i]);
+							}
 						}
+
+						printf("\n\n");
+						printf("byte		%d\n", buffer[viewIndex]);
+						printf("short		%d\n", *reinterpret_cast<uint16_t*>(&buffer[viewIndex]));
+						printf("int32		%d\n", *reinterpret_cast<uint32_t*>(&buffer[viewIndex]));
+						printf("int64		%ld\n", *reinterpret_cast<uint64_t*>(&buffer[viewIndex]));
+						printf("float		%f\n", *reinterpret_cast<float_t*>(&buffer[viewIndex]));
+						printf("double		%lf\n", *reinterpret_cast<double_t*>(&buffer[viewIndex]));
+
+						printf("\n\nAdditional options:\n[BKSPC] - Go back to selection\n[G] - Go to address\n[ESC] - Return to menu\n[V] - Switch view to disassembly\n");
+
+						delete[] buffer;
+						buffer = nullptr;
+					}
+					else
+					{
+						if (!buffer)
+						{
+							buffer = new uint8_t[2048];
+							ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing), buffer, 2048, nullptr);
+
+							std::vector<uint8_t> v(2048, 0);
+							memcpy(&v[0], buffer, 2048);
+
+							ByteStream stream(v);
+							dis64.use(stream);
+							dis64.setOffset(viewing);
+
+							bufferIndex = 0;
+						}
+
+						//MEMORY_BASIC_INFORMATION64 page = { 0 };
+						//VirtualQueryEx(hProcess, reinterpret_cast<void*>(viewing), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
+
+						//if ((page.State & MEM_COMMIT) && (page.Protect & MemUtil::READABLE_MEMORY))
+						//	ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing), buffer, 2048, nullptr);
+						//else
+						//	printf("UNREADABLE MEMORY\n");
+
+						dis64.reset();
+						dis64.setpos(bufferIndex);
+						firstOpcode = dis64.readNext();
+
+						auto op = firstOpcode;
+						auto at = viewing + bufferIndex;
+
+						for (int i = 0; i < 16; i++)
+						{
+							char s[64];
+							sprintf(s, "%p: %s", at, op.text.c_str());
+							printf(s);
+							for (size_t i = strlen(s); i < 64; i++)
+								printf(" ");
+							for (const auto b : op.bytes)
+								printf("%02X ", b);
+							printf("\n");
+							at += op.len;
+							op = dis64.readNext();
+						}
+
+						printf("\n\nAdditional options:\n[BKSPC] - Go back to selection\n[G] - Go to address\n[ESC] - Return to menu\n[V] - Switch view to hexview\n");
 					}
 
-					printf("\n\n");
-					printf("byte		%d\n", buffer[viewIndex]);
-					printf("short		%d\n", *reinterpret_cast<uint16_t*>(&buffer[viewIndex]));
-					printf("int32		%d\n", *reinterpret_cast<uint32_t*>(&buffer[viewIndex]));
-					printf("int64		%ld\n", *reinterpret_cast<uint64_t*>(&buffer[viewIndex]));
-					printf("float		%f\n", *reinterpret_cast<float_t*>(&buffer[viewIndex]));
-					printf("double		%lf\n", *reinterpret_cast<double_t*>(&buffer[viewIndex]));
-
-					printf("\n\nAdditional options:\n[BKSPC] - Go back to selection\n[G] - Go to address\n[ESC] - Return to menu\n");
-
-					delete[] buffer;
 					break;
 				}
 				case EXIT_MODE:
