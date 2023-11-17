@@ -70,13 +70,13 @@ namespace Seraph
 		bool openProcessByEntry(const PROCESSENTRY32& processEntry)
 		{
 			hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, processEntry.th32ProcessID);
-			if (!hProcess || hProcess == INVALID_HANDLE_VALUE)
+			if (hProcess == INVALID_HANDLE_VALUE)
 				return false;
 
 			targetProcessId = processEntry.th32ProcessID;
 
 			hBaseModule = getModule(processEntry.szExeFile);
-			//if (!hBaseModule || hBaseModule == INVALID_HANDLE_VALUE)
+			//if (hBaseModule == INVALID_HANDLE_VALUE)
 			//	return false;
 
 			return true;
