@@ -405,6 +405,7 @@ namespace Seraph
         static const uint32_t OPS_IS_PREFIX = 0x00000004;
         static const uint32_t OPS_16MODE = 0x00000008;
         static const uint32_t OPS_PRE_F3 = 0x00000010;
+        static const uint32_t OPS_EXTEND_IMM64 = 0x00000020;
 
         struct OpData
         {
@@ -537,15 +538,17 @@ namespace Seraph
 
         DisassemblyOptions options;
         ByteStream stream;
-        uintptr_t offset = 0;
+        uintptr_t startIndex = 0;
+        uintptr_t codeOffset = 0;
     public:
         Disassembler();
         Disassembler(const DisassemblyOptions& _options);
         Disassembler(const ByteStream& _stream);
         Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options);
 
-        void use(const ByteStream& _stream) { stream = _stream; }
-        void setOffset(const uintptr_t _offset) { offset = _offset; };
+        void use(const ByteStream& _stream) { stream = _stream; startIndex = stream.getpos(); }
+        void reset() { stream.setpos(startIndex); }
+        void setOffset(const uintptr_t _offset) { codeOffset = _offset; };
 
         BaseSet_x86_64::Opcode readNext();
     };
@@ -563,15 +566,18 @@ namespace Seraph
 
         DisassemblyOptions options;
         ByteStream stream;
-        uintptr_t offset = 0;
+        uintptr_t startIndex = 0;
+        uintptr_t codeOffset = 0;
     public:
         Disassembler();
         Disassembler(const DisassemblyOptions& _options);
         Disassembler(const ByteStream& _stream);
         Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options);
 
-        void use(const ByteStream& _stream) { stream = _stream; }
-        void setOffset(const uintptr_t _offset) { offset = _offset; };
+        void use(const ByteStream& _stream) { stream = _stream; startIndex = stream.getpos(); }
+        void reset() { stream.setpos(startIndex); }
+        void setpos(const size_t pos) { stream.setpos(startIndex + pos); }
+        void setOffset(const uintptr_t _offset) { codeOffset = _offset; };
 
         BaseSet_x86_64::Opcode readNext();
     };
