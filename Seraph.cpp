@@ -44,7 +44,7 @@ namespace Seraph
     namespace Mnemonics
     {
         static const std::vector<std::string> R8 = { "al", "cl", "dl", "bl", "ah", "ch", "dh", "bh" };
-        static const std::vector<std::string> R8ext = { "r8l", "r9l", "r10l", "r11l", "r12l", "r13l", "r14l", "r15l" };
+        static const std::vector<std::string> R8ext = { "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b" };
         static const std::vector<std::string> R16 = { "ax", "cx", "dx", "bx", "sp", "bp", "si", "di" };
         static const std::vector<std::string> R16ext = { "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w" };
         static const std::vector<std::string> R32 = { "eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi" };
@@ -911,17 +911,17 @@ namespace Seraph
             /* 9E */ {{{{}, {}, {}}, "sahf", OP_DESC("Loads SF, ZF, AF, PF, and CF from AH into EFLAGS register")}},
             /* 9F */ {{{{}, {}, {}}, "lahf", OP_DESC("Load: AH = EFLAGS(SF:ZF:0:AF:0:PF:1:CF)")}},
             /* A0 */ {{{{}, {}, {Symbols::al, Symbols::moffs8}}, "mov", OP_DESC("Move byte at (seg:offset) to AL")}},
-            /* A1 */ {{{{}, {}, {Symbols::ax, Symbols::moffs16}}, "mov", OP_DESC("Move word at (seg:offset) to AX")},
+            /* A1 */ {{{{}, {}, {Symbols::ax, Symbols::moffs16}, BaseSet_x86_64::OPS_16MODE}, "mov", OP_DESC("Move word at (seg:offset) to AX")},
             /* A1 */  {{{}, {}, {Symbols::eax, Symbols::moffs32}}, "mov", OP_DESC("Move doubleword at (seg:offset) to EAX")}},
             /* A2 */ {{{{}, {}, {Symbols::moffs8, Symbols::al}}, "mov", OP_DESC("Move AL to (seg:offset)")}},
-            /* A3 */ {{{{}, {}, {Symbols::moffs16, Symbols::ax}}, "mov", OP_DESC("Move AX to (seg:offset)")},
+            /* A3 */ {{{{}, {}, {Symbols::moffs16, Symbols::ax}, BaseSet_x86_64::OPS_16MODE}, "mov", OP_DESC("Move AX to (seg:offset)")},
             /* A3 */  {{{}, {}, {Symbols::moffs32, Symbols::eax}}, "mov", OP_DESC("Move EAX to (seg:offset)")}},
             /* A4 */ {{{{}, {}, {}}, "movsb", OP_DESC("Move byte at address DS:(E)SI to address ES:(E)DI")}},
             /* A5 */ {{{{}, {}, {}}, "movsd", OP_DESC("Move doubleword at address DS:(E)SI to address ES:(E)DI")}},
             /* A6 */ {{{{}, {}, {}}, "cmpsb", OP_DESC("Compares byte at address DS:(E)SI with byte at address ES:(E)DI and sets the status flags accordingly")}},
             /* A7 */ {{{{}, {}, {}}, "cmpsd", OP_DESC("Compares doubleword at address DS:(E)SI with doubleword at address ES:(E)DI and sets the status flags accordingly")}},
             /* A8 */ {{{{}, {OpEncoding::ib}, {Symbols::al, Symbols::imm8}}, "test", OP_DESC("AND imm8 with AL; set SF, ZF, PF according to result")}},
-            /* A9 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}}, "test", OP_DESC("AND imm16 with AX; set SF, ZF, PF according to result")},
+            /* A9 */ {{{{}, {OpEncoding::iw}, {Symbols::ax, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "test", OP_DESC("AND imm16 with AX; set SF, ZF, PF according to result")},
             /* A9 */  {{{}, {OpEncoding::id}, {Symbols::eax, Symbols::imm32}}, "test", OP_DESC("AND imm32 with EAX; set SF, ZF, PF according to result")}},
             /* AA */ {{{{}, {}, {}}, "stosb", OP_DESC("Store AL at address ES:(E)DI")}},
             /* AB */ {{{{}, {}, {}}, "stosd", OP_DESC("Store EAX at address ES:(E)DI")}},
@@ -943,7 +943,7 @@ namespace Seraph
             /* BB */ {{{{}, {}, {Symbols::ebx, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
             /* BC */ {{{{}, {}, {Symbols::esp, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
             /* BD */ {{{{}, {}, {Symbols::ebp, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
-            /* BE */ {{{{}, {}, {Symbols::esi, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BE */ {{{{}, {}, {Symbols::esi, Symbols::imm32}, BaseSet_x86_64::OPS_EXTEND_IMM64}, "mov", OP_DESC("Move imm32 to r32")}},
             /* BF */ {{{{}, {}, {Symbols::edi, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
             /* C0 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rol", OP_DESC("Rotate eight bits rm8 left imm8 times")},
             /* C0 */  {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "ror", OP_DESC("Rotate eight bits rm16 right imm8 times")},
@@ -966,7 +966,7 @@ namespace Seraph
             /* C5 */ {{{{}, {OpEncoding::r}, {Symbols::r16, Symbols::m16_16}}, "lds", OP_DESC("Load DS: r16 with far pointer from memory")},
             /* C5 */  {{{}, {OpEncoding::r}, {Symbols::r32, Symbols::m16_32}}, "lds", OP_DESC("Load DS: r32 with far pointer from memory")}},
             /* C6 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to rm8")}},
-            /* C7 */ {{{{}, {OpEncoding::m0}, {Symbols::rm16, Symbols::imm16}}, "mov", OP_DESC("Move imm16 to rm16")},
+            /* C7 */ {{{{}, {OpEncoding::m0}, {Symbols::rm16, Symbols::imm16}, BaseSet_x86_64::OPS_16MODE}, "mov", OP_DESC("Move imm16 to rm16")},
             /* C7 */  {{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to rm32")}},
             /* C8 */ {{{{}, {OpEncoding::iw, OpEncoding::ib}, {Symbols::imm16, Symbols::imm8}}, "enter", OP_DESC("Create a nested (if imm8 > 0) stack frame for a procedure")}},
             /* C9 */ {{{{}, {}, {}}, "leave", OP_DESC("Set ESP to EBP, then pop EBP")}},
@@ -2630,7 +2630,7 @@ namespace Seraph
         constexpr const uint8_t PRE_REPNE   = 0xF2;
         constexpr const uint8_t PRE_REPE    = 0xF3;
 
-        size_t streamStartIndex = stream.size();
+        size_t streamStartIndex = stream.getpos();
 
         Opcode opcode = { 0 };
         uint8_t cur = stream.next();
@@ -2898,7 +2898,7 @@ namespace Seraph
                 }
                 break;
             }
-            case Symbols::rel16:
+            case Symbols::rel16: 
             {
                 if (!is64mode)
                 {
@@ -2963,7 +2963,7 @@ namespace Seraph
             case Symbols::imm32:
             case Symbols::moffs32:
             {
-                if (rexEnc & (1 << 3) && !findEntry(opRef.extData.entries, OpEncoding::id))
+                if (rexEnc & (1 << 3) && (opRef.extData.settings & BaseSet_x86_64::OPS_EXTEND_IMM64) && !findEntry(opRef.extData.entries, OpEncoding::id))
                 {
                     memcpy(&cop.imm64, stream.pcurrent(), sizeof(uint64_t));
                     stream.skip(sizeof(uint64_t));
@@ -3017,12 +3017,12 @@ namespace Seraph
             case Symbols::al:
                 cop.regs.push_back(0);
                 cop.bitSize = 8;
-                opcode.text += Mnemonics::R8[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R8ext[cop.regs.back()] : Mnemonics::R8[cop.regs.back()];
                 break;
             case Symbols::ax:
                 cop.regs.push_back(0);
                 cop.bitSize = 16;
-                opcode.text += Mnemonics::R16[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R16ext[cop.regs.back()] : Mnemonics::R16[cop.regs.back()];
                 break;
             case Symbols::eax:
                 cop.regs.push_back(0);
@@ -3038,12 +3038,12 @@ namespace Seraph
             case Symbols::cl:
                 cop.regs.push_back(1);
                 cop.bitSize = 8;
-                opcode.text += Mnemonics::R8[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R8ext[cop.regs.back()] : Mnemonics::R8[cop.regs.back()];
                 break;
             case Symbols::cx:
                 cop.regs.push_back(1);
                 cop.bitSize = 16;
-                opcode.text += Mnemonics::R16[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R16ext[cop.regs.back()] : Mnemonics::R16[cop.regs.back()];
                 break;
             case Symbols::ecx:
                 cop.regs.push_back(1);
@@ -3059,12 +3059,12 @@ namespace Seraph
             case Symbols::dl:
                 cop.regs.push_back(2);
                 cop.bitSize = 8;
-                opcode.text += Mnemonics::R8[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R8ext[cop.regs.back()] : Mnemonics::R8[cop.regs.back()];
                 break;
             case Symbols::dx:
                 cop.regs.push_back(2);
                 cop.bitSize = 16;
-                opcode.text += Mnemonics::R16[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R16ext[cop.regs.back()] : Mnemonics::R16[cop.regs.back()];
                 break;
             case Symbols::edx:
                 cop.regs.push_back(2);
@@ -3080,12 +3080,12 @@ namespace Seraph
             case Symbols::bl:
                 cop.regs.push_back(3);
                 cop.bitSize = 8;
-                opcode.text += Mnemonics::R8[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R8ext[cop.regs.back()] : Mnemonics::R8[cop.regs.back()];
                 break;
             case Symbols::bx:
                 cop.regs.push_back(3);
                 cop.bitSize = 16;
-                opcode.text += Mnemonics::R16[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R16ext[cop.regs.back()] : Mnemonics::R16[cop.regs.back()];
                 break;
             case Symbols::ebx:
                 cop.regs.push_back(3);
@@ -3101,12 +3101,12 @@ namespace Seraph
             case Symbols::ah:
                 cop.regs.push_back(4);
                 cop.bitSize = 8;
-                opcode.text += Mnemonics::R8[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R8ext[cop.regs.back()] : Mnemonics::R8[cop.regs.back()];
                 break;
             case Symbols::sp:
                 cop.regs.push_back(4);
                 cop.bitSize = 16;
-                opcode.text += Mnemonics::R16[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R16ext[cop.regs.back()] : Mnemonics::R16[cop.regs.back()];
                 break;
             case Symbols::esp:
                 cop.regs.push_back(4);
@@ -3122,12 +3122,12 @@ namespace Seraph
             case Symbols::ch:
                 cop.regs.push_back(5);
                 cop.bitSize = 8;
-                opcode.text += Mnemonics::R8[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R8ext[cop.regs.back()] : Mnemonics::R8[cop.regs.back()];
                 break;
             case Symbols::bp:
                 cop.regs.push_back(5);
                 cop.bitSize = 16;
-                opcode.text += Mnemonics::R16[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R16ext[cop.regs.back()] : Mnemonics::R16[cop.regs.back()];
                 break;
             case Symbols::ebp:
                 cop.regs.push_back(5);
@@ -3143,12 +3143,12 @@ namespace Seraph
             case Symbols::dh:
                 cop.regs.push_back(6);
                 cop.bitSize = 8;
-                opcode.text += Mnemonics::R8[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R8ext[cop.regs.back()] : Mnemonics::R8[cop.regs.back()];
                 break;
             case Symbols::si:
                 cop.regs.push_back(6);
                 cop.bitSize = 16;
-                opcode.text += Mnemonics::R16[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R16ext[cop.regs.back()] : Mnemonics::R16[cop.regs.back()];
                 break;
             case Symbols::esi:
                 cop.regs.push_back(6);
@@ -3164,12 +3164,12 @@ namespace Seraph
             case Symbols::bh:
                 cop.regs.push_back(7);
                 cop.bitSize = 8;
-                opcode.text += Mnemonics::R8[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R8ext[cop.regs.back()] : Mnemonics::R8[cop.regs.back()];
                 break;
             case Symbols::di:
                 cop.regs.push_back(7);
                 cop.bitSize = 16;
-                opcode.text += Mnemonics::R16[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R16ext[cop.regs.back()] : Mnemonics::R16[cop.regs.back()];
                 break;
             case Symbols::edi:
                 cop.regs.push_back(7);
@@ -3188,7 +3188,7 @@ namespace Seraph
                     cop.regs.push_back(((setmodrm ? modrm : stream.current()) % 0x40) / 8);
                 else
                     cop.regs.push_back((setmodrm ? modrm : stream.current()) % 8);
-                opcode.text += Mnemonics::R8[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R8ext[cop.regs.back()] : Mnemonics::R8[cop.regs.back()];
                 break;
             case Symbols::r16:
                 cop.bitSize = 16;
@@ -3196,7 +3196,7 @@ namespace Seraph
                     cop.regs.push_back(((setmodrm ? modrm : stream.current()) % 0x40) / 8);
                 else
                     cop.regs.push_back((setmodrm ? modrm : stream.current()) % 8);
-                opcode.text += Mnemonics::R16[cop.regs.back()];
+                opcode.text += (rexEnc & (1 << 2)) ? Mnemonics::R16ext[cop.regs.back()] : Mnemonics::R16[cop.regs.back()];
                 break;
             case Symbols::r32:
             {
@@ -3313,6 +3313,8 @@ namespace Seraph
                 auto r2 = ((mode) ? (mb % (mode << 6)) : mb) % 8;
                 bool hasSib = false;
 
+                stream.next(); // ### ADDED
+
                 if (findEntry(opRef.extData.entries, OpEncoding::r))
                 {
                     setmodrm = true;
@@ -3340,8 +3342,9 @@ namespace Seraph
 
                     if (r2 == 4)
                     {
-                        stream.next();
+                        //stream.next(); // ### EDIT
                         sb = stream.current();
+                        stream.next(); // ### ADDED
                         mode = sb >> 5;
                         r1 = (mode) ? ((sb % (mode << 5)) / 8) : 0;
                         r2 = ((mode) ? (sb % (mode << 5)) : sb) % 8;
@@ -3350,37 +3353,53 @@ namespace Seraph
 
                     if (r2 == 5)
                     {
-                        cop.regs.push_back(r1);
+                        // cop.regs.push_back(r1);
+                        // 
+                        // if (!hasRex)
+                        //     opcode.text += Mnemonics::R64[cop.regs.back()];
+                        // else
+                        // {
+                        //     bool isRegExt = (rexEnc & 1);
+                        // 
+                        //     cop.bitSize = 64;
+                        //     opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                        // }
+                        // 
+                        // int mul = ((sb >> 6) << 2) / 4;
+                        // if (mul)
+                        // {
+                        //     char s[4];
+                        //     mul--;
+                        //     std::vector<int>muls = { 2, 4, 8 };
+                        //     sprintf(s, "*%i", muls[mul]);
+                        //     opcode.text += s;
+                        // }
 
-                        if (!hasRex)
-                            opcode.text += Mnemonics::R32[cop.regs.back()];
-                        else
-                        {
-                            bool isRegExt = (rexEnc & 1);
-
-                            cop.bitSize = 64;
-                            opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
-                        }
-
-                        int mul = ((sb >> 6) << 2) / 4;
-                        if (mul)
-                        {
-                            char s[4];
-                            mul--;
-                            std::vector<int>muls = { 2, 4, 8 };
-                            sprintf(s, "*%i", muls[mul]);
-                            opcode.text += s;
-                        }
-
-                        stream.skip(1);
+                        //stream.skip(1); // ### EDIT
                         memcpy(&cop.imm32, stream.pcurrent(), sizeof(uint32_t));
                         stream.skip(sizeof(uint32_t));
-                        cop.immSize = 32;
                         char s[20];
-                        if (cop.imm32 > INT32_MAX)
-                            sprintf(s, "-%08Xh", (UINT32_MAX - cop.imm32) + 1);
+                        if (!is64mode)
+                        {
+                            cop.immSize = 32;
+                            if (cop.imm32 > INT32_MAX)
+                                sprintf(s, "%08Xh", (UINT32_MAX - cop.imm32) + 1);
+                            else
+                                sprintf(s, "%08Xh", cop.imm32);
+                        }
                         else
-                            sprintf(s, "+%08Xh", cop.imm32);
+                        {
+                            cop.immSize = 64;
+                            sprintf(s, "%016llXh", offset + stream.getpos() + cop.imm32);
+                        }
+
+                        // cop.immSize = 32;
+                        // char s[20];
+                        // if (cop.imm32 > INT32_MAX)
+                        //     sprintf(s, "-%08Xh", (UINT32_MAX - cop.imm32) + 1);
+                        // else
+                        //     sprintf(s, "+%08Xh", cop.imm32);
+
                         opcode.text += s;
                     }
                     else
@@ -3388,7 +3407,7 @@ namespace Seraph
                         cop.regs.push_back(r2);
 
                         if (!hasRex)
-                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                            opcode.text += Mnemonics::R64[cop.regs.back()];
                         else
                         {
                             bool isRegExt = (rexEnc & 1);
@@ -3403,7 +3422,7 @@ namespace Seraph
                             cop.regs.push_back(r1);
 
                             if (!hasRex)
-                                opcode.text += Mnemonics::R32[cop.regs.back()];
+                                opcode.text += Mnemonics::R64[cop.regs.back()];
                             else
                             {
                                 bool isRegExt = (rexEnc & 2);
@@ -3423,7 +3442,7 @@ namespace Seraph
                             }
                         }
 
-                        stream.skip(1);
+                        // stream.skip(1); // ### EDIT
                     }
 
                     opcode.text += "]";
@@ -3435,8 +3454,9 @@ namespace Seraph
 
                     if (r2 == 4)
                     {
-                        stream.next();
+                        //stream.next(); // ### EDIT
                         sb = stream.current();
+                        stream.next(); // ### ADDED
                         mode = sb >> 5;
                         r1 = (mode) ? ((sb % (mode << 5)) / 8) : 0;
                         r2 = ((mode) ? (sb % (mode << 5)) : sb) % 8;
@@ -3446,7 +3466,7 @@ namespace Seraph
                     cop.regs.push_back(r2);
 
                     if (!hasRex)
-                        opcode.text += Mnemonics::R32[cop.regs.back()];
+                        opcode.text += Mnemonics::R64[cop.regs.back()];
                     else
                     {
                         bool isRegExt = (rexEnc & 1);
@@ -3461,7 +3481,7 @@ namespace Seraph
                         cop.regs.push_back(r1);
 
                         if (!hasRex)
-                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                            opcode.text += Mnemonics::R64[cop.regs.back()];
                         else
                         {
                             bool isRegExt = (rexEnc & 2);
@@ -3481,7 +3501,7 @@ namespace Seraph
                         }
                     }
                     
-                    stream.skip(1);
+                    //stream.skip(1); // ### EDIT
                     cop.imm8 = stream.next();
                     cop.immSize = 8;
                     char s[20];
@@ -3499,8 +3519,9 @@ namespace Seraph
 
                     if (r2 == 4)
                     {
-                        stream.next();
+                        // stream.next(); // ### EDIT
                         sb = stream.current();
+                        stream.next(); // ### ADDED
                         mode = sb >> 5;
                         r1 = (mode) ? ((sb % (mode << 5)) / 8) : 0;
                         r2 = ((mode) ? (sb % (mode << 5)) : sb) % 8;
@@ -3510,7 +3531,7 @@ namespace Seraph
                     cop.regs.push_back(r2);
 
                     if (!hasRex)
-                        opcode.text += Mnemonics::R32[cop.regs.back()];
+                        opcode.text += Mnemonics::R64[cop.regs.back()];
                     else
                     {
                         bool isRegExt = (rexEnc & 1);
@@ -3525,7 +3546,7 @@ namespace Seraph
                         cop.regs.push_back(r1);
 
                         if (!hasRex)
-                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                            opcode.text += Mnemonics::R64[cop.regs.back()];
                         else
                         {
                             bool isRegExt = (rexEnc & 2);
@@ -3545,7 +3566,7 @@ namespace Seraph
                         }
                     }
                     
-                    stream.skip(1);
+                    //stream.skip(1); // ### EDIT
                     memcpy(&cop.imm32, stream.pcurrent(), sizeof(uint32_t));
                     stream.skip(sizeof(uint32_t));
                     cop.immSize = 32;
@@ -3626,14 +3647,14 @@ namespace Seraph
                                 break;
                             default:
                                 cop.bitSize = 32;
-                                opcode.text += Mnemonics::R32[cop.regs.back()];
+                                opcode.text += isRegExt ? Mnemonics::R32ext[cop.regs.back()] : Mnemonics::R32[cop.regs.back()];
                                 break;
                             }
                         }
                     }
 
-                    if (findEntry(opRef.extData.entries, OpEncoding::r))
-                        stream.skip(1);
+                    //if (findEntry(opRef.extData.entries, OpEncoding::r))
+                    //    stream.skip(1);
 
                     break;
                 }
@@ -3641,8 +3662,8 @@ namespace Seraph
 
                 // if there is no 'r' encoding to worry about,
                 // we can skip the mod/rm byte
-                if (!findEntry(opRef.extData.entries, OpEncoding::r))
-                    stream.skip(1);
+                //if (!findEntry(opRef.extData.entries, OpEncoding::r))
+                //    stream.skip(1);
 
                 break;
             }
@@ -3653,8 +3674,9 @@ namespace Seraph
         }
 
         // Copy the stream bytes into the opcode, for size reference
-        opcode.bytes.resize(stream.size() - streamStartIndex);
-        memcpy(&opcode.bytes[0], &stream.data()[streamStartIndex], stream.size() - streamStartIndex);
+        opcode.len = stream.getpos() - streamStartIndex;
+        opcode.bytes.resize(opcode.len);
+        memcpy(&opcode.bytes[0], &stream.data()[streamStartIndex], opcode.len);
 
         return opcode;
     }
@@ -3690,12 +3712,12 @@ namespace Seraph
 
     BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x86>::readNext()
     {
-        return read_x86_64(stream, offset, options, prelookup_x86_64, oplookup_x86_64, false);
+        return read_x86_64(stream, codeOffset, options, prelookup_x86_64, oplookup_x86_64, false);
     }
 
     BaseSet_x86_64::Opcode Disassembler<TargetArchitecture::x64>::readNext()
     {
-        return read_x86_64(stream, offset, options, prelookup_x86_64, oplookup_x86_64, true);
+        return read_x86_64(stream, codeOffset, options, prelookup_x86_64, oplookup_x86_64, true);
     }
 
     BaseSet_ARM::Opcode Disassembler<TargetArchitecture::ARM>::readNext()
