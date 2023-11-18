@@ -704,7 +704,8 @@ namespace Seraph
 					case VK_LEFT:
 						if (!hexView)
 						{
-							if (bufferIndex > 0)
+							viewing--;
+							/*if (bufferIndex > 0)
 							{
 								bufferIndex--;
 							}
@@ -716,7 +717,7 @@ namespace Seraph
 								if (buffer) delete[] buffer;
 								buffer = nullptr;
 							}
-
+							*/
 							break;
 						}
 
@@ -738,6 +739,8 @@ namespace Seraph
 					case VK_RIGHT:
 						if (!hexView)
 						{
+							viewing += firstOpcode.len;
+							/*
 							// give a breathing room of 1mb
 							if (bufferIndex >= 1024)
 							{
@@ -750,6 +753,7 @@ namespace Seraph
 
 							bufferIndex += firstOpcode.len;
 							//viewing++;
+							*/
 							break;
 						}
 
@@ -772,6 +776,8 @@ namespace Seraph
 					case VK_DOWN:
 						if (!hexView)
 						{
+							viewing += maxCols;
+							/*
 							// give a breathing room of 1mb
 							if (bufferIndex >= 1024 - maxCols)
 							{
@@ -784,6 +790,7 @@ namespace Seraph
 
 							bufferIndex += maxCols;
 							//viewing += maxCols;
+							*/
 							break;
 						}
 
@@ -798,6 +805,8 @@ namespace Seraph
 					case VK_UP:
 						if (!hexView)
 						{
+							viewing -= maxCols;
+							/*
 							if (bufferIndex >= maxCols)
 							{
 								bufferIndex -= maxCols;
@@ -811,6 +820,7 @@ namespace Seraph
 								if (buffer) delete[] buffer;
 								buffer = nullptr;
 							}
+							*/
 							break;
 						}
 
@@ -845,14 +855,41 @@ namespace Seraph
 							infoMode = 0;
 						refresh = true;
 						break;
+					case 'o':
+					{
+						std::string instr;
+						printf("Enter instruction(s): ");
+						std::getline(std::cin, instr);
+
+						const auto at = viewing + bufferIndex;
+
+						Seraph::Assembler<Seraph::TargetArchitecture::x64>assembler;
+
+						std::vector<uint8_t> bytes = {};
+						try {
+							bytes = assembler.compile(instr, at);
+						}
+						catch (SeraphException e) {};
+
+						if (!bytes.empty())
+						{
+							DWORD oldProtect;
+							VirtualProtectEx(hProcess, reinterpret_cast<void*>(at), bytes.size(), PAGE_EXECUTE_READWRITE, &oldProtect);
+							mwrite<uint8_t>(at, bytes);
+							VirtualProtectEx(hProcess, reinterpret_cast<void*>(at), bytes.size(), oldProtect, &oldProtect);
+						}
+
+						refresh = true;
+						break;
+					}
 					case 'v':
-						if (buffer) delete[] buffer;
-						buffer = nullptr;
+						//if (buffer) delete[] buffer;
+						//buffer = nullptr;
 						bufferIndex = 0;
 
 						hexView = !hexView;
 						refresh = true;
-						Sleep(500);
+						Sleep(250);
 						break;
 					}
 
@@ -959,28 +996,28 @@ namespace Seraph
 						printf("float		%f\n", *reinterpret_cast<float_t*>(&buffer[viewIndex]));
 						printf("double		%lf\n", *reinterpret_cast<double_t*>(&buffer[viewIndex]));
 
-						printf("\n\nAdditional options:\n[BKSPC] - Go back to selection\n[G] - Go to address\n[ESC] - Return to menu\n[V] - Switch view to disassembly\n");
+						printf("\n\nAdditional options:\n[BKSPC]\tGo back to selection\n[G]\tGo to address\n[ESC]\tReturn to menu\n[V]\tSwitch view to disassembly\n");
 
 						delete[] buffer;
 						buffer = nullptr;
 					}
 					else
 					{
-						if (!buffer)
-						{
-							bufferIndex = 0;
-							buffer = new uint8_t[4096];
-							ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing), buffer, 4096, nullptr);
+						MEMORY_BASIC_INFORMATION64 page = { 0 };
+						VirtualQueryEx(hProcess, reinterpret_cast<void*>(viewing), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
 
-							std::vector<uint8_t> v(4096, 0);
-							memcpy(&v[0], buffer, 4096);
+						const auto rem = ((page.BaseAddress + page.RegionSize) - viewing) - 1;
+						buffer = new uint8_t[rem];
+						ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing + bufferIndex), buffer, rem, nullptr);
+						
 
-							ByteStream stream(v);
-							dis64.use(stream);
-							dis64.setOffset(viewing);
-						}
+						printf("Buffer: ");
+						for (int i = 0; i < 20; i++)
+							printf("%02X ", buffer[i]);
+						printf("\n\n");
 
-						dis64.reset();
+						dis64.use(ByteStream(buffer, rem));
+						dis64.setOffset(viewing);
 						dis64.setpos(bufferIndex);
 						firstOpcode = dis64.readNext();
 
@@ -1047,7 +1084,8 @@ namespace Seraph
 							op = dis64.readNext();
 						}
 
-						printf("\n\nAdditional options:\n[BKSPC] - Go back to selection\n[G] - Go to address\n[ESC] - Return to menu\n[I] - Switch informative mode\n   1.) Show instruction bytes\n   2.) Extra info\n   3.) Decompilation (N/A)\n[V] - Switch view to hexview\n");
+						printf("\n\nAdditional options:\n[BKSPC]\tGo back to selection\n[G]\tGo to address\n[ESC]\tReturn to menu\n[I]\tSwitch informative mode\n\t\t1.) Show instruction bytes\n\t\t2.) Extra info\n\t\t3.) Decompilation (N/A)\n[V]\tSwitch view to hexview\n[O]\tOverwrite instruction(s)");
+						delete[] buffer;
 					}
 
 					break;

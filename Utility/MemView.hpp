@@ -36,6 +36,11 @@ namespace Seraph
 
 			std::vector<uintptr_t> locations;
 		public:
+			MemView(const uintptr_t location)
+			{
+				locations.push_back(location);
+			};
+
 			MemView(const ScanResults _locations = {})
 			{
 				for (const auto x : _locations)
