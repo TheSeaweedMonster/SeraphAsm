@@ -231,6 +231,7 @@ namespace Seraph
 			{
 				if (!((buffer[i] >= 0x20 && buffer[i] <= 0x7F) || buffer[i] == '\n' || buffer[i] == '\r' || buffer[i] == '\b' || buffer[i] == '\t'))
 					break;
+				
 				result += static_cast<char>(buffer[i]);
 			}
 			delete[] buffer;
