@@ -26,7 +26,7 @@ namespace Seraph
 			constexpr static uint8_t SCAN_ALL = 0;
 			constexpr static uint8_t SCAN_CODE = 1;
 
-			constexpr static size_t maxRows = 6;
+			constexpr static size_t maxRows = 8;
 			constexpr static size_t maxCols = 16;
 
 			int selectionIndex = 0;
