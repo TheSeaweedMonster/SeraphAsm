@@ -141,6 +141,8 @@ namespace Seraph
 				{
 				case 0x1B:
 					locations.clear();
+					aobmask.first.clear();
+					aobmask.second.clear();
 					selectionIndex = 0; // reset from hexview/etc. mode
 					mode = MAINMENU_MODE;
 					break;
@@ -620,10 +622,43 @@ namespace Seraph
 						viewing = locations[selectionIndex];
 						mode = HEXVIEW_MODE;
 						break;
-					case 'g':
-						mode = GOTO_MODE;
-						refresh = true;
+					case 'r':
+					{
+						system("cls");
+						printf("Rescanning... ");
+						for (const auto b : aobmask.second)
+							printf("%02X ", b);
+						printf("\n");
+
+						std::vector<uintptr_t> results = {};
+
+						for (const auto location : locations)
+						{
+							const auto buffer = mread<uint8_t>(location, aobmask.first.size());
+
+							// Search through the whole memory page
+							for (size_t i = 0; i < aobmask.first.size();)
+							{
+								bool matched = true;
+
+								for (size_t j = 0; j < aobmask.second.size(); j++)
+								{
+									if (buffer[i++] != aobmask.second[j] && aobmask.first[j] == '.')
+									{
+										matched = false;
+										break;
+									}
+								}
+
+								if (matched)
+									results.push_back(locations[i]);
+							}
+						}
+
+						printf("Results: %i\n", results.size());
+						locations = results;
 						break;
+					}
 					}
 
 					if (mode != SELECTION_MODE)
@@ -639,7 +674,15 @@ namespace Seraph
 						else
 							printf("  ");
 
-						printf("%p\n", locations[i]);
+						if (!aobmask.first.empty())
+						{
+							printf("%p --> ", locations[i]);
+							for (const auto b : mread<uint8_t>(locations[i], aobmask.first.length()))
+								printf("%02X ", b);
+							printf("\n");
+						}
+						else
+							printf("%p\n", locations[i]);
 
 						if (j++ > 20)
 						{
@@ -647,6 +690,9 @@ namespace Seraph
 							break;
 						}
 					}
+
+					if (!locations.empty() && !aobmask.first.empty())
+						printf("\n\n[R] - Rescan\n");
 
 					break;
 				}
