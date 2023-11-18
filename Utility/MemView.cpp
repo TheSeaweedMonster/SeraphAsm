@@ -886,26 +886,17 @@ namespace Seraph
 					{
 						if (!buffer)
 						{
-							buffer = new uint8_t[2048];
-							ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing), buffer, 2048, nullptr);
+							bufferIndex = 0;
+							buffer = new uint8_t[4096];
+							ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing), buffer, 4096, nullptr);
 
-							std::vector<uint8_t> v(2048, 0);
-							memcpy(&v[0], buffer, 2048);
+							std::vector<uint8_t> v(4096, 0);
+							memcpy(&v[0], buffer, 4096);
 
 							ByteStream stream(v);
 							dis64.use(stream);
 							dis64.setOffset(viewing);
-
-							bufferIndex = 0;
 						}
-
-						//MEMORY_BASIC_INFORMATION64 page = { 0 };
-						//VirtualQueryEx(hProcess, reinterpret_cast<void*>(viewing), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
-
-						//if ((page.State & MEM_COMMIT) && (page.Protect & MemUtil::READABLE_MEMORY))
-						//	ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing), buffer, 2048, nullptr);
-						//else
-						//	printf("UNREADABLE MEMORY\n");
 
 						dis64.reset();
 						dis64.setpos(bufferIndex);
@@ -914,12 +905,21 @@ namespace Seraph
 						auto op = firstOpcode;
 						auto at = viewing + bufferIndex;
 
+						const auto closestModule = getAssociatedModule(at);
+
 						for (int i = 0; i < 16; i++)
 						{
 							char s[64];
-							sprintf(s, "%p: %s", at, op.text.c_str());
+							if (closestModule.first.empty())
+								sprintf(s, "%p: %s", at, op.text.c_str());
+							else
+							{
+								std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+								std::string moduleName = converter.to_bytes(closestModule.first);
+								sprintf(s, "%s+%X: %s", moduleName.c_str(), at - closestModule.second, op.text.c_str());
+							}
 							printf(s);
-							for (size_t i = strlen(s); i < 64; i++)
+							for (size_t i = strlen(s); i < closestModule.first.length() + 60; i++)
 								printf(" ");
 
 							switch (infoMode)
