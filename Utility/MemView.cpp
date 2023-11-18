@@ -661,8 +661,16 @@ namespace Seraph
 							if (bufferIndex > 0)
 							{
 								bufferIndex--;
-								//viewing--;
 							}
+							else
+							{
+								viewing--;
+								bufferIndex = 0;
+
+								if (buffer) delete[] buffer;
+								buffer = nullptr;
+							}
+
 							break;
 						}
 
@@ -684,6 +692,16 @@ namespace Seraph
 					case VK_RIGHT:
 						if (!hexView)
 						{
+							// give a breathing room of 1mb
+							if (bufferIndex >= 1024)
+							{
+								viewing += 1024;
+								bufferIndex -= 1024;
+
+								if (buffer) delete[] buffer;
+								buffer = nullptr;
+							}
+
 							bufferIndex += firstOpcode.len;
 							//viewing++;
 							break;
@@ -708,6 +726,16 @@ namespace Seraph
 					case VK_DOWN:
 						if (!hexView)
 						{
+							// give a breathing room of 1mb
+							if (bufferIndex >= 1024 - maxCols)
+							{
+								viewing += 1024;
+								bufferIndex -= 1024;
+
+								if (buffer) delete[] buffer;
+								buffer = nullptr;
+							}
+
 							bufferIndex += maxCols;
 							//viewing += maxCols;
 							break;
@@ -728,6 +756,14 @@ namespace Seraph
 							{
 								bufferIndex -= maxCols;
 								//viewing -= maxCols;
+							}
+							else
+							{
+								viewing -= maxCols;
+								bufferIndex = 0;
+
+								if (buffer) delete[] buffer;
+								buffer = nullptr;
 							}
 							break;
 						}
