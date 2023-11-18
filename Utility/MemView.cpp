@@ -81,6 +81,7 @@ namespace Seraph
 			auto scanMode = 0;
 			bool hexView = true;
 			bool refresh = true;
+			uint8_t infoMode = 0;
 
 			uint8_t* buffer = nullptr;
 			size_t bufferIndex = 0;
@@ -540,6 +541,8 @@ namespace Seraph
 				}
 				case GOTO_MODE:
 				{
+					hexView = true;
+
 					std::string addr;
 					printf("Enter an address to jump to: ");
 					std::getline(std::cin, addr);
@@ -739,6 +742,7 @@ namespace Seraph
 					case '\b':
 						if (buffer) delete[] buffer;
 						buffer = nullptr;
+						bufferIndex = 0;
 
 						refresh = true;
 						viewing = 0;
@@ -748,13 +752,21 @@ namespace Seraph
 					case 'g':
 						if (buffer) delete[] buffer;
 						buffer = nullptr;
+						bufferIndex = 0;
 
 						mode = GOTO_MODE;
+						refresh = true;
+						break;
+					case 'i':
+						infoMode++;
+						if (infoMode > 2)
+							infoMode = 0;
 						refresh = true;
 						break;
 					case 'v':
 						if (buffer) delete[] buffer;
 						buffer = nullptr;
+						bufferIndex = 0;
 
 						hexView = !hexView;
 						refresh = true;
@@ -909,14 +921,51 @@ namespace Seraph
 							printf(s);
 							for (size_t i = strlen(s); i < 64; i++)
 								printf(" ");
-							for (const auto b : op.bytes)
-								printf("%02X ", b);
+
+							switch (infoMode)
+							{
+							case 0:
+								for (const auto b : op.bytes)
+									printf("%02X ", b);
+								break;
+							case 1:
+							{
+								std::string data = "";
+
+								for (const auto& operand : op.operands)
+								{
+									if (operand.imm32)
+									{
+										const auto offset = at + op.len + operand.imm32;
+										
+										MEMORY_BASIC_INFORMATION64 page = { 0 };
+										VirtualQueryEx(hProcess, reinterpret_cast<void*>(offset), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
+
+										if ((page.State & MEM_COMMIT) && (page.Protect & MemUtil::READABLE_MEMORY))
+										{
+											std::string str = "";
+											for (const auto c : mreads(offset, 32))
+												str += (c == '\n' || c == '\r') ? ' ' : c;
+											if (str.size() > 3)
+												data += "// \"" + str + "\"";
+										}
+									}
+								}
+
+								if (!data.empty())
+									std::cout << data.c_str();
+								break;
+							}
+							case 2:
+								break;
+							}
+
 							printf("\n");
 							at += op.len;
 							op = dis64.readNext();
 						}
 
-						printf("\n\nAdditional options:\n[BKSPC] - Go back to selection\n[G] - Go to address\n[ESC] - Return to menu\n[V] - Switch view to hexview\n");
+						printf("\n\nAdditional options:\n[BKSPC] - Go back to selection\n[G] - Go to address\n[ESC] - Return to menu\n[I] - Switch informative mode\n   1.) Show instruction bytes\n   2.) Extra info\n   3.) Decompilation (N/A)\n[V] - Switch view to hexview\n");
 					}
 
 					break;
@@ -926,6 +975,11 @@ namespace Seraph
 				}
 
 				Sleep(5);
+			}
+
+			if (buffer)
+			{
+				delete[] buffer;
 			}
 		}
 	}
