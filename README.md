@@ -155,6 +155,8 @@ This is solved with the "offset" parameter of the compile function.<br>
 Typically, here you would put the base address of the module that this assembly code is located in (like the start of the .text section).<br>
 But since we're compiling these instructions to go basically anywhere, it's up to you to provide it with the offset--wherever it is you write these bytes to.<br>
 
+As of now, the size of this parameter changes based on whether you compiled your program in x86 or x64.<br>
+
 # Disassembling
 
 To disassemble, or, convert byte values into readable instructions,<br>
