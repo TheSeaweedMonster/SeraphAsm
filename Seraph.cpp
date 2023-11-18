@@ -454,6 +454,8 @@ namespace Seraph
                 {{{0x18}, {OpEncoding::m1}, {Symbols::m8}}, "prefetcht1", OP_DESC("Move data specified by address closer to the processor using the t1 hint")},
                 {{{0x18}, {OpEncoding::m2}, {Symbols::m8}}, "prefetcht2", OP_DESC("Move data specified by address closer to the processor using the t2 hint")},
                 {{{0x18}, {OpEncoding::m3}, {Symbols::m8}}, "prefetchnta", OP_DESC("Move data specified by address closer to the processor using the nta hint")},
+                {{{0x1F}, {OpEncoding::m0}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "nop", OP_DESC("Multi-byte no-operation instruction")},
+                {{{0x1F}, {OpEncoding::m0}, {Symbols::rm32}}, "nop", OP_DESC("Multi-byte no-operation instruction")},
                 {{{0x20}, {OpEncoding::r}, {Symbols::r32, Symbols::cri}}, "mov", OP_DESC("Move control register to r32")},
                 {{{0x21}, {OpEncoding::r}, {Symbols::r32, Symbols::dri}}, "mov", OP_DESC("Move debug register to r32")},
                 {{{0x22}, {OpEncoding::r}, {Symbols::cri, Symbols::r32}}, "mov", OP_DESC("Move r32 to control register")},
