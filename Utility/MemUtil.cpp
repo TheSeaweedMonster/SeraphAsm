@@ -224,9 +224,15 @@ namespace Seraph
 		std::string mreads(uintptr_t location, const size_t count)
 		{
 			size_t nbytes = NULL;
-			char* buffer = new char[count];
+			uint8_t* buffer = new uint8_t[count];
 			ReadProcessMemory(hProcess, reinterpret_cast<void*>(location), buffer, count, &nbytes);
-			std::string result(buffer);
+			std::string result = "";
+			for (size_t i = 0; i < count; i++)
+			{
+				if (!((buffer[i] >= 0x20 && buffer[i] <= 0x7F) || buffer[i] == '\n' || buffer[i] == '\r' || buffer[i] == '\b' || buffer[i] == '\t'))
+					break;
+				result += static_cast<char>(buffer[i]);
+			}
 			delete[] buffer;
 			return result;
 		}
