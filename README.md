@@ -147,8 +147,12 @@ retn
 ```
 
 Easy peazy! :-)<br>
-Notice, for all relative values (such as `jmp AF001F0000h`), we need to provide an offset to jump relative to.<br>
+Notice, for all relative values in call/jmp instructions (such as `jmp AF001F0000h`), we need to provide an offset to jump relative to,<br>
+because otherwise it will just start at 0.<br>
 This is solved with the "offset" parameter of the compile function.<br>
+
+Typically, here you would put the base address of the module that this assembly code is located in (like the start of the .text section).<br>
+But since we're compiling these instructions to go basically anywhere, it's up to you to provide it with the offset--wherever it is you write these bytes to.<br>
 
 The size of this parameter depends on whether you compile your program as x86 or x64.<br>
 
