@@ -20,18 +20,9 @@ if this has been forked or modified. Thanks<br>
 
 # Release Notes
 
-Note for disassembly:<br>
-All opcodes are supported except for prefixed F2 ??/F3 ?? opcodes.<br>
-They should be done by tomorrow :)<br>
-Apart from this, more testing is needed to refine the output<br>
-
-Also for disassembly, the opcode struct does not contain any useful information except for<br>
-the text translation of the instruction and the instruction size. It also contains the instruction bytes and
-operand sizes.<br>
+Note for disassembly: the opcode struct does not contain any useful information except for<br>
+the text translation of the instruction and the instruction bytes/length.<br>
 There will be a lot more functionality soon.<br>
-
-This project is essentially finished but I will continue adding updates<br>
-for more features.<br>
 
 Please report any incorrect outputs or bugs to my discord (jay_howdy).<br>
 Feedback much appreciated :)<br>
