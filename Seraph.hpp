@@ -404,8 +404,9 @@ namespace Seraph
         static const uint32_t OPS_REMOVED_X64 = 0x00000002;
         static const uint32_t OPS_IS_PREFIX = 0x00000004;
         static const uint32_t OPS_16MODE = 0x00000008;
-        static const uint32_t OPS_PRE_F3 = 0x00000010;
-        static const uint32_t OPS_EXTEND_IMM64 = 0x00000020;
+        static const uint32_t OPS_PRE_F2 = 0x00000010;
+        static const uint32_t OPS_PRE_F3 = 0x00000020;
+        static const uint32_t OPS_EXTEND_IMM64 = 0x00000040;
 
         struct OpData
         {
@@ -575,8 +576,8 @@ namespace Seraph
         Disassembler(const ByteStream& _stream, const DisassemblyOptions& _options);
 
         void use(const ByteStream& _stream) { stream = _stream; startIndex = stream.getpos(); }
-        void reset() { stream.setpos(startIndex); }
-        void setpos(const size_t pos) { stream.setpos(startIndex + pos); }
+        void reset() { stream.setpos(0 /*startIndex*/); }
+        void setpos(const size_t pos) { stream.setpos(pos); }
         void setOffset(const uintptr_t _offset) { codeOffset = _offset; };
 
         BaseSet_x86_64::Opcode readNext();
