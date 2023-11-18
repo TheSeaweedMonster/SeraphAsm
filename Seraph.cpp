@@ -613,8 +613,8 @@ namespace Seraph
                 {{{0xAC}, {}, {Symbols::rm32, Symbols::r32, Symbols::imm8}}, "shrd", OP_DESC("Shift rm32 to right imm8 places while shifting bits from r32 in from the left")},
                 {{{0xAD}, {}, {Symbols::rm16, Symbols::r16, Symbols::cl}, BaseSet_x86_64::OPS_16MODE}, "shrd", OP_DESC("Shift rm16 to right CL places while shifting bits from r16 in from the left")},
                 {{{0xAD}, {}, {Symbols::rm32, Symbols::r32, Symbols::cl}}, "shrd", OP_DESC("Shift rm32 to right CL places while shifting bits from r32 in from the left")},
-                {{{0xAE}, {OpEncoding::m0}, {Symbols::m512byte}}, "fxsave", OP_DESC("Store FP and MMXâ„¢ technology state and Streaming SIMD Extension state to m512byte")},
-                {{{0xAE}, {OpEncoding::m1}, {Symbols::m512byte}}, "fxrstor", OP_DESC("Load FP and MMXâ„¢ technology and Streaming SIMD Extension state from m512byte")},
+                {{{0xAE}, {OpEncoding::m0}, {Symbols::m512byte}}, "fxsave", OP_DESC("Store FP and MMX™ technology state and Streaming SIMD Extension state to m512byte")},
+                {{{0xAE}, {OpEncoding::m1}, {Symbols::m512byte}}, "fxrstor", OP_DESC("Load FP and MMX™ technology and Streaming SIMD Extension state from m512byte")},
                 {{{0xAE}, {OpEncoding::m2}, {Symbols::m32}}, "ldmxcsr", OP_DESC("Load Streaming SIMD Extension control/status word from m32")},
                 {{{0xAE}, {OpEncoding::m3}, {Symbols::m32}}, "stmxcsr", OP_DESC("Store Streaming SIMD Extension control/status word to m32")},
                 {{{0xAE}, {OpEncoding::m7}, {}}, "sfence", OP_DESC("Guarantees that every store instruction that precedes in program order the store fence instruction is globally visible before any store instruction which follows the fence is globally visible")},
@@ -970,14 +970,14 @@ namespace Seraph
             /* B5 */ {{{{}, {}, {Symbols::bh, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
             /* B6 */ {{{{}, {}, {Symbols::ch, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
             /* B7 */ {{{{}, {}, {Symbols::dh, Symbols::imm8}}, "mov", OP_DESC("Move imm8 to r8")}},
-            /* B8 */ {{{{}, {}, {Symbols::eax, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
-            /* B9 */ {{{{}, {}, {Symbols::ecx, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
-            /* BA */ {{{{}, {}, {Symbols::edx, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
-            /* BB */ {{{{}, {}, {Symbols::ebx, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
-            /* BC */ {{{{}, {}, {Symbols::esp, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
-            /* BD */ {{{{}, {}, {Symbols::ebp, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* B8 */ {{{{}, {}, {Symbols::eax, Symbols::imm32}, BaseSet_x86_64::OPS_EXTEND_IMM64}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* B9 */ {{{{}, {}, {Symbols::ecx, Symbols::imm32}, BaseSet_x86_64::OPS_EXTEND_IMM64}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BA */ {{{{}, {}, {Symbols::edx, Symbols::imm32}, BaseSet_x86_64::OPS_EXTEND_IMM64}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BB */ {{{{}, {}, {Symbols::ebx, Symbols::imm32}, BaseSet_x86_64::OPS_EXTEND_IMM64}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BC */ {{{{}, {}, {Symbols::esp, Symbols::imm32}, BaseSet_x86_64::OPS_EXTEND_IMM64}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BD */ {{{{}, {}, {Symbols::ebp, Symbols::imm32}, BaseSet_x86_64::OPS_EXTEND_IMM64}, "mov", OP_DESC("Move imm32 to r32")}},
             /* BE */ {{{{}, {}, {Symbols::esi, Symbols::imm32}, BaseSet_x86_64::OPS_EXTEND_IMM64}, "mov", OP_DESC("Move imm32 to r32")}},
-            /* BF */ {{{{}, {}, {Symbols::edi, Symbols::imm32}}, "mov", OP_DESC("Move imm32 to r32")}},
+            /* BF */ {{{{}, {}, {Symbols::edi, Symbols::imm32}, BaseSet_x86_64::OPS_EXTEND_IMM64}, "mov", OP_DESC("Move imm32 to r32")}},
             /* C0 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rol", OP_DESC("Rotate eight bits rm8 left imm8 times")},
                       {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "ror", OP_DESC("Rotate eight bits rm16 right imm8 times")},
                       {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rcl", OP_DESC("Rotate nine bits (CF, rm8) left imm8 times")},
@@ -1005,9 +1005,9 @@ namespace Seraph
             /* C9 */ {{{{}, {}, {}}, "leave", OP_DESC("Set ESP to EBP, then pop EBP")}},
             /* CA */ {{{{}, {OpEncoding::iw}, {Symbols::imm16}}, "ret", OP_DESC("Far return to calling procedure and pop imm16 bytes from stack")}},
             /* CB */ {{{{}, {}, {}}, "ret", OP_DESC("Far return to calling procedure")}},
-            /* CC */ {{{{}, {}, {}}, "int 3", OP_DESC("Interrupt 3â€”trap to debugger")}},
+            /* CC */ {{{{}, {}, {}}, "int 3", OP_DESC("Interrupt 3—trap to debugger")}},
             /* CD */ {{{{}, {OpEncoding::ib}, {Symbols::imm8}}, "int", OP_DESC("Interrupt vector number specified by immediate byte")}},
-            /* CE */ {{{{}, {}, {}}, "into", OP_DESC("Interrupt 4â€”if overflow flag is 1")}},
+            /* CE */ {{{{}, {}, {}}, "into", OP_DESC("Interrupt 4—if overflow flag is 1")}},
             /* CF */ {{{{}, {}, {}}, "iretd", OP_DESC("Interrupt return (32-bit operand size)")}},
             /* D0 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::one}}, "rol", OP_DESC("Rotate eight bits rm8 left once")},
                       {{{}, {OpEncoding::m1}, {Symbols::rm8, Symbols::one}}, "ror", OP_DESC("Rotate eight bits rm8 right once")},
@@ -1072,7 +1072,7 @@ namespace Seraph
                       {{{0xEC}, {}, {}}, "fldlg2", OP_DESC("Push log 102 onto the FPU register stack")},
                       {{{0xED}, {}, {}}, "fldln2", OP_DESC("Push log e2 onto the FPU register stack")},
                       {{{0xEE}, {}, {}}, "fldz", OP_DESC("Push +0.0 onto the FPU register stack")},
-                      {{{0xF0}, {}, {}}, "f2xm1", OP_DESC("Replace ST(0) with (2 ST(0) â€“ 1)")},
+                      {{{0xF0}, {}, {}}, "f2xm1", OP_DESC("Replace ST(0) with (2 ST(0) – 1)")},
                       {{{0xF1}, {}, {}}, "fyl2x", OP_DESC("Replace ST(1) with (ST(1) * log 2ST(0)) and pop the register stack")},
                       {{{0xF2}, {}, {}}, "fptan", OP_DESC("Replace ST(0) with its tangent and push 1 onto the FPU stack")},
                       {{{0xF3}, {}, {}}, "fpatan", OP_DESC("Replace ST(1) with arctan(ST(1)/ST(0)) and pop the register stack")},
@@ -1200,7 +1200,7 @@ namespace Seraph
             /* F5 */ {{{{}, {}, {}}, "cmc", OP_DESC("Complement CF flag")}},
             /* F6 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::imm8}}, "test", OP_DESC("AND imm8 with rm8; set SF, ZF, PF according to result")},
                       {{{}, {OpEncoding::m2}, {Symbols::rm8}}, "not", OP_DESC("Reverse each bit of rm8")},
-                      {{{}, {OpEncoding::m3}, {Symbols::rm8}}, "neg", OP_DESC("Twoâ€™s complement negate rm8")},
+                      {{{}, {OpEncoding::m3}, {Symbols::rm8}}, "neg", OP_DESC("Two’s complement negate rm8")},
                       {{{}, {OpEncoding::m4}, {Symbols::rm8}}, "mul", OP_DESC("Unsigned multiply (AX <- AL * rm8)")},
                       {{{}, {OpEncoding::m5}, {Symbols::rm8}}, "imul", OP_DESC("AX <- AL * rm byte")},
                       {{{}, {OpEncoding::m6}, {Symbols::rm8}}, "div", OP_DESC("Unsigned divide AX by rm8; AL <- Quotient, AH <- Remainder")},
@@ -1209,8 +1209,8 @@ namespace Seraph
                       {{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::imm32}}, "test", OP_DESC("AND imm32 with rm32; set SF, ZF, PF according to result")},
                       {{{}, {OpEncoding::m2}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "not", OP_DESC("Reverse each bit of rm16")},
                       {{{}, {OpEncoding::m2}, {Symbols::rm32}}, "not", OP_DESC("Reverse each bit of rm32")},
-                      {{{}, {OpEncoding::m3}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "neg", OP_DESC("Twoâ€™s complement negate rm16")},
-                      {{{}, {OpEncoding::m3}, {Symbols::rm32}}, "neg", OP_DESC("Twoâ€™s complement negate rm32")},
+                      {{{}, {OpEncoding::m3}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "neg", OP_DESC("Two’s complement negate rm16")},
+                      {{{}, {OpEncoding::m3}, {Symbols::rm32}}, "neg", OP_DESC("Two’s complement negate rm32")},
                       {{{}, {OpEncoding::m4}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "mul", OP_DESC("Unsigned multiply (DX:AX <- AX * rm16)")},
                       {{{}, {OpEncoding::m4}, {Symbols::rm32}}, "mul", OP_DESC("Unsigned multiply (EDX:EAX <- EAX * rm32)")},
                       {{{}, {OpEncoding::m5}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "imul", OP_DESC("DX:AX <- AX * rm word")},
@@ -1232,7 +1232,7 @@ namespace Seraph
                       {{{}, {OpEncoding::m1}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "dec", OP_DESC("Decrement rm word by 1")},
                       {{{}, {OpEncoding::m1}, {Symbols::rm32}}, "dec", OP_DESC("Decrement rm doubleword by 1")},
                       {{{}, {OpEncoding::m2}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "call", OP_DESC("Call near, absolute indirect, address given in rm16")},
-                      {{{}, {OpEncoding::m2}, {Symbols::rm32}}, "call", OP_DESC("Call near, absolute indirect, address given in rm32")},
+                      {{{}, {OpEncoding::m2}, {Symbols::rm32}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "call", OP_DESC("Call near, absolute indirect, address given in rm32")},
                       {{{}, {OpEncoding::m3}, {Symbols::m16_16}, BaseSet_x86_64::OPS_16MODE}, "call", OP_DESC("Call far, absolute indirect, address given in m16:16")},
                       {{{}, {OpEncoding::m3}, {Symbols::m16_32}}, "call", OP_DESC("Call far, absolute indirect, address given in m16:32")},
                       {{{}, {OpEncoding::m4}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "jmp", OP_DESC("Jump near, absolute indirect, address given in rm16")},
@@ -3660,8 +3660,16 @@ namespace Seraph
                             opcode.text += Mnemonics::XMM[cop.regs.back()];
                             break;
                         default:
-                            cop.bitSize = 32;
-                            opcode.text += Mnemonics::R32[cop.regs.back()];
+                            if (opRef.extData.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS)
+                            {
+                                cop.bitSize = 64;
+                                opcode.text += Mnemonics::R64[cop.regs.back()];
+                            }
+                            else
+                            {
+                                cop.bitSize = 32;
+                                opcode.text += Mnemonics::R32[cop.regs.back()];
+                            }
                             break;
                         }
                     }
@@ -3811,7 +3819,6 @@ namespace Seraph
 
         const uint8_t B_OPERAND_SIZE_OVERRIDE = 0x66;
         const uint8_t B_ADDRESS_SIZE_OVERRIDE = 0x67;
-        const uint8_t B_REX_OVERRIDE = 0x40;
 
         Parser::Scope scope = Parser::compile<TargetArchitecture::x86>(source, prelookup_x86_64);
         Parser::Body mainBody = scope.bodies.front();

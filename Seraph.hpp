@@ -45,6 +45,11 @@ namespace Seraph
         ByteStream(void) = default;
         ByteStream(const std::vector<uint8_t>& s) { *this = s; }
         ByteStream(const ByteStream& s){ *this = s; }
+        ByteStream(uint8_t* s, const size_t count) {
+            std::vector<uint8_t> v(count, 0);
+            memcpy(&v[0], s, count);
+            *this = v;
+        }
 
         inline ByteStream& operator<<(const uint8_t b)
         {
@@ -302,9 +307,9 @@ namespace Seraph
             r16_32,         // r32 by default, r16 depending on operand size prefix
             r32,            // One of the doubleword general-purpose registers EAX, ECX, EDX, EBX, ESP, EBP, ESI, or EDI.
             r64,            // ### x64 Mode ###
-            imm8,           // An immediate byte value -- a signed number between â€“128 and +127 inclusive.
-            imm16,          // An immediate word value between â€“32,768 and +32,767 inclusive. 
-            imm32,          // An immediate doubleword value between +2,147,483,647 and â€“2,147,483,648 inclusive.
+            imm8,           // An immediate byte value -- a signed number between –128 and +127 inclusive.
+            imm16,          // An immediate word value between –32,768 and +32,767 inclusive. 
+            imm32,          // An immediate doubleword value between +2,147,483,647 and –2,147,483,648 inclusive.
             imm64,          // ### x64 Mode ###
             rm8,            // A byte operand that is either the contents of a byte general-purpose register (AL, BL, CL, DL, AH, BH, CH, and DH), or a byte from memory.
             rm16,           // A word general-purpose register or memory operand (AX, BX, CX, DX, SP, BP, SI, and DI).
@@ -337,12 +342,12 @@ namespace Seraph
             m80bcd,
             st0,            // (or ST) - The top element of the FPU register stack.
             sti,            // The ith element from the top of the FPU register stack. (i = 0 through 7)
-            mm,             // An MMXâ„¢ technology register. The 64-bit MMXâ„¢ technology registers are: MM0 through MM7
+            mm,             // An MMX™ technology register. The 64-bit MMX™ technology registers are: MM0 through MM7
             mm2,            // Indicates the instruction uses xmm register(s) and does not use mod. (0xC0+)
             xmm,            // A SIMD floating-point register. The 128-bit SIMD floating-point registers are: XMM0 through XMM7.
             xmm2,           // Indicates the instruction uses xmm register(s) and does not use mod. (0xC0+)
-            mm_m32,         // The low order 32 bits of an MMXâ„¢ technology register or a 32-bit memory operand. The 64-bit MMXâ„¢ technology registers are: MM0 through MM7
-            mm_m64,         // An MMXâ„¢ technology register or a 64-bit memory operand. The 64-bit MMXâ„¢ technology registers are: MM0 through MM7.
+            mm_m32,         // The low order 32 bits of an MMX™ technology register or a 32-bit memory operand. The 64-bit MMX™ technology registers are: MM0 through MM7
+            mm_m64,         // An MMX™ technology register or a 64-bit memory operand. The 64-bit MMX™ technology registers are: MM0 through MM7.
             xmm_m32,        // A SIMD floating-points register or a 32-bit memory operand. The 128-bit SIMD floating-point registers are XMM0 through XMM7
             xmm_m64,        // A SIMD floating-point register or a 64-bit memory operand. The 64-bi SIMD floating-point registers are XMM0 through XMM7
             xmm_m128,       // A SIMD floating-point register or a 128-bit memory operand. The 128-bit SIMD floating-point registers are XMM0 through XMM7
