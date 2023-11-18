@@ -146,7 +146,8 @@ retn
 	}
 ```
 
-Easy peazy! :-)<br>
+Easy peazy :)<br>
+
 Notice, for all relative values in call/jmp instructions (such as `jmp AF001F0000h`), we need to provide an offset to jump relative to,<br>
 because otherwise it will just start at 0.<br>
 This is solved with the "offset" parameter of the compile function.<br>
