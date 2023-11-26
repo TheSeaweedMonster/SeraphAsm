@@ -19,8 +19,8 @@ std::pair<std::wstring, uintptr_t> getAssociatedModule(const uintptr_t location)
 			const auto dist = location - reinterpret_cast<uintptr_t>(mod.second);
 			if (dist >= 0 && dist < (location - closestModule.second))
 			{
-				//MEMORY_BASIC_INFORMATION64 page = { 0 };
-				//VirtualQueryEx(Seraph::MemUtil::hProcess, mod.second, reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
+				//MEMORY_BASIC_INFORMATION page = { 0 };
+				//VirtualQueryEx(Seraph::MemUtil::hProcess, mod.second, &page, sizeof(page));
 
 				//if (location >= page.BaseAddress && location < page.BaseAddress + page.RegionSize)
 				//{
@@ -85,6 +85,7 @@ namespace Seraph
 
 			uint8_t* buffer = nullptr;
 			size_t bufferIndex = 0;
+			std::vector<uintptr_t> viewHistory = {};
 
 			Disassembler<TargetArchitecture::x64> dis64;
 			BaseSet_x86_64::Opcode firstOpcode = { 0 };
@@ -310,7 +311,7 @@ namespace Seraph
 
 							printf("\n\nRegions currently in use (with PAGE_EXECUTE flag):\n\n");
 
-							MEMORY_BASIC_INFORMATION64 page = { 0 };
+							MEMORY_BASIC_INFORMATION page = { 0 };
 							SYSTEM_INFO info = { 0 };
 							GetSystemInfo(&info);
 
@@ -318,7 +319,7 @@ namespace Seraph
 
 							for (uintptr_t at = 0; at < reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress); at += (page.RegionSize) ? page.RegionSize : 0x1000)
 							{
-								VirtualQueryEx(hProcess, reinterpret_cast<void*>(at), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
+								VirtualQueryEx(hProcess, reinterpret_cast<void*>(at), &page, sizeof(page));
 
 								if (page.State & MEM_COMMIT && page.Protect & EXECUTABLE_MEMORY)
 								{
@@ -363,15 +364,21 @@ namespace Seraph
 
 					std::vector<uintptr_t>results;
 
-					MEMORY_BASIC_INFORMATION64 page = { 0 };
+					MEMORY_BASIC_INFORMATION page;
 					SYSTEM_INFO info = { 0 };
 					GetSystemInfo(&info);
 
 					printf("Scanning...");
+					for (const auto b : aobmask.second)
+						printf("%02X ", b);
+					printf("\n");
 
-					for (uintptr_t at = reinterpret_cast<uintptr_t>(info.lpMinimumApplicationAddress); at < reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress); at += page.RegionSize)
+					uintptr_t at = reinterpret_cast<uintptr_t>(info.lpMinimumApplicationAddress);
+
+					while (at < reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress))
 					{
-						VirtualQueryEx(hProcess, reinterpret_cast<void*>(at), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
+						page = { 0 };
+						VirtualQueryEx(hProcess, reinterpret_cast<void*>(at), &page, sizeof(page));
 
 						bool condition = false;
 
@@ -387,7 +394,7 @@ namespace Seraph
 
 						if (condition)
 						{
-							const auto buffer = mread<uint8_t>(page.BaseAddress, page.RegionSize);
+							const auto buffer = mread<uint8_t>(at, page.RegionSize);
 
 							// Search through the whole memory page
 							for (size_t i = 0; i < page.RegionSize - aobmask.second.size();)
@@ -410,6 +417,8 @@ namespace Seraph
 
 						if (!page.RegionSize)
 							page.RegionSize = 0x1000;
+
+						at += page.RegionSize;
 					}
 
 					printf("Scan finished\nResults: %i\n", results.size());
@@ -447,7 +456,7 @@ namespace Seraph
 						aobmask.second.clear();
 
 						std::string str;
-						printf("Enter an AOB to scan:\n\n>");
+						printf("Enter the value to scan:\n\n>");
 						std::getline(std::cin, str);
 
 						switch (selectionIndex)
@@ -459,8 +468,8 @@ namespace Seraph
 						case 1: // String
 							for (const auto c : str)
 							{
-								aobmask.first += c;
-								aobmask.second.push_back(c);
+								aobmask.first += '.';
+								aobmask.second.push_back(static_cast<uint8_t>(c));
 							}
 							mode = SCAN_AOB_MODE;
 							break;
@@ -705,19 +714,6 @@ namespace Seraph
 						if (!hexView)
 						{
 							viewing--;
-							/*if (bufferIndex > 0)
-							{
-								bufferIndex--;
-							}
-							else
-							{
-								viewing--;
-								bufferIndex = 0;
-
-								if (buffer) delete[] buffer;
-								buffer = nullptr;
-							}
-							*/
 							break;
 						}
 
@@ -733,27 +729,12 @@ namespace Seraph
 							editSlotIndex = 1;
 						}
 
-						//editSlotIndex = 0;
 						break;
 					case 'x':
 					case VK_RIGHT:
 						if (!hexView)
 						{
 							viewing += firstOpcode.len;
-							/*
-							// give a breathing room of 1mb
-							if (bufferIndex >= 1024)
-							{
-								viewing += 1024;
-								bufferIndex -= 1024;
-
-								if (buffer) delete[] buffer;
-								buffer = nullptr;
-							}
-
-							bufferIndex += firstOpcode.len;
-							//viewing++;
-							*/
 							break;
 						}
 
@@ -769,28 +750,12 @@ namespace Seraph
 							editSlotIndex = 0;
 						}
 
-						
-						//editSlotIndex = 0;
 						break;
 					case 's':
 					case VK_DOWN:
 						if (!hexView)
 						{
 							viewing += maxCols;
-							/*
-							// give a breathing room of 1mb
-							if (bufferIndex >= 1024 - maxCols)
-							{
-								viewing += 1024;
-								bufferIndex -= 1024;
-
-								if (buffer) delete[] buffer;
-								buffer = nullptr;
-							}
-
-							bufferIndex += maxCols;
-							//viewing += maxCols;
-							*/
 							break;
 						}
 
@@ -806,21 +771,6 @@ namespace Seraph
 						if (!hexView)
 						{
 							viewing -= maxCols;
-							/*
-							if (bufferIndex >= maxCols)
-							{
-								bufferIndex -= maxCols;
-								//viewing -= maxCols;
-							}
-							else
-							{
-								viewing -= maxCols;
-								bufferIndex = 0;
-
-								if (buffer) delete[] buffer;
-								buffer = nullptr;
-							}
-							*/
 							break;
 						}
 
@@ -832,9 +782,13 @@ namespace Seraph
 						editSlotIndex = 0;
 						break;
 					case '\b':
-						if (buffer) delete[] buffer;
-						buffer = nullptr;
-						bufferIndex = 0;
+						if (!viewHistory.empty())
+						{
+							viewIndex = 0;
+							viewing = viewHistory.back();
+							viewHistory.pop_back();
+							break;
+						}
 
 						refresh = true;
 						viewing = 0;
@@ -842,10 +796,6 @@ namespace Seraph
 						mode = SELECTION_MODE;
 						break;
 					case 'g':
-						if (buffer) delete[] buffer;
-						buffer = nullptr;
-						bufferIndex = 0;
-
 						mode = GOTO_MODE;
 						refresh = true;
 						break;
@@ -869,7 +819,9 @@ namespace Seraph
 						try {
 							bytes = assembler.compile(instr, at);
 						}
-						catch (SeraphException e) {};
+						catch (SeraphException e) {
+							printf("Error: %s\n", e.what());
+						};
 
 						if (!bytes.empty())
 						{
@@ -877,19 +829,28 @@ namespace Seraph
 							VirtualProtectEx(hProcess, reinterpret_cast<void*>(at), bytes.size(), PAGE_EXECUTE_READWRITE, &oldProtect);
 							mwrite<uint8_t>(at, bytes);
 							VirtualProtectEx(hProcess, reinterpret_cast<void*>(at), bytes.size(), oldProtect, &oldProtect);
+
+							printf("Wrote bytes");
+						}
+						else
+						{
+							printf("No bytes\n");
+							Sleep(1000);
 						}
 
 						refresh = true;
 						break;
 					}
 					case 'v':
-						//if (buffer) delete[] buffer;
-						//buffer = nullptr;
-						bufferIndex = 0;
-
 						hexView = !hexView;
 						refresh = true;
 						Sleep(250);
+						break;
+					case '\r':
+					case '\n':
+						viewHistory.push_back(viewing);
+						viewing = mread<uintptr_t>(viewing + viewIndex);
+						refresh = true;
 						break;
 					}
 
@@ -901,8 +862,8 @@ namespace Seraph
 						buffer = new uint8_t[maxRows * maxCols];
 						memset(buffer, '\0', maxRows * maxCols);
 
-						MEMORY_BASIC_INFORMATION64 page = { 0 };
-						VirtualQueryEx(hProcess, reinterpret_cast<void*>(viewing), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
+						MEMORY_BASIC_INFORMATION page = { 0 };
+						VirtualQueryEx(hProcess, reinterpret_cast<void*>(viewing), &page, sizeof(page));
 					
 						if ((page.State & MEM_COMMIT) && (page.Protect & MemUtil::READABLE_MEMORY))
 							ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing), buffer, maxRows * maxCols, nullptr);
@@ -1003,10 +964,10 @@ namespace Seraph
 					}
 					else
 					{
-						MEMORY_BASIC_INFORMATION64 page = { 0 };
-						VirtualQueryEx(hProcess, reinterpret_cast<void*>(viewing), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
+						MEMORY_BASIC_INFORMATION page = { 0 };
+						VirtualQueryEx(hProcess, reinterpret_cast<void*>(viewing), &page, sizeof(page));
 
-						const auto rem = ((page.BaseAddress + page.RegionSize) - viewing) - 1;
+						const auto rem = ((reinterpret_cast<uintptr_t>(page.BaseAddress) + page.RegionSize) - viewing) - 1;
 						buffer = new uint8_t[rem];
 						ReadProcessMemory(hProcess, reinterpret_cast<void*>(viewing + bufferIndex), buffer, rem, nullptr);
 						
@@ -1056,9 +1017,9 @@ namespace Seraph
 									if (operand.imm32)
 									{
 										const auto offset = at + op.len + operand.imm32;
-										
-										MEMORY_BASIC_INFORMATION64 page = { 0 };
-										VirtualQueryEx(hProcess, reinterpret_cast<void*>(offset), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
+
+										MEMORY_BASIC_INFORMATION page = { 0 };
+										VirtualQueryEx(hProcess, reinterpret_cast<void*>(offset), &page, sizeof(page));
 
 										if ((page.State & MEM_COMMIT) && (page.Protect & MemUtil::READABLE_MEMORY))
 										{

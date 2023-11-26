@@ -1,6 +1,7 @@
 #include "MemUtil.hpp"
 #include <Psapi.h>
 #include <TlHelp32.h>
+#include "Sections.hpp"
 
 std::vector<THREADENTRY32> getProcessThreadEntries(DWORD dwOwnerPID)
 {
@@ -40,6 +41,7 @@ namespace Seraph
 		DWORD targetProcessId = 0;
 		HANDLE hProcess;
 		HANDLE hBaseModule;
+		size_t baseModuleSize;
 
 		PROCESSENTRY32 findProcess(const std::vector<std::wstring>& processNames)
 		{
@@ -74,8 +76,7 @@ namespace Seraph
 				return false;
 
 			targetProcessId = processEntry.th32ProcessID;
-
-			hBaseModule = getModule(processEntry.szExeFile);
+			hBaseModule = getModule(processEntry.szExeFile, &baseModuleSize);
 			//if (hBaseModule == INVALID_HANDLE_VALUE)
 			//	return false;
 
@@ -128,7 +129,7 @@ namespace Seraph
 			return results;
 		}
 
-		HMODULE getModule(const std::wstring& wstrModContain)
+		HMODULE getModule(const std::wstring& wstrModContain, size_t* modSize)
 		{
 			for (const auto& mod : getModules())
 			{
@@ -138,6 +139,13 @@ namespace Seraph
 				for (const auto c : wstrModContain) str2 += tolower(c);
 				if (str1.find(str2) != std::wstring::npos)
 				{
+					if (modSize)
+					{
+						MEMORY_BASIC_INFORMATION page = { 0 };
+						VirtualQueryEx(hProcess, reinterpret_cast<void*>(mod.second), &page, sizeof(page));
+
+						*modSize = page.RegionSize;
+					}
 					return mod.second;
 				}
 			}
@@ -205,11 +213,87 @@ namespace Seraph
 			return mpeb;
 		}
 
-		#if _WIN64
-		MEMORY_BASIC_INFORMATION64 getPage(const uintptr_t location)
+		bool isRel(const uintptr_t address)
 		{
-			MEMORY_BASIC_INFORMATION64 page = { 0 };
-			VirtualQueryEx(hProcess, reinterpret_cast<void*>(location), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&page), sizeof(page));
+			return (getRel(address) % 0x10 == 0);
+		}
+
+		bool isCall(const uintptr_t address)
+		{
+			return (
+				isRel(address)
+				&& getRel(address) > reinterpret_cast<uintptr_t>(hBaseModule)
+				&& getRel(address) < reinterpret_cast<uintptr_t>(hBaseModule) + baseModuleSize
+			);
+		}
+
+		bool isPrologue(const uintptr_t address)
+		{
+			#if _WIN64
+			return (
+				//(address > reinterpret_cast<uintptr_t>(hBaseModule) && address < reinterpret_cast<uintptr_t>(hBaseModule) + baseModuleSize) &&
+				(address % 0x10 == 0) &&
+				((mread<uint16_t>(address - 1) == 0x8BCC) ||
+				(mread<uint16_t>(address) == 0x8948 && (mread<uint8_t>(address + 2) / 0x40 == 1) && mread<uint8_t>(address + 2) % 8 == 4)
+				)
+			);
+			#else
+			return (
+				//(address > reinterpret_cast<uintptr_t>(hBaseModule) && address < reinterpret_cast<uintptr_t>(hBaseModule) + baseModuleSize) &&
+				(address % 0x10 == 0) &&
+				// Check for 3 different prologues, each with different registers
+				((   mread<uint8_t>(address) == 0x55 && mread<uint16_t>(address + 1) == 0xEC8B)
+				 || (mread<uint8_t>(address) == 0x53 && mread<uint16_t>(address + 1) == 0xDC8B)
+				 || (mread<uint8_t>(address) == 0x56 && mread<uint16_t>(address + 1) == 0xF48B))
+			);
+			#endif
+		}
+
+		uintptr_t getRel(const uintptr_t address)
+		{
+			return address + 5 + mread<uint32_t>(address + 1);
+		}
+
+		uintptr_t nextPrologue(const uintptr_t address)
+		{
+			uintptr_t at = address;
+
+			if (isPrologue(at))
+				at += 16;
+			else
+				at += (at % 16);
+
+			while (!isPrologue(at))
+				at += 16;
+
+			return at;
+		}
+
+		uintptr_t prevPrologue(const uintptr_t address)
+		{
+			uintptr_t at = address;
+
+			if (isPrologue(at))
+				at -= 16;
+			else
+				at -= (at % 16);
+
+			while (!isPrologue(at))
+				at -= 16;
+
+			return at;
+		}
+
+		uintptr_t getPrologue(const uintptr_t address)
+		{
+			return (isPrologue(address)) ? address : prevPrologue(address);
+		}
+
+		#if _WIN64
+		MEMORY_BASIC_INFORMATION getPage(const uintptr_t location)
+		{
+			MEMORY_BASIC_INFORMATION page = { 0 };
+			VirtualQueryEx(hProcess, reinterpret_cast<void*>(location), &page, sizeof(page));
 			return page;
 		}
 		#else

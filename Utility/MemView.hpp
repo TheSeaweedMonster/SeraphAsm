@@ -47,7 +47,7 @@ namespace Seraph
 					locations.push_back(x.address);
 			};
 
-			MemView(const std::vector<uintptr_t> _locations)
+			MemView(const std::vector<uintptr_t>& _locations)
 			{
 				locations = _locations;
 			};

@@ -11,29 +11,27 @@ namespace Seraph
 			return prevRes;
 		}
 
-		ScanResults MemScan::start(const std::string& aob, const std::string& mask)
+		ScanResults MemScan::start(const ScanRegion& region, const std::string& aob, const std::string& mask)
 		{
+			ScanRegion bounds = region;
 			ScanResults newResults = {};
 
-			uint32_t protectFlag = MemUtil::READABLE_MEMORY;
+			uint32_t protectFlag = MemUtil::READABLE_MEMORY | MemUtil::EXECUTABLE_MEMORY;
 
 			switch (bounds.second)
 			{
 			case Regions::Data.second:
-			{
-				const auto data = MemUtil::getSection(".data");
-				bounds = { data.start, data.end };
+				protectFlag = MemUtil::READABLE_MEMORY;
+				bounds = MemUtil::getSection(".data");
 				break;
-			}
 			case Regions::Code.second:
-				//{
-				//	const auto code = MemUtil::getSection(".text");
-				//	bounds = { code.start, code.end };
-				//	break;
-				//}
+				//bounds = MemUtil::getSection(".text");
+				//break;
 				protectFlag = MemUtil::EXECUTABLE_MEMORY; // Scan all executable memory in the process
+				break;
 			case Regions::VirtualMemory.second:
 			{
+				protectFlag = MemUtil::READABLE_MEMORY;
 				SYSTEM_INFO info = { 0 };
 				GetSystemInfo(&info);
 				bounds = { reinterpret_cast<uintptr_t>(info.lpMinimumApplicationAddress), reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress) };
@@ -45,10 +43,10 @@ namespace Seraph
 
 			while (start < bounds.second)
 			{
-				MEMORY_BASIC_INFORMATION64 memRegion = { 0 };
-				VirtualQueryEx(MemUtil::hProcess, reinterpret_cast<void*>(start), reinterpret_cast<PMEMORY_BASIC_INFORMATION>(&memRegion), sizeof(memRegion));
+				MEMORY_BASIC_INFORMATION memRegion = { 0 };
+				VirtualQueryEx(MemUtil::hProcess, reinterpret_cast<void*>(start), &memRegion, sizeof(memRegion));
 
-				const auto remainingBytes = memRegion.RegionSize - (start - memRegion.BaseAddress);
+				const auto remainingBytes = memRegion.RegionSize - (start - reinterpret_cast<uintptr_t>(memRegion.BaseAddress));
 
 				if ((memRegion.State & MEM_COMMIT) && (memRegion.Protect & protectFlag))
 				{

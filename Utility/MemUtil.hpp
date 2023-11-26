@@ -16,20 +16,22 @@ namespace Seraph
 
 		extern HANDLE hProcess;
 		extern HANDLE hBaseModule;
+		extern size_t baseModuleSize;
 
 		extern PROCESSENTRY32 findProcess(const std::vector<std::wstring>& processNames);
 		extern bool openProcessByEntry(const PROCESSENTRY32& processName);
 		extern bool isProcessOpened();
 
 		extern std::vector<std::pair<std::wstring, HMODULE>> getModules();
-		extern HMODULE getModule(const std::wstring& wstrModContain);
+		extern HMODULE getModule(const std::wstring& wstrModContain, size_t* modSize = nullptr);
 		extern PEB getPeb();
 
-		#if _WIN64
-		MEMORY_BASIC_INFORMATION64 getPage(const uintptr_t location);
-		#else
+		extern uintptr_t getRel(const uintptr_t address);
+		extern uintptr_t nextPrologue(const uintptr_t address);
+		extern uintptr_t prevPrologue(const uintptr_t address);
+		extern uintptr_t getPrologue(const uintptr_t address);
+
 		MEMORY_BASIC_INFORMATION getPage(const uintptr_t location);
-		#endif
 
 		extern std::string mreads(uintptr_t location, const size_t count = 1024);
 
