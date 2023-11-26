@@ -1236,7 +1236,7 @@ namespace Seraph
                       {{{}, {OpEncoding::m3}, {Symbols::m16_16}, BaseSet_x86_64::OPS_16MODE}, "call", OP_DESC("Call far, absolute indirect, address given in m16:16")},
                       {{{}, {OpEncoding::m3}, {Symbols::m16_32}}, "call", OP_DESC("Call far, absolute indirect, address given in m16:32")},
                       {{{}, {OpEncoding::m4}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "jmp", OP_DESC("Jump near, absolute indirect, address given in rm16")},
-                      {{{}, {OpEncoding::m4}, {Symbols::rm32}}, "jmp", OP_DESC("Jump near, absolute indirect, address given in rm32")},
+                      {{{}, {OpEncoding::m4}, {Symbols::rm32}, BaseSet_x86_64::OPS_DEFAULT_64_BITS}, "jmp", OP_DESC("Jump near, absolute indirect, address given in rm32")},
                       {{{}, {OpEncoding::m5}, {Symbols::m16_16}, BaseSet_x86_64::OPS_16MODE}, "jmp", OP_DESC("Jump far, absolute indirect, address given in m16:16")},
                       {{{}, {OpEncoding::m5}, {Symbols::m16_32}}, "jmp", OP_DESC("Jump far, absolute indirect, address given in m16:32")},
                       {{{}, {OpEncoding::m6}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "push", OP_DESC("Push rm16")},
@@ -3820,7 +3820,7 @@ namespace Seraph
         const uint8_t B_OPERAND_SIZE_OVERRIDE = 0x66;
         const uint8_t B_ADDRESS_SIZE_OVERRIDE = 0x67;
 
-        Parser::Scope scope = Parser::compile<TargetArchitecture::x86>(source, prelookup_x86_64);
+        Parser::Scope scope = Parser::compile<TargetArchitecture::x86>(source + "\n", prelookup_x86_64);
         Parser::Body mainBody = scope.bodies.front();
 
         auto getLabels = [&mainBody]()
