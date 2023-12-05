@@ -4649,11 +4649,16 @@ namespace Seraph
                                             {
                                             case Symbols::rel16:
                                             case Symbols::rel32:
-                                            case Symbols::imm32:
+                                            //case Symbols::imm32:               // ###
                                                 op->rel16 = op->imm16;
                                                 op->rel32 = op->imm32;
                                                 forceValidate = true;
                                                 break;
+                                            case Symbols::imm32:                // Latest addition ###
+                                                op->imm32 = op->imm16;          // ###
+                                                op->opmode = Symbols::imm32;    // ###
+                                                forceValidate = true;           // ###
+                                                break;                          // ###
                                             case Symbols::rm32:
                                                 if (op->hasMod && node.hasMod == 1)
                                                 {
@@ -4905,6 +4910,14 @@ namespace Seraph
                                 if (!(opvariant.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS))
                                 {
                                     if (has64data || hasextreg)
+                                    {
+                                        usingrex = 1;
+                                        rexEnc |= 1 << 6; // 01000000
+                                    }
+                                }
+                                else
+                                {
+                                    if (hasextreg)
                                     {
                                         usingrex = 1;
                                         rexEnc |= 1 << 6; // 01000000
@@ -5317,7 +5330,7 @@ namespace Seraph
                                             break;
                                         }
 
-                                        if (useModByte && op.regExt)
+                                        if (op.regExt)
                                             rexEnc |= op.regExt == 4 ? 1 : op.regExt;
 
                                         break;
