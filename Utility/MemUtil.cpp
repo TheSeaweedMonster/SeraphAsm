@@ -3,37 +3,6 @@
 #include <TlHelp32.h>
 #include "Sections.hpp"
 
-std::vector<THREADENTRY32> getProcessThreadEntries(DWORD dwOwnerPID)
-{
-	HANDLE hThreadSnap = INVALID_HANDLE_VALUE;
-	THREADENTRY32 te32;
-
-	hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-	if (hThreadSnap == INVALID_HANDLE_VALUE)
-		return {};
-
-	te32.dwSize = sizeof(THREADENTRY32);
-
-	// Retrieve information about the first thread
-	if (!Thread32First(hThreadSnap, &te32))
-	{
-		CloseHandle(hThreadSnap);
-		return {};
-	}
-
-	std::vector<THREADENTRY32>threadEntries;
-
-	do
-	{
-		if (te32.th32OwnerProcessID == dwOwnerPID)
-			threadEntries.push_back(te32);
-	} while (Thread32Next(hThreadSnap, &te32));
-
-	// Clean up the snapshot
-	CloseHandle(hThreadSnap);
-	return threadEntries;
-}
-
 namespace Seraph
 {
 	namespace MemUtil
@@ -42,6 +11,37 @@ namespace Seraph
 		HANDLE hProcess;
 		HANDLE hBaseModule;
 		size_t baseModuleSize;
+
+		std::vector<THREADENTRY32> getProcessThreadEntries(DWORD dwOwnerPID)
+		{
+			HANDLE hThreadSnap = INVALID_HANDLE_VALUE;
+			THREADENTRY32 te32;
+
+			hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+			if (hThreadSnap == INVALID_HANDLE_VALUE)
+				return {};
+
+			te32.dwSize = sizeof(THREADENTRY32);
+
+			// Retrieve information about the first thread
+			if (!Thread32First(hThreadSnap, &te32))
+			{
+				CloseHandle(hThreadSnap);
+				return {};
+			}
+
+			std::vector<THREADENTRY32>threadEntries;
+
+			do
+			{
+				if (te32.th32OwnerProcessID == dwOwnerPID)
+					threadEntries.push_back(te32);
+			} while (Thread32Next(hThreadSnap, &te32));
+
+			// Clean up the snapshot
+			CloseHandle(hThreadSnap);
+			return threadEntries;
+		}
 
 		PROCESSENTRY32 findProcess(const std::vector<std::wstring>& processNames)
 		{

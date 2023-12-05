@@ -18,6 +18,7 @@ namespace Seraph
 		extern HANDLE hBaseModule;
 		extern size_t baseModuleSize;
 
+		extern std::vector<THREADENTRY32> getProcessThreadEntries(DWORD dwOwnerPID);
 		extern PROCESSENTRY32 findProcess(const std::vector<std::wstring>& processNames);
 		extern bool openProcessByEntry(const PROCESSENTRY32& processName);
 		extern bool isProcessOpened();
@@ -49,6 +50,12 @@ namespace Seraph
 		{
 			size_t nbytes = NULL;
 			return WriteProcessMemory(hProcess, reinterpret_cast<void*>(location), &value, sizeof(T), &nbytes);
+		}
+
+		static bool mwrite(uintptr_t location, const void* value, const size_t count)
+		{
+			size_t nbytes = NULL;
+			return WriteProcessMemory(hProcess, reinterpret_cast<void*>(location), value, count, &nbytes);
 		}
 
 		template <typename T>
