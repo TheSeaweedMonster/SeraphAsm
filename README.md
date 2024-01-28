@@ -11,8 +11,6 @@ Features:<br>
 ✔️ Memory-editing utilities for both internal and external application<br>
 ✔️ Open-sourced<br>
 
-Percentage completion: 92%<br>
-
 For more information, see Release Notes<br>
 
 I am open to contributions, but please give credit where due,<br>
