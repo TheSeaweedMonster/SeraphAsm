@@ -613,10 +613,13 @@ namespace Seraph
                 {{{0xAC}, {}, {Symbols::rm32, Symbols::r32, Symbols::imm8}}, "shrd", OP_DESC("Shift rm32 to right imm8 places while shifting bits from r32 in from the left")},
                 {{{0xAD}, {}, {Symbols::rm16, Symbols::r16, Symbols::cl}, BaseSet_x86_64::OPS_16MODE}, "shrd", OP_DESC("Shift rm16 to right CL places while shifting bits from r16 in from the left")},
                 {{{0xAD}, {}, {Symbols::rm32, Symbols::r32, Symbols::cl}}, "shrd", OP_DESC("Shift rm32 to right CL places while shifting bits from r32 in from the left")},
-                {{{0xAE}, {OpEncoding::m0}, {Symbols::m512byte}}, "fxsave", OP_DESC("Store FP and MMX™ technology state and Streaming SIMD Extension state to m512byte")},
-                {{{0xAE}, {OpEncoding::m1}, {Symbols::m512byte}}, "fxrstor", OP_DESC("Load FP and MMX™ technology and Streaming SIMD Extension state from m512byte")},
+                {{{0xAE}, {OpEncoding::m0}, {Symbols::m512byte}}, "fxsave", OP_DESC("Store FP and MMXâ„¢ technology state and Streaming SIMD Extension state to m512byte")},
+                {{{0xAE}, {OpEncoding::m1}, {Symbols::m512byte}}, "fxrstor", OP_DESC("Load FP and MMXâ„¢ technology and Streaming SIMD Extension state from m512byte")},
                 {{{0xAE}, {OpEncoding::m2}, {Symbols::m32}}, "ldmxcsr", OP_DESC("Load Streaming SIMD Extension control/status word from m32")},
                 {{{0xAE}, {OpEncoding::m3}, {Symbols::m32}}, "stmxcsr", OP_DESC("Store Streaming SIMD Extension control/status word to m32")},
+                {{{0xAE}, {OpEncoding::m4}, {Symbols::m32}}, "xsave", OP_DESC("Save processor extended state")},
+                {{{0xAE}, {OpEncoding::m5}, {}}, "lfence", OP_DESC("Load fence")},
+                {{{0xAE}, {OpEncoding::m6}, {}}, "mfence", OP_DESC("Memory fence")},
                 {{{0xAE}, {OpEncoding::m7}, {}}, "sfence", OP_DESC("Guarantees that every store instruction that precedes in program order the store fence instruction is globally visible before any store instruction which follows the fence is globally visible")},
                 {{{0xAF}, {OpEncoding::r}, {Symbols::r16, Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "imul", OP_DESC("word register <- word register * rm word")},
                 {{{0xAF}, {OpEncoding::r}, {Symbols::r32, Symbols::rm32}}, "imul", OP_DESC("doubleword register <- doubleword register * rm doubleword")},
@@ -918,8 +921,8 @@ namespace Seraph
                       {{{0xDD}, {OpEncoding::m7}, {Symbols::m2byte}}, "fstsw", OP_DESC("Store FPU status word at m2byte after checking for pending unmasked floating-point exceptions")},
                       {{{0xDF, 0xE0}, {}, {Symbols::ax}}, "fstsw", OP_DESC("Store FPU status word in AX register after checking for pending unmasked floating-point exceptions")},
                       {{{}, {}, {}}, "fwait", OP_DESC("Check pending unmasked floating-point exceptions")}},
-            /* 9C */ {{{{}, {}, {}}, "pushfd", OP_DESC("Push EFLAGS")}},
-            /* 9D */ {{{{}, {}, {}}, "popfd", OP_DESC("Pop top of stack into EFLAGS")}},
+            /* 9C */ {{{{}, {}, {}}, "pushf", OP_DESC("Push EFLAGS")}},
+            /* 9D */ {{{{}, {}, {}}, "popf", OP_DESC("Pop top of stack into EFLAGS")}},
             /* 9E */ {{{{}, {}, {}}, "sahf", OP_DESC("Loads SF, ZF, AF, PF, and CF from AH into EFLAGS register")}},
             /* 9F */ {{{{}, {}, {}}, "lahf", OP_DESC("Load: AH = EFLAGS(SF:ZF:0:AF:0:PF:1:CF)")}},
             /* A0 */ {{{{}, {}, {Symbols::al, Symbols::moffs8}}, "mov", OP_DESC("Move byte at (seg:offset) to AL")}},
@@ -982,14 +985,14 @@ namespace Seraph
                       {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "ror", OP_DESC("Rotate eight bits rm16 right imm8 times")},
                       {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rcl", OP_DESC("Rotate nine bits (CF, rm8) left imm8 times")},
                       {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "rcr", OP_DESC("Rotate nine bits (CF, rm8) right imm8 times")},
-                      {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sal", OP_DESC("Multiply rm8 by 2, imm8 times")},
+                      {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "shl", OP_DESC("Multiply rm8 by 2, imm8 times")},
                       {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "shr", OP_DESC("Unsigned divide rm8 by 2, imm8 times")},
                       {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm8, Symbols::imm8}}, "sar", OP_DESC("Signed divide* rm8 by 2, imm8 times")}},
             /* C1 */ {{{{}, {OpEncoding::m0, OpEncoding::ib}, {Symbols::rm16, Symbols::imm8}}, "rol", OP_DESC("Rotate 16 bits rm16 left imm8 times")},
                       {{{}, {OpEncoding::m1, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "ror", OP_DESC("Rotate 32 bits rm32 right imm8 times")},
                       {{{}, {OpEncoding::m2, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "rcl", OP_DESC("Rotate 17 bits (CF, rm16) left imm8 times")},
                       {{{}, {OpEncoding::m3, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "rcr", OP_DESC("Rotate 33 bits (CF, rm32) right imm8 times")},
-                      {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sal", OP_DESC("Multiply rm32 by 2, imm8 times")},
+                      {{{}, {OpEncoding::m4, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "shl", OP_DESC("Multiply rm32 by 2, imm8 times")},
                       {{{}, {OpEncoding::m5, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "shr", OP_DESC("Unsigned divide rm32 by 2, imm8 times")},
                       {{{}, {OpEncoding::m7, OpEncoding::ib}, {Symbols::rm32, Symbols::imm8}}, "sar", OP_DESC("Signed divide* rm32 by 2, imm8 times")}},
             /* C2 */ {{{{}, {OpEncoding::iw}, {Symbols::imm16}}, "ret", OP_DESC("Near return to calling procedure and pop imm16 bytes from stack")}},
@@ -1005,9 +1008,9 @@ namespace Seraph
             /* C9 */ {{{{}, {}, {}}, "leave", OP_DESC("Set ESP to EBP, then pop EBP")}},
             /* CA */ {{{{}, {OpEncoding::iw}, {Symbols::imm16}}, "ret", OP_DESC("Far return to calling procedure and pop imm16 bytes from stack")}},
             /* CB */ {{{{}, {}, {}}, "ret", OP_DESC("Far return to calling procedure")}},
-            /* CC */ {{{{}, {}, {}}, "int 3", OP_DESC("Interrupt 3—trap to debugger")}},
+            /* CC */ {{{{}, {}, {}}, "int 3", OP_DESC("Interrupt 3â€”trap to debugger")}},
             /* CD */ {{{{}, {OpEncoding::ib}, {Symbols::imm8}}, "int", OP_DESC("Interrupt vector number specified by immediate byte")}},
-            /* CE */ {{{{}, {}, {}}, "into", OP_DESC("Interrupt 4—if overflow flag is 1")}},
+            /* CE */ {{{{}, {}, {}}, "into", OP_DESC("Interrupt 4â€”if overflow flag is 1")}},
             /* CF */ {{{{}, {}, {}}, "iretd", OP_DESC("Interrupt return (32-bit operand size)")}},
             /* D0 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::one}}, "rol", OP_DESC("Rotate eight bits rm8 left once")},
                       {{{}, {OpEncoding::m1}, {Symbols::rm8, Symbols::one}}, "ror", OP_DESC("Rotate eight bits rm8 right once")},
@@ -1072,7 +1075,7 @@ namespace Seraph
                       {{{0xEC}, {}, {}}, "fldlg2", OP_DESC("Push log 102 onto the FPU register stack")},
                       {{{0xED}, {}, {}}, "fldln2", OP_DESC("Push log e2 onto the FPU register stack")},
                       {{{0xEE}, {}, {}}, "fldz", OP_DESC("Push +0.0 onto the FPU register stack")},
-                      {{{0xF0}, {}, {}}, "f2xm1", OP_DESC("Replace ST(0) with (2 ST(0) – 1)")},
+                      {{{0xF0}, {}, {}}, "f2xm1", OP_DESC("Replace ST(0) with (2 ST(0) â€“ 1)")},
                       {{{0xF1}, {}, {}}, "fyl2x", OP_DESC("Replace ST(1) with (ST(1) * log 2ST(0)) and pop the register stack")},
                       {{{0xF2}, {}, {}}, "fptan", OP_DESC("Replace ST(0) with its tangent and push 1 onto the FPU stack")},
                       {{{0xF3}, {}, {}}, "fpatan", OP_DESC("Replace ST(1) with arctan(ST(1)/ST(0)) and pop the register stack")},
@@ -1200,7 +1203,7 @@ namespace Seraph
             /* F5 */ {{{{}, {}, {}}, "cmc", OP_DESC("Complement CF flag")}},
             /* F6 */ {{{{}, {OpEncoding::m0}, {Symbols::rm8, Symbols::imm8}}, "test", OP_DESC("AND imm8 with rm8; set SF, ZF, PF according to result")},
                       {{{}, {OpEncoding::m2}, {Symbols::rm8}}, "not", OP_DESC("Reverse each bit of rm8")},
-                      {{{}, {OpEncoding::m3}, {Symbols::rm8}}, "neg", OP_DESC("Two’s complement negate rm8")},
+                      {{{}, {OpEncoding::m3}, {Symbols::rm8}}, "neg", OP_DESC("Twoâ€™s complement negate rm8")},
                       {{{}, {OpEncoding::m4}, {Symbols::rm8}}, "mul", OP_DESC("Unsigned multiply (AX <- AL * rm8)")},
                       {{{}, {OpEncoding::m5}, {Symbols::rm8}}, "imul", OP_DESC("AX <- AL * rm byte")},
                       {{{}, {OpEncoding::m6}, {Symbols::rm8}}, "div", OP_DESC("Unsigned divide AX by rm8; AL <- Quotient, AH <- Remainder")},
@@ -1209,8 +1212,8 @@ namespace Seraph
                       {{{}, {OpEncoding::m0}, {Symbols::rm32, Symbols::imm32}}, "test", OP_DESC("AND imm32 with rm32; set SF, ZF, PF according to result")},
                       {{{}, {OpEncoding::m2}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "not", OP_DESC("Reverse each bit of rm16")},
                       {{{}, {OpEncoding::m2}, {Symbols::rm32}}, "not", OP_DESC("Reverse each bit of rm32")},
-                      {{{}, {OpEncoding::m3}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "neg", OP_DESC("Two’s complement negate rm16")},
-                      {{{}, {OpEncoding::m3}, {Symbols::rm32}}, "neg", OP_DESC("Two’s complement negate rm32")},
+                      {{{}, {OpEncoding::m3}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "neg", OP_DESC("Twoâ€™s complement negate rm16")},
+                      {{{}, {OpEncoding::m3}, {Symbols::rm32}}, "neg", OP_DESC("Twoâ€™s complement negate rm32")},
                       {{{}, {OpEncoding::m4}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "mul", OP_DESC("Unsigned multiply (DX:AX <- AX * rm16)")},
                       {{{}, {OpEncoding::m4}, {Symbols::rm32}}, "mul", OP_DESC("Unsigned multiply (EDX:EAX <- EAX * rm32)")},
                       {{{}, {OpEncoding::m5}, {Symbols::rm16}, BaseSet_x86_64::OPS_16MODE}, "imul", OP_DESC("DX:AX <- AX * rm word")},
@@ -2003,6 +2006,7 @@ namespace Seraph
         };
         oplookup_x86_64["popf"] = { { { 0x9D }, { } } };
         oplookup_x86_64["popfd"] = { { { 0x9D }, { } } };
+        oplookup_x86_64["popfq"] = { { { 0x9D }, { } } };
         oplookup_x86_64["popa"] = { { { 0x61 }, { } } };
         oplookup_x86_64["popad"] = { { { 0x61 }, { } } };
         oplookup_x86_64["pusha"] = { { { 0x60 }, { } } };
@@ -2022,6 +2026,7 @@ namespace Seraph
         };
         oplookup_x86_64["pushf"] = { { { 0x9C }, { } } };
         oplookup_x86_64["pushfd"] = { { { 0x9C }, { } } };
+        oplookup_x86_64["pushfq"] = { { { 0x9C }, { } } };
         oplookup_x86_64["ret"] = {
             { { 0xC2 }, { OpEncoding::iw }, { Symbols::imm16 } },
             { { 0xCA }, { OpEncoding::iw }, { Symbols::imm16 } },
@@ -2058,7 +2063,11 @@ namespace Seraph
         oplookup_x86_64["scasd"] = { { { 0xAF }, { } } };
         oplookup_x86_64["shr"] = {
             { { 0xC0 }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
-            { { 0xC1 }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } }
+            { { 0xC1 }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
+            { { 0x0F, 0xAC }, { }, { Symbols::rm16, Symbols::r16, Symbols::imm8 } },
+            { { 0x0F, 0xAC }, { }, { Symbols::rm32, Symbols::r32, Symbols::imm8 } },
+            { { 0x0F, 0xAD }, { }, { Symbols::rm16, Symbols::r16, Symbols::cl } },
+            { { 0x0F, 0xAD }, { }, { Symbols::rm32, Symbols::r32, Symbols::cl } },
         };
         oplookup_x86_64["stosb"] = { { { 0xAA }, { } } };
         oplookup_x86_64["stosd"] = { { { 0xAB }, { } } };
@@ -2383,7 +2392,9 @@ namespace Seraph
             { { 0x0F, 0xBD }, { }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0xBD }, { }, { Symbols::r32, Symbols::rm32 } },
         };
-        oplookup_x86_64["shld"] = {
+        oplookup_x86_64["shl"] = {
+            { { 0xC0 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm8, Symbols::imm8 } },
+            { { 0xC1 }, { OpEncoding::m4, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
             { { 0x0F, 0xA4 }, { }, { Symbols::rm16, Symbols::r16, Symbols::imm8 } },
             { { 0x0F, 0xA4 }, { }, { Symbols::rm32, Symbols::r32, Symbols::imm8 } },
             { { 0x0F, 0xA5 }, { }, { Symbols::rm16, Symbols::r16, Symbols::cl } },
@@ -2395,12 +2406,6 @@ namespace Seraph
             { { 0x0F, 0xAB }, { }, { Symbols::rm32, Symbols::r32 } },
             { { 0x0F, 0xBA }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm16, Symbols::imm8 } },
             { { 0x0F, 0xBA }, { OpEncoding::m5, OpEncoding::ib }, { Symbols::rm32, Symbols::imm8 } },
-        };
-        oplookup_x86_64["shrd"] = {
-            { { 0x0F, 0xAC }, { }, { Symbols::rm16, Symbols::r16, Symbols::imm8 } },
-            { { 0x0F, 0xAC }, { }, { Symbols::rm32, Symbols::r32, Symbols::imm8 } },
-            { { 0x0F, 0xAD }, { }, { Symbols::rm16, Symbols::r16, Symbols::cl } },
-            { { 0x0F, 0xAD }, { }, { Symbols::rm32, Symbols::r32, Symbols::cl } },
         };
         oplookup_x86_64["fxsave"] = {
             { { 0x0F, 0xAE }, { OpEncoding::m0 }, { Symbols::m512byte } }
@@ -2820,6 +2825,8 @@ namespace Seraph
 
             matched = true;
 
+            bool modeCheck = false;
+
             for (size_t i = 0; i < ref.extData.entries.size() && matched; i++)
             {
                 const auto m = ((stream.current() % 0x40) / 8);
@@ -2828,27 +2835,35 @@ namespace Seraph
                 {
                 case OpEncoding::m0:
                     matched = (m == 0);
+                    modeCheck = matched;
                     break;
                 case OpEncoding::m1:
                     matched = (m == 1);
+                    modeCheck = matched;
                     break;
                 case OpEncoding::m2:
                     matched = (m == 2);
+                    modeCheck = matched;
                     break;
                 case OpEncoding::m3:
                     matched = (m == 3);
+                    modeCheck = matched;
                     break;
                 case OpEncoding::m4:
                     matched = (m == 4);
+                    modeCheck = matched;
                     break;
                 case OpEncoding::m5:
                     matched = (m == 5);
+                    modeCheck = matched;
                     break;
                 case OpEncoding::m6:
                     matched = (m == 6);
+                    modeCheck = matched;
                     break;
                 case OpEncoding::m7:
                     matched = (m == 7);
+                    modeCheck = matched;
                     break;
                 }
             }
@@ -2875,6 +2890,16 @@ namespace Seraph
             
             opRef = ref;
             identified = true;
+
+            if (modeCheck)
+            {
+                if (opRef.extData.symbols.empty())
+                {
+                    // If a certain mode was used but there are no symbols for the instruction,
+                    // we can just skip the byte
+                    stream.next();
+                }
+            }
 
             break;
         }
@@ -2941,12 +2966,14 @@ namespace Seraph
                 break;
             case Symbols::rel8:
             {
+                opcode.flags |= BaseSet_x86_64::OP_REL;
+                cop.relSize = 8;
                 if (!is64mode)
                 {
                     cop.rel8 = stream.current();
                     stream.skip(sizeof(uint8_t));
                     char s[18];
-                    sprintf(s, "%08Xh", offset + stream.getpos() + cop.rel8);
+                    sprintf_s(s, "%08Xh", offset + stream.getpos() + cop.rel8);
                     opcode.text += s;
                 }
                 else
@@ -2954,19 +2981,21 @@ namespace Seraph
                     cop.rel8 = stream.current();
                     stream.skip(sizeof(uint8_t));
                     char s[18];
-                    sprintf(s, "%016llXh", offset + stream.getpos() + cop.rel8);
+                    sprintf_s(s, "%016llXh", offset + stream.getpos() + cop.rel8);
                     opcode.text += s;
                 }
                 break;
             }
             case Symbols::rel16: 
             {
+                opcode.flags |= BaseSet_x86_64::OP_REL;
+                cop.relSize = 16;
                 if (!is64mode)
                 {
                     memcpy(&cop.rel16, stream.pcurrent(), sizeof(uint16_t));
                     stream.skip(sizeof(uint16_t));
                     char s[18];
-                    sprintf(s, "%08Xh", offset + stream.getpos() + cop.rel16);
+                    sprintf_s(s, "%08Xh", offset + stream.getpos() + cop.rel16);
                     opcode.text += s;
                 }
                 else
@@ -2974,19 +3003,21 @@ namespace Seraph
                     memcpy(&cop.rel16, stream.pcurrent(), sizeof(uint16_t));
                     stream.skip(sizeof(uint16_t));
                     char s[18];
-                    sprintf(s, "%016llXh", offset + stream.getpos() + cop.rel16);
+                    sprintf_s(s, "%016llXh", offset + stream.getpos() + cop.rel16);
                     opcode.text += s;
                 }
                 break;
             }
             case Symbols::rel32:
             {
+                opcode.flags |= BaseSet_x86_64::OP_REL;
+                cop.relSize = 32;
                 if (!is64mode)
                 {
                     memcpy(&cop.rel32, stream.pcurrent(), sizeof(uint32_t));
                     stream.skip(sizeof(uint32_t));
                     char s[18];
-                    sprintf(s, "%08Xh", offset + stream.getpos() + cop.rel32);
+                    sprintf_s(s, "%08Xh", offset + stream.getpos() + cop.rel32);
                     opcode.text += s;
                 }
                 else
@@ -2994,7 +3025,7 @@ namespace Seraph
                     memcpy(&cop.rel32, stream.pcurrent(), sizeof(uint32_t));
                     stream.skip(sizeof(uint32_t));
                     char s[18];
-                    sprintf(s, "%016llXh", offset + stream.getpos() + cop.rel32);
+                    sprintf_s(s, "%016llXh", offset + stream.getpos() + cop.rel32);
                     opcode.text += s;
                 }
                 break;
@@ -3002,35 +3033,68 @@ namespace Seraph
             case Symbols::imm8:
             case Symbols::moffs8:
             {
+                if (symbol == Symbols::moffs8 && is64mode)
+                {
+                    cop.immSize = 64;
+                    memcpy(&cop.imm64, stream.pcurrent(), sizeof(uint64_t));
+                    stream.skip(sizeof(uint64_t));
+                    char s[32];
+                    sprintf_s(s, "[%016llXh]", cop.imm64);
+                    opcode.text += s;
+                    break;
+                }
+
                 cop.imm8 = stream.current();
                 stream.skip(sizeof(uint8_t));
                 cop.immSize = 8;
                 char s[18];
-                sprintf(s, "%02Xh", cop.imm8);
+                sprintf_s(s, "%02Xh", cop.imm8);
                 opcode.text += s;
                 break;
             }
             case Symbols::imm16:
             case Symbols::moffs16:
             {
+                if (symbol == Symbols::moffs16 && is64mode)
+                {
+                    cop.immSize = 64;
+                    memcpy(&cop.imm64, stream.pcurrent(), sizeof(uint64_t));
+                    stream.skip(sizeof(uint64_t));
+                    char s[32];
+                    sprintf_s(s, "[%016llXh]", cop.imm64);
+                    opcode.text += s;
+                    break;
+                }
+
                 memcpy(&cop.imm16, stream.pcurrent(), sizeof(uint16_t));
                 stream.skip(sizeof(uint16_t));
                 cop.immSize = 16;
                 char s[18];
-                sprintf(s, "%04Xh", cop.imm16);
+                sprintf_s(s, "%04Xh", cop.imm16);
                 opcode.text += s;
                 break;
             }
             case Symbols::imm32:
             case Symbols::moffs32:
             {
+                if (symbol == Symbols::moffs32 && is64mode)
+                {
+                    cop.immSize = 64;
+                    memcpy(&cop.imm64, stream.pcurrent(), sizeof(uint64_t));
+                    stream.skip(sizeof(uint64_t));
+                    char s[32];
+                    sprintf_s(s, "[%016llXh]", cop.imm64);
+                    opcode.text += s;
+                    break;
+                }
+
                 if (rexEnc & (1 << 3) && (opRef.extData.settings & BaseSet_x86_64::OPS_EXTEND_IMM64) && !findEntry(opRef.extData.entries, OpEncoding::id))
                 {
                     memcpy(&cop.imm64, stream.pcurrent(), sizeof(uint64_t));
                     stream.skip(sizeof(uint64_t));
                     cop.immSize = 64;
                     char s[18];
-                    sprintf(s, "%016llXh", cop.imm64);
+                    sprintf_s(s, "%016llXh", cop.imm64);
                     opcode.text += s;
                 }
                 else
@@ -3039,7 +3103,7 @@ namespace Seraph
                     stream.skip(sizeof(uint32_t));
                     cop.immSize = 32;
                     char s[18];
-                    sprintf(s, "%08Xh", cop.imm32);
+                    sprintf_s(s, "%08Xh", cop.imm32);
                     opcode.text += s;
                 }
                 break;
@@ -3047,11 +3111,22 @@ namespace Seraph
             case Symbols::imm64:
             case Symbols::moffs64:
             {
+                if (symbol == Symbols::moffs64 && is64mode)
+                {
+                    cop.immSize = 64;
+                    memcpy(&cop.imm64, stream.pcurrent(), sizeof(uint64_t));
+                    stream.skip(sizeof(uint64_t));
+                    char s[32];
+                    sprintf_s(s, "[%016llXh]", cop.imm64);
+                    opcode.text += s;
+                    break;
+                }
+
                 memcpy(&cop.imm64, stream.pcurrent(), sizeof(uint64_t));
                 stream.skip(sizeof(uint64_t));
                 cop.immSize = 64;
                 char s[18];
-                sprintf(s, "%016llXh", cop.imm64);
+                sprintf_s(s, "%016llXh", cop.imm64);
                 opcode.text += s;
                 break;
             }
@@ -3064,7 +3139,7 @@ namespace Seraph
                 stream.skip(sizeof(uint16_t));
 
                 char s[32];
-                sprintf(s, "%04X:%08Xh", cop.disp16, cop.imm32);
+                sprintf_s(s, "%04X:%08Xh", cop.disp16, cop.imm32);
                 opcode.text += s;
                 break;
             }
@@ -3373,6 +3448,7 @@ namespace Seraph
                 auto r1 = (mode) ? ((mb % (mode << 6)) / 8) : 0;
                 auto r2 = ((mode) ? (mb % (mode << 6)) : mb) % 8;
                 bool hasSib = false;
+                bool hasSegment = false;
 
                 stream.next(); // ### ADDED
 
@@ -3383,17 +3459,17 @@ namespace Seraph
                 }
 
                 if (opcode.prefix & BaseSet_x86_64::PRE_SEG_CS)
-                    opcode.text += "cs:";
+                    hasSegment = true, opcode.text += "cs:";
                 else if (opcode.prefix & BaseSet_x86_64::PRE_SEG_DS)
-                    opcode.text += "ds:";
+                    hasSegment = true, opcode.text += "ds:";
                 else if (opcode.prefix & BaseSet_x86_64::PRE_SEG_ES)
-                    opcode.text += "es:";
+                    hasSegment = true, opcode.text += "es:";
                 else if (opcode.prefix & BaseSet_x86_64::PRE_SEG_FS)
-                    opcode.text += "fs:";
+                    hasSegment = true, opcode.text += "fs:";
                 else if (opcode.prefix & BaseSet_x86_64::PRE_SEG_GS)
-                    opcode.text += "gs:";
+                    hasSegment = true, opcode.text += "gs:";
                 else if (opcode.prefix & BaseSet_x86_64::PRE_SEG_FS)
-                    opcode.text += "fs:";
+                    hasSegment = true, opcode.text += "fs:";
 
                 switch (mode)
                 {
@@ -3432,34 +3508,56 @@ namespace Seraph
                         //     char s[4];
                         //     mul--;
                         //     std::vector<int>muls = { 2, 4, 8 };
-                        //     sprintf(s, "*%i", muls[mul]);
+                        //     sprintf_s(s, "*%i", muls[mul]);
                         //     opcode.text += s;
                         // }
 
                         //stream.skip(1); // ### EDIT
-                        memcpy(&cop.imm32, stream.pcurrent(), sizeof(uint32_t));
-                        stream.skip(sizeof(uint32_t));
                         char s[20];
+
                         if (!is64mode)
                         {
+                            memcpy(&cop.imm32, stream.pcurrent(), sizeof(uint32_t));
+                            stream.skip(sizeof(uint32_t));
                             cop.immSize = 32;
                             if (cop.imm32 > INT32_MAX)
-                                sprintf(s, "%08Xh", (UINT32_MAX - cop.imm32) + 1);
+                                sprintf_s(s, "%08Xh", (UINT32_MAX - cop.imm32) + 1);
                             else
-                                sprintf(s, "%08Xh", cop.imm32);
+                                sprintf_s(s, "%08Xh", cop.imm32);
                         }
                         else
                         {
-                            cop.immSize = 64;
-                            sprintf(s, "%016llXh", offset + stream.getpos() + cop.imm32);
+                            uint32_t val;
+                            memcpy(&val, stream.pcurrent(), sizeof(uint32_t));
+                            stream.skip(sizeof(uint32_t));
+
+                            // This roughly works, until I can figure out exactly
+                            // what distinguishes relative values from pointer values
+                            // 
+                            if (!hasSegment && !(val >= 0x7E000000 && val <= 0x7FFFFFFF))
+                            {
+                                cop.rel32 = val;
+                                opcode.flags |= BaseSet_x86_64::OP_RELDATA;
+                                cop.relSize = 32;
+                                sprintf_s(s, "%016llXh", offset + stream.getpos() + cop.rel32);
+                            }
+                            else
+                            {
+                                cop.imm32 = val;
+                                cop.immSize = 32;
+                                if (cop.imm32 > INT32_MAX)
+                                    sprintf_s(s, "%08Xh", (UINT32_MAX - cop.imm32) + 1);
+                                else
+                                    sprintf_s(s, "%08Xh", cop.imm32);
+                            }
                         }
 
                         // cop.immSize = 32;
                         // char s[20];
                         // if (cop.imm32 > INT32_MAX)
-                        //     sprintf(s, "-%08Xh", (UINT32_MAX - cop.imm32) + 1);
+                        //     sprintf_s(s, "-%08Xh", (UINT32_MAX - cop.imm32) + 1);
                         // else
-                        //     sprintf(s, "+%08Xh", cop.imm32);
+                        //     sprintf_s(s, "+%08Xh", cop.imm32);
 
                         opcode.text += s;
                     }
@@ -3498,7 +3596,7 @@ namespace Seraph
                                 char s[4];
                                 mul--;
                                 std::vector<int>muls = { 2, 4, 8 };
-                                sprintf(s, "*%i", muls[mul]);
+                                sprintf_s(s, "*%i", muls[mul]);
                                 opcode.text += s;
                             }
                         }
@@ -3557,7 +3655,7 @@ namespace Seraph
                             char s[4];
                             mul--;
                             std::vector<int>muls = { 2, 4, 8 };
-                            sprintf(s, "*%i", muls[mul]);
+                            sprintf_s(s, "*%i", muls[mul]);
                             opcode.text += s;
                         }
                     }
@@ -3567,9 +3665,9 @@ namespace Seraph
                     cop.immSize = 8;
                     char s[20];
                     if (cop.imm8 > INT8_MAX)
-                        sprintf(s, "-%02Xh]", (UINT8_MAX - cop.imm8) + 1);
+                        sprintf_s(s, "-%02Xh]", (UINT8_MAX - cop.imm8) + 1);
                     else
-                        sprintf(s, "+%02Xh]", cop.imm8);
+                        sprintf_s(s, "+%02Xh]", cop.imm8);
 
                     opcode.text += s;
                     break;
@@ -3622,7 +3720,7 @@ namespace Seraph
                             char s[4];
                             mul--;
                             std::vector<int>muls = { 2, 4, 8 };
-                            sprintf(s, "*%i", muls[mul]);
+                            sprintf_s(s, "*%i", muls[mul]);
                             opcode.text += s;
                         }
                     }
@@ -3633,9 +3731,9 @@ namespace Seraph
                     cop.immSize = 32;
                     char s[20];
                     if (cop.imm32 > INT32_MAX)
-                        sprintf(s, "-%08Xh]", (UINT32_MAX - cop.imm32) + 1);
+                        sprintf_s(s, "-%08Xh]", (UINT32_MAX - cop.imm32) + 1);
                     else
-                        sprintf(s, "+%08Xh]", cop.imm32);
+                        sprintf_s(s, "+%08Xh]", cop.imm32);
 
                     opcode.text += s;
                     break;
@@ -3715,8 +3813,16 @@ namespace Seraph
                                 opcode.text += Mnemonics::XMM[cop.regs.back()];
                                 break;
                             default:
-                                cop.bitSize = 32;
-                                opcode.text += isRegExt ? Mnemonics::R32ext[cop.regs.back()] : Mnemonics::R32[cop.regs.back()];
+                                if (opRef.extData.settings & BaseSet_x86_64::OPS_DEFAULT_64_BITS)
+                                {
+                                    cop.bitSize = 64;
+                                    opcode.text += isRegExt ? Mnemonics::R64ext[cop.regs.back()] : Mnemonics::R64[cop.regs.back()];
+                                }
+                                else
+                                {
+                                    cop.bitSize = 32;
+                                    opcode.text += isRegExt ? Mnemonics::R32ext[cop.regs.back()] : Mnemonics::R32[cop.regs.back()];
+                                }
                                 break;
                             }
                         }
@@ -3741,6 +3847,20 @@ namespace Seraph
                 break;
             }
         }
+
+        /*if (opcode.flags & BaseSet_x86_64::OP_RELDATA)
+        {
+            for (auto& op : opcode.operands)
+            {
+                if (op.bitSize <= 32 && !op.regs.empty())
+                {
+                    // this instruction doesn't use a relative offset
+                    // if it uses 32-bit register
+                    opcode.flags &= ~BaseSet_x86_64::OP_RELDATA;
+                    break;
+                }
+            }
+        }*/
 
         // Copy the stream bytes into the opcode, for size reference
         opcode.len = stream.getpos() - streamStartIndex;
@@ -4394,7 +4514,9 @@ namespace Seraph
 
             if (node.type == Parser::Node::NodeType::AsmNode)
             {
-                bool hasExtRegs, reject, solved = false;
+                bool hasExtRegs = false;
+                bool reject = false;
+                bool solved = false;
 
                 // Look up the corresponding opcode information
                 // for our parsed opcode
@@ -4711,6 +4833,14 @@ namespace Seraph
                                                 break;
                                             case Symbols::imm32:
                                                 forceValidate = true;
+                                                break;
+                                            case Symbols::m16_16:
+                                            case Symbols::m16_32:
+                                                if (op->hasMod)
+                                                {
+                                                    op->opmode = Symbols::m16_32;
+                                                    forceValidate = true;
+                                                }
                                                 break;
                                             }
                                             break;
@@ -5203,6 +5333,17 @@ namespace Seraph
                                         {
                                             modbyte += 5;
                                             imm32value = op.imm32;
+                                            hasImm32 = true;
+                                            break;
+                                        }
+                                        
+                                        // No regs, or segments, just a 64-bit memory offset.
+                                        // In x64, we have to treat this as a relative 32-bit value
+                                        // starting at the next instruction's address
+                                        if (op.regs.size() == 0 && op.flags & BaseSet_x86_64::OP_IMM64 && !node.segment)
+                                        {
+                                            modbyte += 5;
+                                            imm32value = static_cast<uint32_t>(op.imm64 - (offset + stream.size() + 4 + 1));
                                             hasImm32 = true;
                                             break;
                                         }
