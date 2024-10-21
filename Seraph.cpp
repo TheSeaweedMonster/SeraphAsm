@@ -73,21 +73,24 @@ namespace Seraph
     public:
         Parser(ByteStream& refStream) : stream(refStream) { };
 
+        enum class Specifier {
+            None,
+            BytePtr,
+            WordPtr,
+            DwordPtr,
+            QwordPtr,
+            DQwordPtr,
+            TwordPtr,
+            MMWordPtr,
+            XMMWordPtr
+        };
+
         struct Node
         {
             enum class NodeType {
                 Label,
                 AsmNode
             } type = NodeType::Label;
-
-            enum class Specifier {
-                None,
-                BytePtr,
-                WordPtr,
-                DwordPtr,
-                QwordPtr,
-                TwordPtr
-            };
 
             std::vector<uint8_t> prefixes = {};
             std::string opName = "";
@@ -136,8 +139,37 @@ namespace Seraph
         };
 
         template<TargetArchitecture archType>
-        static Scope compile(const std::string& source, std::unordered_map<std::string, uint8_t>& prelookup_x86_64)
+        static Scope compile(const std::string& _source, std::unordered_map<std::string, uint8_t>& prelookup_x86_64)
         {
+            std::string source = std::string();
+
+            // Erase any block comments from the source
+            size_t at = 0;
+            while (at < _source.length())
+            {
+                if (_source[at] == '/')
+                {
+                    if (_source[at + 1] == '*')
+                    {
+                        at += 2;
+                        while (!(_source[at] == '*' && _source[at + 1] == '/'))
+                            at++;
+                        at += 2;
+                        continue;
+                    }
+                }
+
+                if (_source[at] == '*')
+                {
+                    if (_source[at + 1] == '/')
+                    {
+                        throw SeraphException("Block comment finish, without start");
+                    }
+                }
+
+                source += _source[at++];
+            }
+
             switch (archType)
             {
             case TargetArchitecture::x86:
@@ -198,7 +230,7 @@ namespace Seraph
                             if (isOperand)
                             {
                                 // Check for keywords used (at the operands)
-                                const std::vector<std::string> keywords = { "none", "byte", "word", "dword", "qword", "dqword", "tword" };
+                                const std::vector<std::string> keywords = { "none", "byte", "word", "dword", "qword", "dqword", "tword", "mmword", "xmmword" };
 
                                 size_t isKeyword, keywordIndex;
 
@@ -214,7 +246,7 @@ namespace Seraph
                                 if (isKeyword)
                                 {
                                     // Use the enumerator value (corresponds to the array index)
-                                    currentNode.sizeIndicator = static_cast<Node::Specifier>(keywordIndex);
+                                    currentNode.sizeIndicator = static_cast<Specifier>(keywordIndex);
 
                                     at++; // Skip past the space character
 
@@ -2151,6 +2183,7 @@ namespace Seraph
             { { 0x0F, 0x03 }, { OpEncoding::r }, { Symbols::r16, Symbols::rm16 } },
             { { 0x0F, 0x03 }, { OpEncoding::r }, { Symbols::r32, Symbols::rm32 } },
         };
+        oplookup_x86_64["syscall"] = { { { 0x0F, 0x05 }, { }, { } } };
         oplookup_x86_64["clts"] = { { { 0x0F, 0x06 }, { }, { } } };
         oplookup_x86_64["invd"] = { { { 0x0F, 0x08 }, { }, { } } };
         oplookup_x86_64["wbinvd"] = { { { 0x0F, 0x09 }, { }, { } } };
@@ -2981,7 +3014,7 @@ namespace Seraph
                     cop.rel8 = stream.current();
                     stream.skip(sizeof(uint8_t));
                     char s[18];
-                    sprintf_s(s, "%016llXh", offset + stream.getpos() + cop.rel8);
+                    sprintf_s(s, "%016llXh", offset + stream.getpos() + static_cast<int8_t>(cop.rel8));
                     opcode.text += s;
                 }
                 break;
@@ -3003,7 +3036,7 @@ namespace Seraph
                     memcpy(&cop.rel16, stream.pcurrent(), sizeof(uint16_t));
                     stream.skip(sizeof(uint16_t));
                     char s[18];
-                    sprintf_s(s, "%016llXh", offset + stream.getpos() + cop.rel16);
+                    sprintf_s(s, "%016llXh", offset + stream.getpos() + static_cast<int16_t>(cop.rel16));
                     opcode.text += s;
                 }
                 break;
@@ -3025,7 +3058,7 @@ namespace Seraph
                     memcpy(&cop.rel32, stream.pcurrent(), sizeof(uint32_t));
                     stream.skip(sizeof(uint32_t));
                     char s[18];
-                    sprintf_s(s, "%016llXh", offset + stream.getpos() + cop.rel32);
+                    sprintf_s(s, "%016llXh", offset + stream.getpos() + static_cast<int32_t>(cop.rel32));
                     opcode.text += s;
                 }
                 break;
@@ -3539,7 +3572,7 @@ namespace Seraph
                                 cop.rel32 = val;
                                 opcode.flags |= BaseSet_x86_64::OP_RELDATA;
                                 cop.relSize = 32;
-                                sprintf_s(s, "%016llXh", offset + stream.getpos() + cop.rel32);
+                                sprintf_s(s, "%016llXh", offset + stream.getpos() + static_cast<int32_t>(cop.rel32));
                             }
                             else
                             {
@@ -4674,6 +4707,19 @@ namespace Seraph
 
                                             switch (opvariant.symbols[i])
                                             {
+                                            case Symbols::rm16:
+                                            {
+                                                // cmp word ptr [r10+10h],0200h translates to rm32, imm16, but
+                                                // it needs to become rm16, imm16 in order to match the variant
+                                                // in our opcode table as it is set.
+                                                // Our handlers below for rm16/rmm32/rmm64 will 
+                                                // configure the RM properly anyway
+                                                
+                                                if (node.sizeIndicator == Parser::Specifier::WordPtr)
+                                                    forceValidate = true;
+
+                                                break;
+                                            }
                                             case Symbols::r32:
                                                 if (!op->hasMod)
                                                 {
@@ -4683,6 +4729,15 @@ namespace Seraph
                                                     forceValidate = true;
                                                 }
                                                 break;
+                                            case Symbols::rm8:
+                                            {
+                                                // cmp byte ptr[r11+10h],20h --> will use the smaller size (byte ptr) instruction
+                                                if (node.sizeIndicator == Parser::Specifier::BytePtr)
+                                                {
+                                                    forceValidate = true;
+                                                    break;
+                                                }
+                                            }
                                             case Symbols::m:
                                             case Symbols::mm:
                                             case Symbols::m8:
@@ -4743,12 +4798,25 @@ namespace Seraph
                                             {
                                             // Example: ret 4 (imm8) should work. ('ret' expects imm16)
                                             case Symbols::imm16:
-                                                op->opmode = Symbols::imm16;
-                                                op->flags = BaseSet_x86_64::OP_IMM16;
-                                                op->immSize = 16;
-                                                op->imm16 = static_cast<uint16_t>(op->imm8);
-                                                forceValidate = true;
-                                                break;
+                                                if (node.bitSize == 16)
+                                                {
+                                                    op->opmode = Symbols::imm16;
+                                                    op->flags = BaseSet_x86_64::OP_IMM16;
+                                                    op->immSize = 16;
+                                                    op->imm16 = static_cast<uint16_t>(op->imm8);
+                                                    forceValidate = true;
+                                                    break;
+                                                }
+                                            case Symbols::imm32:
+                                                if (node.bitSize >= 32)
+                                                {
+                                                    op->opmode = Symbols::imm32;
+                                                    op->flags = BaseSet_x86_64::OP_IMM32;
+                                                    op->immSize = 32;
+                                                    op->imm32 = static_cast<uint16_t>(op->imm8);
+                                                    forceValidate = true;
+                                                    break;
+                                                }
                                             case Symbols::rel8:
                                                 op->rel8 = op->imm8;
                                                 forceValidate = true;
@@ -4765,10 +4833,35 @@ namespace Seraph
                                                 }
                                                 break;
                                             }
+
+                                            switch (node.sizeIndicator)
+                                            {
+                                            case Parser::Specifier::WordPtr:
+                                                op->imm16 = op->imm8;
+                                                op->opmode = Symbols::imm16;
+                                                break;
+                                            case Parser::Specifier::DwordPtr:
+                                                op->imm32 = op->imm8;
+                                                op->opmode = Symbols::imm32;
+                                                break;
+                                            case Parser::Specifier::QwordPtr:
+                                                op->imm64 = op->imm8;
+                                                op->opmode = Symbols::imm64;
+                                                break;
+                                            }
+
                                             break;
                                         case Symbols::imm16: // To-do: optimize by enabling shorter (rel8) jump when necessary
                                             switch (opvariant.symbols[i])
                                             {
+                                            case Symbols::imm32:                // Latest addition ###
+                                                if (node.sizeIndicator != Parser::Specifier::WordPtr)
+                                                {
+                                                    op->imm32 = op->imm16;          // ###
+                                                    op->opmode = Symbols::imm32;    // ###
+                                                    forceValidate = true;           // ###
+                                                }
+                                                break;
                                             case Symbols::rel16:
                                             case Symbols::rel32:
                                             //case Symbols::imm32:               // ###
@@ -4776,11 +4869,6 @@ namespace Seraph
                                                 op->rel32 = op->imm32;
                                                 forceValidate = true;
                                                 break;
-                                            case Symbols::imm32:                // Latest addition ###
-                                                op->imm32 = op->imm16;          // ###
-                                                op->opmode = Symbols::imm32;    // ###
-                                                forceValidate = true;           // ###
-                                                break;                          // ###
                                             case Symbols::rm32:
                                                 if (op->hasMod && node.hasMod == 1)
                                                 {
@@ -4789,6 +4877,23 @@ namespace Seraph
                                                 }
                                                 break;
                                             }
+
+                                            switch (node.sizeIndicator)
+                                            {
+                                            case Parser::Specifier::BytePtr:
+                                                op->imm8 = op->imm16;
+                                                op->opmode = Symbols::imm8;
+                                                break;
+                                            case Parser::Specifier::DwordPtr:
+                                                op->imm32 = op->imm16;
+                                                op->opmode = Symbols::imm32;
+                                                break;
+                                            case Parser::Specifier::QwordPtr:
+                                                op->imm64 = op->imm16;
+                                                op->opmode = Symbols::imm64;
+                                                break;
+                                            }
+
                                             break;
                                         case Symbols::imm32:
                                             switch (opvariant.symbols[i])
@@ -4806,6 +4911,23 @@ namespace Seraph
                                                 }
                                                 break;
                                             }
+
+                                            switch (node.sizeIndicator)
+                                            {
+                                            case Parser::Specifier::BytePtr:
+                                                op->imm8 = op->imm32;
+                                                op->opmode = Symbols::imm8;
+                                                break;
+                                            case Parser::Specifier::WordPtr:
+                                                op->imm16 = op->imm32;
+                                                op->opmode = Symbols::imm16;
+                                                break;
+                                            case Parser::Specifier::QwordPtr:
+                                                op->imm64 = op->imm32;
+                                                op->opmode = Symbols::imm64;
+                                                break;
+                                            }
+
                                             break;
                                         case Symbols::imm64:
                                             switch (opvariant.symbols[i])
@@ -4843,6 +4965,23 @@ namespace Seraph
                                                 }
                                                 break;
                                             }
+
+                                            switch (node.sizeIndicator)
+                                            {
+                                            case Parser::Specifier::BytePtr:
+                                                op->imm8 = op->imm64;
+                                                op->opmode = Symbols::imm8;
+                                                break;
+                                            case Parser::Specifier::WordPtr:
+                                                op->imm16 = op->imm64;
+                                                op->opmode = Symbols::imm16;
+                                                break;
+                                            case Parser::Specifier::DwordPtr:
+                                                op->imm32 = op->imm64;
+                                                op->opmode = Symbols::imm32;
+                                                break;
+                                            }
+
                                             break;
                                         }
 
@@ -4934,7 +5073,28 @@ namespace Seraph
                                             }
                                             break;
                                         }
+                                        
+                                        if (!opvariant.entries.empty())
+                                        {
+                                            switch (opvariant.entries.front())
+                                            {
+                                            case OpEncoding::ib:
+                                                if (node.bitSize > 8)
+                                                    reject = true;
+                                                break;
+                                            case OpEncoding::iw:
+                                                if (node.bitSize > 16)
+                                                    reject = true;
+                                                break;
+                                            case OpEncoding::id:
+                                                if (node.bitSize > 32)
+                                                    reject = true;
+                                                break;
+                                            }
+                                        }
 
+                                        if (reject) break;
+                                        
                                         // ***
                                         // Consider the following opcodes and their r/m byte:
                                         // 
@@ -4990,6 +5150,12 @@ namespace Seraph
                             uint8_t rexEnc = 0;
                             uint8_t hasextreg = 0;
                             uint8_t has64data = 0;
+
+                            if (node.sizeIndicator == Parser::Specifier::WordPtr)
+                            {
+                                // declare the instruction mode 16-bit
+                                node.prefixes.push_back(0x66);
+                            }
 
                             // Add prefix flags
                             for (const uint8_t pre : node.prefixes)
@@ -5112,6 +5278,12 @@ namespace Seraph
                                 case OpEncoding::r:
                                     regenc = 1;
                                     break;
+                                case OpEncoding::ib:
+                                    break;
+                                case OpEncoding::iw:
+                                    break;
+                                case OpEncoding::id:
+                                    break;
                                 case OpEncoding::rb:
                                 case OpEncoding::rw:
                                 case OpEncoding::rd:
@@ -5196,7 +5368,7 @@ namespace Seraph
                                     const auto op = userOperands[i];
 
                                     if (node.marked && node.markedOperand == i)
-                                        node.markedOffset = stream.size() + useModByte + hasSib + hasImm8 + (hasImm16 ? 16 : 0) + (hasImm32 ? 32 : 0) + (hasImm64 ? 64 : 0) + hasDisp8 + (hasDisp16 ? 16 : 0) + (hasDisp32 ? 32 : 0) + (hasDisp64 ? 64 : 0);
+                                        node.markedOffset = stream.size() + usingrex + useModByte + hasSib + hasImm8 + (hasImm16 ? 16 : 0) + (hasImm32 ? 32 : 0) + (hasImm64 ? 64 : 0) + hasDisp8 + (hasDisp16 ? 16 : 0) + (hasDisp32 ? 32 : 0) + (hasDisp64 ? 64 : 0);
                                     
                                     switch (op.opmode)
                                     {
@@ -5218,19 +5390,19 @@ namespace Seraph
                                         hasDisp64 = true;
                                         break;
                                     case Symbols::rel8:
-                                        imm8value = static_cast<uint8_t>(op.rel8 - (offset + stream.size() + 1));
+                                        imm8value = static_cast<uint8_t>(op.rel8 - (offset + stream.size() + 1 + usingrex));
                                         hasImm8 = true;
                                         break;
                                     case Symbols::rel16:
-                                        imm16value = static_cast<uint16_t>(op.rel16 - (offset + stream.size() + 2));
+                                        imm16value = static_cast<uint16_t>(op.rel16 - (offset + stream.size() + 2 + usingrex));
                                         hasImm16 = true;
                                         break;
                                     case Symbols::rel32:
-                                        imm32value = static_cast<uint32_t>(op.rel32 - (offset + stream.size() + 4));
+                                        imm32value = static_cast<uint32_t>(op.rel32 - (offset + stream.size() + 4 + usingrex));
                                         hasImm32 = true;
                                         break;
                                     case Symbols::rel64:
-                                        imm64value = static_cast<uint64_t>(op.rel64 - (offset + stream.size() + 8));
+                                        imm64value = static_cast<uint64_t>(op.rel64 - (offset + stream.size() + 8 + usingrex));
                                         hasImm64 = true;
                                         break;
                                     case Symbols::ptr16_32:
@@ -5343,7 +5515,7 @@ namespace Seraph
                                         if (op.regs.size() == 0 && op.flags & BaseSet_x86_64::OP_IMM64 && !node.segment)
                                         {
                                             modbyte += 5;
-                                            imm32value = static_cast<uint32_t>(op.imm64 - (offset + stream.size() + 4 + 1));
+                                            imm32value = static_cast<uint32_t>(op.imm64 - (offset + stream.size() + 4 + 1 + usingrex));
                                             hasImm32 = true;
                                             break;
                                         }
@@ -5476,6 +5648,57 @@ namespace Seraph
 
                                         break;
                                     }
+
+                                    /*if (node.sizeIndicator == Parser::Specifier::WordPtr)
+                                    {
+                                        // This is a band-aid to correct operand sizes because 
+                                        // currently it picks 32 bit instructions over 16 bit
+                                        // even though the bit size and size specifier is 16 bits.
+                                        // I'll work this out eventually
+                                        if (hasImm32)
+                                        {
+                                            hasImm32 = false;
+                                            hasImm16 = true;
+                                            //userOperands[i].imm16 = imm32value;
+                                            //userOperands[i].imm32 = 0;
+                                            //userOperands[i].flags &= BaseSet_x86_64::OP_IMM32;
+                                            //userOperands[i].flags |= BaseSet_x86_64::OP_IMM16;
+                                            imm16value = userOperands[i].imm16;
+                                        }
+
+                                        if (hasImm64)
+                                        {
+                                            hasImm64 = false;
+                                            hasImm16 = true;
+                                            //userOperands[i].imm16 = imm64value;
+                                            //userOperands[i].imm64 = 0;
+                                            //userOperands[i].flags &= BaseSet_x86_64::OP_IMM64;
+                                            //userOperands[i].flags |= BaseSet_x86_64::OP_IMM16;
+                                            imm16value = userOperands[i].imm16;
+                                        }
+
+                                        if (hasDisp32)
+                                        {
+                                            hasDisp32 = false;
+                                            hasDisp16 = true;
+                                            //userOperands[i].disp16 = disp32value;
+                                            //userOperands[i].disp32 = 0;
+                                            //userOperands[i].flags &= BaseSet_x86_64::OP_DISP32;
+                                            //userOperands[i].flags |= BaseSet_x86_64::OP_DISP16;
+                                            disp16value = userOperands[i].disp16;
+                                        }
+
+                                        if (hasDisp64)
+                                        {
+                                            hasDisp64 = false;
+                                            hasDisp16 = true;
+                                            //userOperands[i].disp16 = disp64value;
+                                            //userOperands[i].disp64 = 0;
+                                            //userOperands[i].flags &= BaseSet_x86_64::OP_DISP64;
+                                            //userOperands[i].flags |= BaseSet_x86_64::OP_DISP16;
+                                            disp16value = userOperands[i].disp16;
+                                        }
+                                    }*/
                                 }
 
                                 modbyte |= modenc;
